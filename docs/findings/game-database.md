@@ -117,3 +117,27 @@ evaluator. `TendencyGeneration.dat` (108 records) drives player tendencies.
 | MatchResolverDistributions.4 | — | 6666645 | — |
 | MatchResolverDistributions.5 | — | 7564785 | — |
 | MatchResolverDistributions.6 | — | 5437333 | — |
+
+## Record format: bit-packed (confirmed), exact widths not statically decodable
+
+Records are fixed-size and **bit-packed** (confirmed: header 8 bytes = `DATa` +
+uint32 count, then N records of exactly `rec_bytes`; e.g. Club = 6571×169,
+Player = 85035×41). Each schema registration function (e.g. FUN_00a5d0e0 for
+Club) builds a field-descriptor table where each field has a type tag, name,
+a **bit width**, a native size (4) and a default (-1).
+
+Summing the extracted widths lands close to the record size but not exactly
+(Club: ~1527 vs 1352 bits; Competition: ~386 vs 480), because:
+- the decompiler's variable-ordering noise makes per-field width extraction
+  unreliable from the constructor code, and
+- the descriptor table lives at RVA 0x00c69450, which is in a section whose
+  virtual size exceeds its on-disk size — i.e. it is **initialized at runtime**
+  by these constructors, so it cannot be read statically from the exe.
+
+**Honest limitation:** exact per-field bit offsets (needed to read individual
+values like a specific player's attributes) require either runtime observation
+of the initialized descriptor table (Windows) or a cleaner reparse. The
+container format, table inventory, record counts and record sizes above are all
+verified; the per-field value decode is left explicitly unresolved rather than
+guessed. Plausible widths are visible for uniform tables (e.g. TeamTactics
+fields = 7 bits each).

@@ -93,8 +93,26 @@ producer) — so there is no static "velocity offset" to pin on the exposed obje
 either implicit (inter-frame position delta) or thread-private. This is itself a fidelity
 finding: positions are integer fixed-point waypoints, not a float {pos,vel} record.
 
+## Per-frame advance — RECOVERED (set-to-target + double-buffer, no velocity integrator)
+From the clean-exe Ghidra dump (big/CM2008.exe_big.c, valid for the 0x77xxxx/0x9xxxxx
+match code): the coordinate record is a **current/previous double-buffer**:
+- X: current @+0xc0, previous @+0xc4   ·   Y: current @+0xd0, previous @+0xd4
+The update function (big.c:67577) syncs `if (cur[+0xc0]!=prev[+0xc4]) prev[+0xc4]=cur[+0xc0];`
+before recomputing, and a setter (big.c:36881/36888) writes the NEW coordinate into
+cur[+0xc0]/[+0xd0] from a parameter. So each tick the position is SET to a computed target
+(then render interpolates prev→cur). There is NO `pos += velocity*dt` integrator (confirming
+S2's image-wide zero-hit): motion is **set-to-target + interpolation**, where the target is
+produced by the decision logic (attribute-driven contest + waypoints, see SIM_AI_DECISION.md).
+
+This closes the "per-frame advance" micro-item: the mechanism is recovered (double-buffered
+set-to-target); the only thing that is still data/decision-dependent is WHICH target each
+tick, which is the (recovered-mechanism, data-driven-values) decision layer — not a missing
+integrator. VERIFIED (double-buffer + setter); target-selection per tick = the decision layer.
+
 ## Classification
 - per-entity geometry = 1012-byte block via entity+0x134 under [pool+0x3004c] — **VERIFIED**
+- coordinate double-buffer cur/prev @+0xc0/+0xc4 (X), +0xd0/+0xd4 (Y); per-frame = set-to-
+  target + interpolate (NO velocity integrator) — **VERIFIED**
 - world X/Y = integer at +0xc0/+0xd0 projected ×(1/112.5); +0xd0 sub-object = 4 u16 waypoint
   pairs (stride 8 from +0x12) — **VERIFIED**
 - explicit velocity field — **does not exist in exposed data** (motion = integer waypoints;

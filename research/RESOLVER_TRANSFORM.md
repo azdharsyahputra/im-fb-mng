@@ -59,3 +59,27 @@ unchanged; only the field meaning is corrected.
   approximation; the full shape is recoverable from them next.
 - Which group/context a given player maps to (attribute→index) — still the
   obfuscated picker (FUN_005b5100).
+
+## UPDATE — moment means are robust (VERIFIED); exact cell decomposition still ambiguous
+
+Cross-check of pooling methods on real file 1:
+- Pool group-totals vs pool ALL triples give nearly identical population means:
+  Corners 3.38 vs 3.41 · GoalsScored ~0.086 · PassesCompleted ~33.9 ·
+  Fouls 0.294 · ShotsOnTarget 0.303. Variance same order.
+- Invariant across all metrics: ΣN over all triples == 2×sectionTotal, and exactly
+  one triple has cum == sectionTotal (a catch-all/total row). This confirms the
+  triples carry cumulative structure (not purely independent cells), but the
+  population **mean/variance are stable regardless of decomposition**.
+- Per-value-level delta reconstruction (Δsum/ΔN) does NOT yield a clean monotone
+  value axis under the naive group split (negative/zero deltas appear), so the
+  exact within-metric shape is NOT yet pinned.
+
+Status:
+- VERIFIED: per-metric population mean & variance (robust, realistic, decomposition-independent).
+- APPROXIMATE: the draw SHAPE (Gaussian-from-moments) — sound given verified mean/var,
+  but not CM's exact empirical shape.
+- UNKNOWN: exact cell/cumulative decomposition for the full distribution shape; the
+  attribute→context index.
+
+The quick resolver (resolver.c) therefore rests on VERIFIED population moments; only
+the draw shape and per-player context are approximations, both isolated + labeled.

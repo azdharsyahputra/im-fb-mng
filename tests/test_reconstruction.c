@@ -29,6 +29,7 @@
 #include "../match/sim/match_lifecycle.h"
 #include "../match/sim/detailed_engine.h"
 #include "../match/sim/predicate_weights.h"
+#include "../match/formula/formula.h"
 #include "../match/resolver_format.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -343,6 +344,81 @@ int main(void) {
         CHECK(cm_predicate_passes_rank("GCMatchPredicateDefensiveErrorsLeadsToShots")==0); /* 70 */
         CHECK(cm_predicate_passes_rank("GCMatchPredicateWinsManyHeaders")==0);  /* 10 */
         CHECK(CM_PREDICATE_RANK_THRESHOLD==80.0f);
+    }
+
+    /* Clean-room formula.xml evaluator (recovered opcodes/operators, FUN_00818120) */
+    {
+        /* operator string -> opcode (calc vocabulary VERIFIED) */
+        CHECK(cm_fbinop_from_name("add")==CM_FOP_ADD);
+        CHECK(cm_fbinop_from_name("div")==CM_FOP_DIV);
+        CHECK(cm_fagg_from_name("mean")==CM_FAGG_MEAN);
+        CHECK(cm_fagg_from_name("prod")==CM_FAGG_PRODUCT);
+        cm_fcmp cc;
+        CHECK(cm_fcmp_from_name("greaterthan",&cc)==1 && cc==CM_FCMP_GT);
+        CHECK(cm_fcmp_from_name("notequals",&cc)==1 && cc==CM_FCMP_NE);
+        CHECK(cm_fcmp_from_name("ge",&cc)==0);   /* >= does not exist in CM2008 */
+        CHECK(cm_fcmp_apply(CM_FCMP_GT,5,3)==1 && cm_fcmp_apply(CM_FCMP_LT,5,3)==0);
+
+        /* literal leaves */
+        cm_fnode l2={0}; l2.has_literal=1; l2.literal=2.0f;
+        cm_fnode l3={0}; l3.has_literal=1; l3.literal=3.0f;
+        cm_fnode l4={0}; l4.has_literal=1; l4.literal=4.0f;
+        cm_fnode *kids2[2]={&l2,&l3};
+        cm_fnode *kids3[3]={&l2,&l3,&l4};
+        float v; cm_feval_status s;
+
+        /* binop ADD/SUB/MUL/DIV/UNARY */
+        cm_fnode add={0}; add.children=kids2; add.n_children=2; add.binop=CM_FOP_ADD;
+        s=cm_formula_eval(&add,0,0,&v); CHECK(s==CM_FEVAL_OK && v==5.0f);
+        cm_fnode dv={0}; dv.children=kids2; dv.n_children=2; dv.binop=CM_FOP_DIV;
+        s=cm_formula_eval(&dv,0,0,&v); CHECK(s==CM_FEVAL_OK && v>0.66f && v<0.67f);
+        cm_fnode z0={0}; z0.has_literal=1; z0.literal=0.0f;
+        cm_fnode *kidz[2]={&l2,&z0};
+        cm_fnode dz={0}; dz.children=kidz; dz.n_children=2; dz.binop=CM_FOP_DIV;
+        s=cm_formula_eval(&dz,0,0,&v); CHECK(s==CM_FEVAL_ERROR); /* div-by-zero guarded */
+        cm_fnode un={0}; un.children=kids2; un.n_children=1; un.binop=CM_FOP_UNARY;
+        s=cm_formula_eval(&un,0,0,&v); CHECK(s==CM_FEVAL_OK && v==2.0f);
+
+        /* aggregate SUM/MEAN/PRODUCT */
+        cm_fnode sum={0}; sum.children=kids3; sum.n_children=3; sum.has_agg=1; sum.agg=CM_FAGG_SUM;
+        s=cm_formula_eval(&sum,0,0,&v); CHECK(s==CM_FEVAL_OK && v==9.0f);
+        cm_fnode mean={0}; mean.children=kids3; mean.n_children=3; mean.has_agg=1; mean.agg=CM_FAGG_MEAN;
+        s=cm_formula_eval(&mean,0,0,&v); CHECK(s==CM_FEVAL_OK && v==3.0f);
+        cm_fnode prod={0}; prod.children=kids3; prod.n_children=3; prod.has_agg=1; prod.agg=CM_FAGG_PRODUCT;
+        s=cm_formula_eval(&prod,0,0,&v); CHECK(s==CM_FEVAL_OK && v==24.0f);
+
+        /* variable resolution via host context */
+        cm_fnode var={0}; var.kind=CM_OPERAND_VARIABLE; var.name="MarkingDistanceScale";
+        cm_data_source ds_unused; (void)ds_unused;
+        cm_fcontext fctx; fctx.resolve=mock_get; fctx.user=0;
+        s=cm_formula_eval(&var,&fctx,0,&v); CHECK(s==CM_FEVAL_OK && v==0.5f); /* mock_get */
+        cm_fnode varU={0}; varU.kind=CM_OPERAND_VARIABLE; varU.name="NopeUnknownVar";
+        s=cm_formula_eval(&varU,&fctx,0,&v); CHECK(s==CM_FEVAL_UNRESOLVED); /* not invented */
+
+        /* registry: recovered default + unresolved formula ref */
+        CHECK(CM_FORMULA_DEFAULTS.n_defs>=2);
+        s=cm_formula_resolve(&CM_FORMULA_DEFAULTS,"MaxSprintingSpeed","MatchResolver",0,&v);
+        CHECK(s==CM_FEVAL_OK && v==9.0f);
+        s=cm_formula_resolve(&CM_FORMULA_DEFAULTS,"KeyPassesPerformance",0,0,&v);
+        CHECK(s==CM_FEVAL_OK && v==0.5f);
+        s=cm_formula_resolve(&CM_FORMULA_DEFAULTS,"NotARealFormula",0,0,&v);
+        CHECK(s==CM_FEVAL_UNRESOLVED);  /* body in encrypted xml -> explicit, not faked */
+
+        /* rule: conditionset = AND of conditions */
+        cm_fnode c5={0}; c5.has_literal=1; c5.literal=5.0f;
+        cm_fnode c1={0}; c1.has_literal=1; c1.literal=1.0f;
+        cm_fcondition conds[2] = {
+            { CM_FCMP_GT, &c5, &c1 },   /* 5 > 1 true */
+            { CM_FCMP_EQ, &l2, &l2 },   /* 2 == 2 true */
+        };
+        int hold; s=cm_rule_conditions_hold(conds,2,0,0,&hold);
+        CHECK(s==CM_FEVAL_OK && hold==1);
+        conds[1].op=CM_FCMP_LT;         /* 2 < 2 false -> AND false */
+        s=cm_rule_conditions_hold(conds,2,0,0,&hold); CHECK(s==CM_FEVAL_OK && hold==0);
+        /* unresolved operand -> fail-closed */
+        cm_fcondition cbad[1] = { { CM_FCMP_GT, &varU, &l2 } };
+        s=cm_rule_conditions_hold(cbad,1,&fctx,0,&hold);
+        CHECK(s==CM_FEVAL_UNRESOLVED && hold==0);
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

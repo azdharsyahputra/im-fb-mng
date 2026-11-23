@@ -83,3 +83,28 @@ Status:
 
 The quick resolver (resolver.c) therefore rests on VERIFIED population moments; only
 the draw shape and per-player context are approximations, both isolated + labeled.
+
+## UPDATE — block0 is a normal-quantile transform grid (shape model found)
+
+Parsing block0 (previously skipped) across metrics/files:
+- `block0[0]`: count=9, nQ=8, **symmetric, range ±20.904** — identical across ALL
+  metrics and files. This is a shared **standard-normal quantile axis** (9 z
+  breakpoints / 8 intervals).
+- `block0[1..]`: per-metric, asymmetric small ranges (e.g. Corners [2.2,4.0],
+  GoalsScored/PassesCompleted [4.0,13.0]) — per-metric value-mapping parameters.
+
+Interpretation [STRONGLY INFERRED]: each metric's distribution is a **piecewise
+quantile transform of a standard normal** — sample z~N(0,1), clamp to [-20.9,20.9],
+map through the per-metric block0 curve to the metric value. This EXPLAINS why the
+moment reconstruction gave sane mean/var (a normal core) AND why pure Gaussian is
+not exact (the transform is piecewise, skewing/bounding the normal).
+
+Consequences:
+- The Gaussian-from-moments sampler is a BASELINE approximation of a
+  normal-quantile transform — kept explicitly experimental, NOT wired as original.
+- The EXACT shape = normal z → block0 piecewise map; the precise value mapping
+  (how block0[0] z-grid pairs with block0[1..] / the triples to produce the value)
+  needs the consumer/sampler code (picker/RNG agent in progress) to confirm.
+
+Open: exact block0[0]↔value pairing; role of the catch-all triple (cum==sectionTotal)
+— likely the normalisation denominator (aggregation), not a sampled row.

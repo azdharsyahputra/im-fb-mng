@@ -46,4 +46,12 @@ float cm_quick_sample(cm_quick_resolver *R, int section, const char *metric);
  * Gaussian cm_quick_sample baseline. */
 float cm_quick_sample_empirical(cm_quick_resolver *R, int section, const char *metric);
 
+/* Evidence-backed context selection (replaces uniform): ctx_hint in [0,5] chooses
+ * one of the 6 context files, which RE shows differ by block0 band count and
+ * correspond to contexts keyed on position/duty/squad/performance-level
+ * (research/resolver-indexing.md). The caller derives ctx_hint from those recovered
+ * dimensions; the hint→file mapping is evidence-informed but APPROXIMATE until the
+ * obfuscated picker FUN_005b5100 index is runtime-captured. */
+float cm_quick_sample_ctx(cm_quick_resolver *R, int section, const char *metric, int ctx_hint);
+
 #endif /* CM2008_MATCH_RESOLVER_H */

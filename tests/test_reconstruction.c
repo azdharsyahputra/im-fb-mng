@@ -26,6 +26,7 @@
 #include "../match/resolver_metrics.h"
 #include "../match/sim/resolver_eval.h"
 #include "../match/sim/resolver_dat.h"
+#include "../match/sim/match_lifecycle.h"
 #include "../match/resolver_format.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -233,6 +234,22 @@ int main(void) {
         CHECK(z>6500 && z<7500);         /* ~70% weight on bucket 0 */
         CHECK(three>2500 && three<3500); /* ~30% weight on bucket 1 */
         CHECK(acc/10000.0 > 0.8 && acc/10000.0 < 1.0); /* mean ~0.9 */
+    }
+
+    /* Lifecycle FSM over continuous float clock (differential, verified states) */
+    {
+        cm_lifecycle L; cm_lifecycle_init(&L);
+        CHECK(L.state==CM_GS_KICKOFF_WAITING);
+        cm_lifecycle_advance(&L,0.0f); CHECK(L.state==CM_GS_IN_PLAY);   /* kickoff */
+        cm_lifecycle_advance(&L,44.0f*60.0f);
+        CHECK(L.state==CM_GS_IN_PLAY); CHECK(cm_lifecycle_minute(&L)==44);
+        cm_lifecycle_advance(&L,2.0f*60.0f);       /* cross 45' */
+        CHECK(L.state==CM_GS_HALF_OVER);
+        cm_lifecycle_advance(&L,0.0f); CHECK(L.state==CM_GS_SECOND_HALF && L.half==2);
+        cm_lifecycle_advance(&L,0.0f); CHECK(L.state==CM_GS_IN_PLAY);   /* 2nd-half kickoff */
+        cm_lifecycle_advance(&L,44.0f*60.0f);      /* ~90' total */
+        CHECK(L.state==CM_GS_GAME_OVER && cm_lifecycle_minute(&L)>=90);
+        cm_lifecycle_advance(&L,10.0f); CHECK(L.state==CM_GS_GAME_OVER); /* terminal */
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

@@ -61,3 +61,12 @@ float cm_quick_sample_empirical(cm_quick_resolver *R, int section, const char *m
     if(!rec) return 0.0f;
     return cm_resolver_sample_empirical(rec, &R->rng);
 }
+
+float cm_quick_sample_ctx(cm_quick_resolver *R, int section, const char *metric, int ctx_hint){
+    if(R->n_files<=0) return 0.0f;
+    int f = ctx_hint; if(f<0) f=0; if(f>=R->n_files) f=R->n_files-1;  /* deterministic, input-driven */
+    const cm_dist_record *rec = cm_resolver_find(&R->files[f], section, metric);
+    if(!rec){ for(int i=0;i<R->n_files && !rec;i++) rec=cm_resolver_find(&R->files[i],section,metric); }
+    if(!rec) return 0.0f;
+    return cm_resolver_sample_empirical(rec, &R->rng);
+}

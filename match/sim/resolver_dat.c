@@ -148,3 +148,27 @@ float cm_resolver_sample_group(const cm_dist_record *rec, int group, uint32_t *l
 float cm_resolver_sample(const cm_dist_record *rec, uint32_t *lcg){
     return cm_resolver_sample_group(rec, 0, lcg);
 }
+
+/* GROUNDED empirical sampler: the picker (FUN_005b5100, interface-verified) does a
+ * weighted inverse-CDF bucket draw. Each triple is a bucket (N, sumX, sumX2);
+ * draw a bucket with weight N, return its mean (sumX/N) plus intra-bucket noise
+ * from its own variance (via recovered LCG). Reproduces the real empirical
+ * distribution SHAPE (not just the first two moments). */
+float cm_resolver_sample_empirical(const cm_dist_record *rec, uint32_t *lcg){
+    if(!rec||rec->n_triples<=0) return 0.0f;
+    double tot=0; for(int i=0;i<rec->n_triples;i++) tot+=(double)rec->triples[i].cum;
+    if(tot<=0) return 0.0f;
+    double u=(double)cm_lcg_unit(lcg)*tot, acc=0; int k=rec->n_triples-1;
+    for(int i=0;i<rec->n_triples;i++){ acc+=(double)rec->triples[i].cum; if(u<acc){k=i;break;} }
+    cm_triple t=rec->triples[k];
+    if(t.cum==0) return 0.0f;
+    double mean=(double)t.lo/(double)t.cum, var=(double)t.hi/(double)t.cum-mean*mean;
+    if(var<0) var=0;
+    double val=mean;
+    if(var>0){
+        float u1=cm_lcg_unit(lcg), u2=cm_lcg_unit(lcg); if(u1<1e-7f)u1=1e-7f;
+        val += sqrt(-2.0*log(u1))*cos(6.28318530718*u2)*sqrt(var);
+    }
+    if(val<0) val=0;
+    return (float)val;
+}

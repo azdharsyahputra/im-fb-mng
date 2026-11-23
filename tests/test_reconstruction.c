@@ -220,6 +220,21 @@ int main(void) {
         CHECK(acc/8000.0 > 4.5 && acc/8000.0 < 5.5);  /* sample mean ~= recovered mean */
     }
 
+    /* empirical weighted-bucket sampler: 70% bucket value 0, 30% value 3 */
+    {
+        static cm_triple et[2] = { {700,0.0f,0.0f}, {300,900.0f,2700.0f} };
+        static cm_cdf_group eg[1] = { {0,2,0} };
+        cm_dist_record er; er.name[0]='Y'; er.name[1]=0; er.triples=et; er.n_triples=2;
+        er.total=0; er.groups=eg; er.n_groups=1;
+        uint32_t st=4242u; int z=0,three=0,other=0; double acc=0;
+        for(int i=0;i<10000;i++){ float v=cm_resolver_sample_empirical(&er,&st);
+            acc+=v; if(v<0.5f)z++; else if(v>2.5f&&v<3.5f)three++; else other++; }
+        CHECK(other==0);                 /* var=0 buckets -> exact values 0 or 3 */
+        CHECK(z>6500 && z<7500);         /* ~70% weight on bucket 0 */
+        CHECK(three>2500 && three<3500); /* ~30% weight on bucket 1 */
+        CHECK(acc/10000.0 > 0.8 && acc/10000.0 < 1.0); /* mean ~0.9 */
+    }
+
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }
     printf("%d TEST(S) FAILED\n", fails); return 1;
 }

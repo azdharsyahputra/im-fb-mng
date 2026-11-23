@@ -77,4 +77,9 @@ void cm_resolver_group_moments(const cm_dist_record *rec, int group,
 /* Convenience: sample group 0 (back-compat). */
 float cm_resolver_sample(const cm_dist_record *rec, uint32_t *lcg_state);
 
+/* GROUNDED empirical sampler — weighted bucket draw over all triples + intra-bucket
+ * noise. Reproduces the real distribution shape (preferred over the Gaussian group
+ * sampler, which is the labeled baseline). */
+float cm_resolver_sample_empirical(const cm_dist_record *rec, uint32_t *lcg_state);
+
 #endif /* CM2008_MATCH_RESOLVER_DAT_H */

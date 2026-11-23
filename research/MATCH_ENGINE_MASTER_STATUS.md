@@ -31,14 +31,14 @@ Recursive typed-node-tree interpreters are the shared shape:
 | FUN_00a098a0 | .dat loader (`#Database#/MatchResolverDistributions.%i.dat`, 6 files) | VERIFIED |
 | FUN_00662cf0 | named-field lookup (obfuscated body) | INFERRED |
 | FUN_00818120 (+00817fe0/f20/df0/080) | node-tree sampler/evaluator | VERIFIED |
-| FUN_005b5100 | index/bucket picker (obfuscated) | UNKNOWN |
+| FUN_005b5100 | weighted inverse-CDF bucket PICKER (interface verified; body anti-disassembly) | INFERRED(algo)/UNKNOWN(bytes) |
 | FUN_008f90f0 | UI/game-flow command-tree interpreter (NOT the match engine) | VERIFIED |
 | FUN_0077ee80 | GCMatchModule::Update — REAL detailed match engine (vtable 0x00ba2904+0xa8) | VERIFIED |
 | FUN_0077c660 | continuous float match clock (elapsed @ matchCtx+0xe4+0x44) | VERIFIED |
 | FUN_0077ddc0 | eGameState FSM (31 states: Kickoff/InPlay/HalfOver/GameOver+events) | VERIFIED |
 | 00724790→00a1fdf0 / 009b2600→009aecc0 / 0093c7f0→008a7770 | movement / offside-duties / axiom leaves | VERIFIED(edge) |
-| GCFormulaModule *Performance writer | attributes→performance | UNKNOWN |
-| outer match clock/tick loop | submits trees to FUN_008f90f0 | UNKNOWN |
+| GCFormulaModule *Performance | NO writer — live formula-tree eval (FUN_00818120); coefficients in encrypted formula.xml.blowfish | VERIFIED(mechanism)/BOUNDARY(data) |
+| module-manager update loop | indirect-calls GCMatchModule::Update (FUN_0077ee80); clock=continuous float | VERIFIED(target)/UNKNOWN(indirect dispatch) |
 | LCG (inlined) | state=state*1664525+1013904223 | VERIFIED |
 
 ## .dat format + transform (VERIFIED)

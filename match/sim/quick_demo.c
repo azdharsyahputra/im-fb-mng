@@ -19,7 +19,7 @@ int main(int argc,char**argv){
     for(unsigned i=0;i<sizeof ms/sizeof ms[0];i++){
         double mean,var; uint32_t n;
         if(!cm_quick_moments(&R,ms[i].sec,ms[i].m,&mean,&var,&n)){ printf("%-18s (not found)\n",ms[i].m); continue; }
-        float s=cm_quick_sample(&R,ms[i].sec,ms[i].m);
+        float s=cm_quick_sample_empirical(&R,ms[i].sec,ms[i].m);
         printf("%-18s %-8.3f %-8.3f %-8u  %.2f\n",ms[i].m,mean,var>0?__builtin_sqrtf((float)var):0.0f,n,s);
     }
     cm_quick_free(&R);

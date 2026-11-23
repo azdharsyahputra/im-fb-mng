@@ -50,3 +50,14 @@ float cm_quick_sample(cm_quick_resolver *R, int section, const char *metric){
     if(val<0) val=0;
     return (float)val;
 }
+
+float cm_quick_sample_empirical(cm_quick_resolver *R, int section, const char *metric){
+    if(R->n_files<=0) return 0.0f;
+    /* pick a context file (uniform) — stands in for the obfuscated context index */
+    int f = (int)(cm_lcg_unit(&R->rng) * (float)R->n_files);
+    if(f<0) f=0; if(f>=R->n_files) f=R->n_files-1;
+    const cm_dist_record *rec = cm_resolver_find(&R->files[f], section, metric);
+    if(!rec){ for(int i=0;i<R->n_files && !rec;i++) rec=cm_resolver_find(&R->files[i],section,metric); }
+    if(!rec) return 0.0f;
+    return cm_resolver_sample_empirical(rec, &R->rng);
+}

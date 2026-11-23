@@ -41,4 +41,9 @@ int  cm_quick_moments(const cm_quick_resolver *R, int section, const char *metri
  * from moments via the recovered LCG, clamped >=0). */
 float cm_quick_sample(cm_quick_resolver *R, int section, const char *metric);
 
+/* GROUNDED: pick a context file (uniform ≈ context selection approximation) then
+ * draw from its empirical bucket distribution for the metric. Preferred over the
+ * Gaussian cm_quick_sample baseline. */
+float cm_quick_sample_empirical(cm_quick_resolver *R, int section, const char *metric);
+
 #endif /* CM2008_MATCH_RESOLVER_H */

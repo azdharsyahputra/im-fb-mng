@@ -9,7 +9,7 @@ SRC     := $(filter-out match/sim/sim_demo.c match/sim/quick_demo.c,$(ALLC))
 OBJ     := $(SRC:.c=.o)
 SIMSRC  := match/sim/sim_core.c match/sim/movement.c match/sim/defending.c match/sim/events.c
 
-.PHONY: all test demo quickdemo integration clean
+.PHONY: all test demo quickdemo integration subtests clean
 all: libcm2008.a
 
 demo: match/sim/cmdemo
@@ -48,5 +48,18 @@ integration: tests/test_integration
 tests/test_integration: $(INTEGSRC)
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 
+# Per-subsystem standalone tests (own main(); live under tests/ so the globbed build
+# never pulls them in).
+tests/test_formula_parse: tests/test_formula_parse.c match/formula/formula_eval.c match/formula/formula_parse.c match/formula/formula_registry.c
+	$(CC) $(CFLAGS) $^ -o $@ -lm
+tests/test_resolver_settings: tests/test_resolver_settings.c match/model/resolver_settings.c match/formula/formula_eval.c match/formula/formula_registry.c
+	$(CC) $(CFLAGS) $^ -o $@ -lm
+tests/test_match_loop: tests/test_match_loop.c match/engine/match_loop.c match/sim/match_state.c match/sim/match_lifecycle.c match/sim/detailed_engine.c
+	$(CC) $(CFLAGS) $^ -o $@ -lm
+
+subtests: tests/test_formula_parse tests/test_resolver_settings tests/test_match_loop tests/test_integration
+	./tests/test_formula_parse && ./tests/test_resolver_settings && ./tests/test_match_loop && ./tests/test_integration
+
 clean:
-	rm -f $(OBJ) libcm2008.a tests/test_reconstruction tests/test_integration
+	rm -f $(OBJ) libcm2008.a tests/test_reconstruction tests/test_integration \
+	      tests/test_formula_parse tests/test_resolver_settings tests/test_match_loop

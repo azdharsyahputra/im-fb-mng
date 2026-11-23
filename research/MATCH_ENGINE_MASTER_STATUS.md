@@ -1,5 +1,14 @@
 # CM2008 Match Engine — Master Status
 
+> **CRITICAL CORRECTION (verified):** `FUN_008f90f0` is the top-level UI/game-flow
+> **command-tree** interpreter (89 recovered command names: SaveGame, SwitchMatchScreen,
+> ViewHalfTimeTeamTalks, Tactics…), NOT the match update. The REAL detailed match engine
+> is **`GCMatchModule::Update` = `FUN_0077ee80`** (vtable 0x00ba2904 slot +0xa8), invoked
+> virtually by the module manager; it iterates fixtures → FUN_0077cf20→FUN_0077c540→
+> FUN_009e9570 (predicate rule engine). Match **clock = continuous float seconds**
+> (FUN_0077c660), NOT fixed-tick. Half/full-time = **eGameState FSM, 31 states**
+> (FUN_0077ddc0). See research/COMMAND_TREE_*.md, MATCH_CLOCK_AND_UPDATE_LOOP.md.
+
 Central index of the reverse-engineering + reconstruction. Categories reported
 separately: **VERIFIED** (binary/byte-backed + validated), **INFERRED** (strong,
 not conclusively demonstrated), **APPROXIMATE** (deliberate substitute),
@@ -23,7 +32,10 @@ Recursive typed-node-tree interpreters are the shared shape:
 | FUN_00662cf0 | named-field lookup (obfuscated body) | INFERRED |
 | FUN_00818120 (+00817fe0/f20/df0/080) | node-tree sampler/evaluator | VERIFIED |
 | FUN_005b5100 | index/bucket picker (obfuscated) | UNKNOWN |
-| FUN_008f90f0 | detailed-engine update dispatcher | VERIFIED |
+| FUN_008f90f0 | UI/game-flow command-tree interpreter (NOT the match engine) | VERIFIED |
+| FUN_0077ee80 | GCMatchModule::Update — REAL detailed match engine (vtable 0x00ba2904+0xa8) | VERIFIED |
+| FUN_0077c660 | continuous float match clock (elapsed @ matchCtx+0xe4+0x44) | VERIFIED |
+| FUN_0077ddc0 | eGameState FSM (31 states: Kickoff/InPlay/HalfOver/GameOver+events) | VERIFIED |
 | 00724790→00a1fdf0 / 009b2600→009aecc0 / 0093c7f0→008a7770 | movement / offside-duties / axiom leaves | VERIFIED(edge) |
 | GCFormulaModule *Performance writer | attributes→performance | UNKNOWN |
 | outer match clock/tick loop | submits trees to FUN_008f90f0 | UNKNOWN |

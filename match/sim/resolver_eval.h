@@ -40,8 +40,10 @@ typedef enum cm_node_type {
     CM_NODE_AGG      = 7   /* aggregate children by `agg`                  */
 } cm_node_type;
 
-typedef enum { CM_OP_ADD=0, CM_OP_SUB=1, CM_OP_MUL=2, CM_OP_DIV=3 } cm_binop;   /* node+0x24 */
-typedef enum { CM_AGG_SUM=0, CM_AGG_MEAN=1, CM_AGG_PRODUCT=2 } cm_aggmode;      /* node+0x20 */
+/* VERIFIED from the evaluator jump tables (research/PLAYER_PERFORMANCE_FORMULAS.md):
+ * binop code at node+0x24 is 1-based; aggregate mode at node+0x20 is 0-based. */
+typedef enum { CM_OP_ADD=1, CM_OP_SUB=2, CM_OP_MUL=3, CM_OP_DIV=4, CM_OP_VALUE=5 } cm_binop; /* node+0x24 */
+typedef enum { CM_AGG_SUM=0, CM_AGG_MEAN=1, CM_AGG_PRODUCT=2 } cm_aggmode;                    /* node+0x20 */
 
 typedef struct cm_dist_node {
     int type;                       /* cm_node_type */

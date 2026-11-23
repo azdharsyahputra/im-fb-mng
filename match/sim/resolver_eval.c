@@ -54,6 +54,7 @@ float cm_dist_eval(const cm_dist_node *node, cm_resolver_ctx *c){
         case CM_OP_SUB: return a-b;
         case CM_OP_MUL: return a*b;
         case CM_OP_DIV: return b!=0.0f ? a/b : 0.0f;
+        case CM_OP_VALUE: return node->value;   /* code 5: term is a literal value */
         }
         return a;
     }

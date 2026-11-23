@@ -46,7 +46,8 @@ runtime diff vs the original exe (that needs a lawful runtime; see §Runtime).
 | movement state word (entity+4) | Data-flow mapped | writers cd40/cf20/a023f0; reader=view |
 | tackling / loose-ball contest | Implemented | FUN_0077c710 2-sided attribute contest (rating@+0x3c >>0xc&0x7f, share tuning*ra/(ra+rb) vs uniform); match/movement/contest.c + tests |
 | penalty shootout | Implemented | FUN_00a023f0 best-of-5+SD, p=51/125≈0.408; cm_shootout + tests |
-| player pos / velocity / accel / direction | Data-flow mapped (dword indices UNKNOWN) | NARROWED (VERIFIED): continuous geometry = a per-entity 253-dword (1012B) block keyed by entity+0x134 under the [pool+0x3004c] period object (FUN_009efa90/009efb70; copied by rep-movsd in FUN_009b54b0; processed FUN_009b41e0→009cffa0). Exact x/y/vel dword indices need the FUN_009cffa0 closure or runtime. See MOVEMENT_GEOMETRY_BUFFER.md |
+| player position (world X/Y) | Algorithm recovered | RECOVERED via the projection-scaler anomaly: world X/Y = INTEGER fixed-point at coordinate-object **+0xc0 / +0xd0**, projected ×(1/112.5) (0xb5e8c8) then ×screen-size — VERIFIED from the projection funcs 0x9a89b0/0x9aa250. Object-is-entity-block = INFERRED. See MOVEMENT_GEOMETRY_BUFFER.md |
+| player velocity / accel / direction | Data-flow mapped | adjacent coordinate cluster (+0xc4/+0xd4 or the +0x160.. triple) within the per-entity 1012B block (via entity+0x134) — INFERRED, exact axis not yet isolated (needs the threaded writer or per-axis confirm) |
 | ball pos/velocity | Data-flow mapped | pool B via view+0xc0; offsets UNKNOWN |
 | passing / receiving / shooting | Identified | message-ids/atoms only; math in sim loop (out of corpus) |
 | continuous integrator (pos+=vel*dt, speed clamp=9) | Identified | coefficient known (MaxSprintingSpeed=9); code path in sim loop, not in corpus |

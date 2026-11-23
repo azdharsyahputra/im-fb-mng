@@ -52,7 +52,36 @@ This is the ONLY match behavior still < "Algorithm recovered". Everything else (
 state-writer, resolver, picker, formula engine+trees, predicate weights, contest/shootout,
 match-loop) is recovered/implemented. NOT a protection boundary — a not-yet-dumped region.
 
+## COORDINATE OFFSETS RECOVERED (anomaly method: follow the projection scaler)
+Instead of chasing the thin-forwarder read chain, I followed the pitch→screen projection
+SCALER constant 0.008888889 (= 1/112.5, VA 0xb5e8c8) to its consumers. Two projection
+functions (0x9a89b0, 0x9aa250) do, VERIFIED by disassembly:
+```
+fild dword ptr [obj+0xd0]      ; world coordinate (INTEGER fixed-point)
+fmul dword ptr [0xb5e8c8]      ; * 1/112.5  (pitch units -> normalized)
+fmul <screen-size const>       ; * 56.25 / etc -> pixels
+```
+and the overlay 0x9aa250 reads BOTH axes of a point:
+```
+fild [esi+0xd0] * (1/112.5) * 56.25        ; axis A  -> screen
+      [esi+0xc0] (fild) * [0xbd2c88]        ; axis B  -> screen
+      [esi+0x160]/[esi+0x164]/[esi+0x168]   ; second point / vector
+```
+So the engine's world coordinates are **integer fixed-point at object offset +0xc0 and
++0xd0** (a 2D point; one is the pitch-length axis, the other pitch-width), each projected
+by ×(1/112.5). This matches A3's observed +0xb0/+0xc0/+0xd0 view-coordinate cluster.
+
+- world X / Y = **+0xc0 / +0xd0**, integer fixed-point, projection ×(1/112.5) — **VERIFIED**
+  (projection disassembly) on the engine coordinate object.
+- that this coordinate object IS the per-entity geometry block (so player positions live at
+  block+0xc0/+0xd0) — **INFERRED** (strong: it is the only fild-coordinate layout in the
+  view cluster, and the block is the per-entity object). Velocity is the adjacent/second
+  cluster (+0xc4/+0xd4 or the +0x160.. triple) — INFERRED, not yet isolated.
+
 ## Classification
 - per-entity geometry = 1012-byte block via entity+0x134 under [pool+0x3004c] — **VERIFIED**
 - resolver chain 009efa90/009efb70 + rep-movsd copy — **VERIFIED**
-- x/y/vel/accel dword indices within the block — **UNKNOWN** (narrowed; next = 0x9b41e0 reader)
+- world X/Y = +0xc0/+0xd0 integer fixed-point, ×(1/112.5) projection — **VERIFIED** (projection);
+  mapping onto the entity block — **INFERRED**
+- velocity/accel exact offsets — **INFERRED/UNKNOWN** (adjacent cluster; needs the threaded
+  writer or a per-axis confirmation)

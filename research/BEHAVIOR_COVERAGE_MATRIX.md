@@ -44,9 +44,9 @@ runtime diff vs the original exe (that needs a lawful runtime; see §Runtime).
 |---|---|---|
 | entity pools (player/ball/event/cold) | Data-flow mapped | A=DAT_00c784a8 stride0x20, B=DAT_00c779ac stride0x2c, C/D; handle=(ptr-base)>>5 |
 | movement state word (entity+4) | Data-flow mapped | writers cd40/cf20/a023f0; reader=view |
-| tackling / loose-ball contest | Algorithm recovered | FUN_0077c710 attribute-weighted 2-sided contest (rating@+0x3c) |
-| penalty shootout | Algorithm recovered | FUN_00a023f0 best-of-5+SD, p≈0.408 |
-| player pos / velocity / accel / direction | Identified (offsets UNKNOWN) | consumed in view draw + geometry accessors whose decompile is broken → re-disasm needed |
+| tackling / loose-ball contest | Implemented | FUN_0077c710 2-sided attribute contest (rating@+0x3c >>0xc&0x7f, share tuning*ra/(ra+rb) vs uniform); match/movement/contest.c + tests |
+| penalty shootout | Implemented | FUN_00a023f0 best-of-5+SD, p=51/125≈0.408; cm_shootout + tests |
+| player pos / velocity / accel / direction | Identified (offsets UNKNOWN) | RECLASSIFIED (emulated): the "geometry accessors" are std::map/string/ctor, NOT geometry; the 32-byte entity record exposes only +0/+2; continuous geometry is INTEGER fixed-point in the manager state buffer (mgr+0x3004c, ~1012 dwords) / out-of-corpus threaded sim — not in the emulated corpus |
 | ball pos/velocity | Data-flow mapped | pool B via view+0xc0; offsets UNKNOWN |
 | passing / receiving / shooting | Identified | message-ids/atoms only; math in sim loop (out of corpus) |
 | continuous integrator (pos+=vel*dt, speed clamp=9) | Identified | coefficient known (MaxSprintingSpeed=9); code path in sim loop, not in corpus |

@@ -56,10 +56,12 @@ tests/test_resolver_settings: tests/test_resolver_settings.c match/model/resolve
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 tests/test_match_loop: tests/test_match_loop.c match/engine/match_loop.c match/sim/match_state.c match/sim/match_lifecycle.c match/sim/detailed_engine.c
 	$(CC) $(CFLAGS) $^ -o $@ -lm
+tests/test_movement: tests/test_movement.c match/movement/contest.c match/sim/resolver_eval.c
+	$(CC) $(CFLAGS) $^ -o $@ -lm
 
-subtests: tests/test_formula_parse tests/test_resolver_settings tests/test_match_loop tests/test_integration
-	./tests/test_formula_parse && ./tests/test_resolver_settings && ./tests/test_match_loop && ./tests/test_integration
+subtests: tests/test_formula_parse tests/test_resolver_settings tests/test_match_loop tests/test_movement tests/test_integration
+	./tests/test_formula_parse && ./tests/test_resolver_settings && ./tests/test_match_loop && ./tests/test_movement && ./tests/test_integration
 
 clean:
 	rm -f $(OBJ) libcm2008.a tests/test_reconstruction tests/test_integration \
-	      tests/test_formula_parse tests/test_resolver_settings tests/test_match_loop
+	      tests/test_formula_parse tests/test_resolver_settings tests/test_match_loop tests/test_movement

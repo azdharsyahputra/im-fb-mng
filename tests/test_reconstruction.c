@@ -24,6 +24,8 @@
 #include "../clubs/club_finance_schema.h"
 #include "../database/table_counts.h"
 #include "../match/resolver_metrics.h"
+#include "../match/resolver_format.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -151,6 +153,30 @@ int main(void) {
     CHECK(cm_resolver_metric_from_name("ShotsOnTarget") >= 0);
     CHECK(cm_resolver_metric_from_name("TacklesWon") >= 0);
     CHECK(cm_resolver_metric_from_name("GroundCovered") >= 0);
+
+
+    /* Match resolver FORMAT parser — synthetic data (not game data) */
+    {
+        /* version=64 | "Shots"(5) | block nBuckets=2 |
+           bucket key=10 nVals=3 + 3 floats | bucket key=20 nVals=0 */
+        uint8_t fake[] = {
+            64,0,0,0,                      /* version */
+            5,0,0,0, 'S','h','o','t','s',  /* record name */
+            2,0,0,0,                       /* block: nBuckets=2 */
+            10,0,0,0, 3,0,0,0,  0,0,0x80,0x3f, 0,0,0,0x40, 0,0,0x40,0x40, /* bucket key=10 n=3 floats */
+            20,0,0,0, 0,0,0,0              /* bucket key=20 n=0 */
+        };
+        cm_resolver_reader rr;
+        CHECK(cm_resolver_open(&rr, fake, sizeof fake) == 1);
+        char nm[32];
+        CHECK(cm_resolver_next_record(&rr, nm, sizeof nm) == 5);
+        CHECK(strcmp(nm, "Shots") == 0);
+        uint32_t nb=0, key=0, nv=0;
+        CHECK(cm_resolver_read_block_header(&rr, &nb) == 1 && nb == 2);
+        CHECK(cm_resolver_read_bucket(&rr, &key, &nv) == 1 && key == 10 && nv == 3);
+        CHECK(cm_resolver_read_bucket(&rr, &key, &nv) == 1 && key == 20 && nv == 0);
+        CHECK(rr.pos == sizeof fake); /* consumed exactly */
+    }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }
     printf("%d TEST(S) FAILED\n", fails); return 1;

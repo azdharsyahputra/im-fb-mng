@@ -40,6 +40,28 @@ array of IEEE-754 floats forming the distribution for that metric. The six files
 partition the distributions (by context/position tier). Records are large and
 hierarchically nested.
 
+## Nested grammar (verified layer)
+
+Structural analysis (counts only — no values reproduced) gives:
+
+```
+file    = u32 version(=64) , record*
+record  = u32 nameLen , name , block+        (blocks until the next name / EOF)
+block   = u32 nBuckets , bucket[nBuckets]
+bucket  = u32 key , u32 nValues , f32[nValues]
+```
+
+The first block of each record parses cleanly (e.g. Assists' first block =
+5 buckets with keys 9/34/31/32/27 and 8/6/6/5/4 values). Reconstructed as a
+buffer reader in `match/resolver_format.h/.c` that walks this grammar and
+**skips the float payloads** (values are never materialised), tested on
+synthetic data in `tests/`.
+
+Still open: deeper blocks within a record show variants (many empty buckets,
+alternate keying) that the single grammar above does not yet consume to the exact
+record boundary; and the mapping from a player's effective attributes/tactics to
+the (block,bucket) index used for sampling. Those remain the behavioral frontier.
+
 ## Deliberately NOT reproduced
 
 The distribution **float values are proprietary game data** and are **not**

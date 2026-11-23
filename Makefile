@@ -2,7 +2,8 @@
 CC      ?= cc
 CFLAGS  ?= -std=c11 -Wall -Wextra -O2
 # auto-discover every reconstructed module (new generated schemas join automatically)
-ALLC    := $(shell find finances players match tactics staff competitions clubs scouting -name '*.c' 2>/dev/null)
+# Exclude standalone reference subsystems (own main + own Makefile, e.g. picker_ref).
+ALLC    := $(shell find finances players match tactics staff competitions clubs scouting -name '*.c' -not -path '*/picker_ref/*' 2>/dev/null)
 # library excludes files with their own main() (the demo)
 SRC     := $(filter-out match/sim/sim_demo.c match/sim/quick_demo.c,$(ALLC))
 OBJ     := $(SRC:.c=.o)

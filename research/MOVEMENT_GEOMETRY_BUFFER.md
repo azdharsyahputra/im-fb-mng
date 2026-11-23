@@ -30,14 +30,27 @@ consumed by (a) the view-build cluster that reads the copied stack buffer in FUN
 continuation (0x9b41e0 …) and (b) the continuous integrator, which is in the threaded sim
 (writes the block) — not in any dump so far.
 
-## Precise next step (static, tractable)
-The processing chain is `FUN_009b41e0 -> FUN_009cffa0` (009b41e0 is a thin dispatcher that
-re-resolves the period object; 009cffa0 does the per-entity work). Dumping the FUN_009cffa0
-closure (its reads of the 1012-byte block + the fixed-point→screen projection) yields the
-world x/y dword indices, then velocity for interpolation — without runtime. (Alternatively a
-write-watchpoint on the block in a legit runtime names them directly.) This is the ONLY match
-behavior still at < "Algorithm recovered"; everything else (lifecycle, state-writer, resolver,
-picker, formula engine, predicate weights, contest/shootout, match-loop) is recovered/implemented.
+## Chase result — the read side is thin forwarders; the writer is the threaded sim
+Followed the processing chain: `FUN_009b41e0 -> FUN_009cffa0` (`mov ecx,[ecx+0x148]; jmp`)
+`-> FUN_009efaa0` (`mov ecx,[ecx+4]; jmp`) `-> FUN_009f0d30 ...` — a cascade of thin
+`__thiscall` forwarders in the 009ef accessor family, each just re-deref + tail-jump. A
+scan of the entire view/geometry cluster (0x9b0000–0x9d0000) for fixed-point reads
+(`fild`/`fistp`) found essentially NONE (a couple at +0x34/+0x70/+0xe4) — i.e. the
+world-coordinate conversion is NOT in the view code. So the 1012-byte block is POPULATED by
+the continuous integrator in the worker-thread sim (the block's producer); the view side
+only forwards/reads pre-computed values.
+
+Therefore the exact x/y/velocity dword indices are in the THREADED sim writer, which no
+module-seeded dump has reached (it is not protected — just never located). The two ways to
+get them:
+1. Static: find the match worker-thread entry (the `_beginthreadex`/`CreateThread` site in
+   the match module) and dump the sim loop that writes the 1012-byte block — then the store
+   offsets are the field indices.
+2. Runtime: a write-watchpoint on the block in a legit unmodified copy names them directly.
+
+This is the ONLY match behavior still < "Algorithm recovered". Everything else (lifecycle,
+state-writer, resolver, picker, formula engine+trees, predicate weights, contest/shootout,
+match-loop) is recovered/implemented. NOT a protection boundary — a not-yet-dumped region.
 
 ## Classification
 - per-entity geometry = 1012-byte block via entity+0x134 under [pool+0x3004c] — **VERIFIED**

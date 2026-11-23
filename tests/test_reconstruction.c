@@ -23,6 +23,7 @@
 #include "../players/person_name_schema.h"
 #include "../clubs/club_finance_schema.h"
 #include "../database/table_counts.h"
+#include "../match/resolver_metrics.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -145,6 +146,11 @@ int main(void) {
     CHECK(CM_DB_PLAYER_COUNT == 85035);
     CHECK(CM_DB_CLUB_COUNT == 6571);
     CHECK(CM_DB_PERSON_COUNT == 102990);
+    /* Match resolver metric vocabulary */
+    CHECK(CM_MR_METRIC_COUNT == 70);
+    CHECK(cm_resolver_metric_from_name("ShotsOnTarget") >= 0);
+    CHECK(cm_resolver_metric_from_name("TacklesWon") >= 0);
+    CHECK(cm_resolver_metric_from_name("GroundCovered") >= 0);
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }
     printf("%d TEST(S) FAILED\n", fails); return 1;

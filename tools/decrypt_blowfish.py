@@ -16,9 +16,14 @@ Recovered keys (VERIFIED by producing valid plaintext):
     DataXML/ProgramStep.xml.blowfish  -> b"Q1ofsktoPkjS89jdnJeqIO"
                                          (4 fragments nJeqIO|jS89jd|ktoPk|Q1ofs
                                           concatenated in reverse order)
-    DataXML/formula.xml.blowfish      -> UNKNOWN (key is not a plaintext string and
-                                         the loader sits in a protected region; see
-                                         research/BLOWFISH_DATA_RECOVERY.md)
+    DataXML/formula.xml.blowfish      -> b"deliverance" (VERIFIED: decrypts to valid XML,
+                                         1349 <formula> elements). The key is DERIVED, not
+                                         a literal: 11 single chars are sliced from the decoy
+                                         pangram "the quick brown fox jumped over the lazy
+                                         dog." at indices [29,7,14,37,11,24,28,6,36,2,25] and
+                                         reverse-concatenated -> "deliverance". That is why a
+                                         printable-string brute never found it. See
+                                         research/BLOWFISH_KEY_DATAFLOW.md.
 
 Usage:
     python3 decrypt_blowfish.py <cm2008.exe> <infile.blowfish> <key> <outfile>

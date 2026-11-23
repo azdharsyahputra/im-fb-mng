@@ -35,7 +35,7 @@ runtime diff vs the original exe (that needs a lawful runtime; see §Runtime).
 | calc operator vocabulary (9) | Validated | {sum,mean,prod,div,sub,add,mul,unary}+{gt,lt,eq,ne} |
 | 88 default constants / 810 names | Data-flow mapped | FORMULA_COEFFICIENT_REGISTRY.md |
 | **harvest path** (two centralizers) | Algorithm recovered | FUN_005d6dd0 (101 PlayerConstant per-player) + FUN_009f4bd0 (360 globals → ResolverSettings struct ~0x5e0B, byte-exact offsets) |
-| **formula trees (bodies)** | Identified | in encrypted formula.xml.blowfish → UNRESOLVED by design |
+| **formula trees (bodies)** | Algorithm recovered (DATA) | formula.xml **DECRYPTED** (key `deliverance`, derived statically): 1349 formula trees + all coefficients now in the clear. Parse → wire into the evaluator. (Game data kept local.) |
 | condition/effect engine | Data-flow mapped | rule=conditionset(AND)→effectset; 4 compares; parser FUN_005b4db0 |
 | **effect targets (function/callrule)** | Identified | produce AI weights (ProspectiveManagers/ManagerSacking), NOT real-time match mutation; native targets UNKNOWN |
 
@@ -67,7 +67,7 @@ Static analysis is exhausted for four items, all blocked by the SAME two causes:
 Closeable ONLY by read-only observation of a lawful, unmodified CM2008 runtime:
 - SetGameState writer → write-watchpoint on *(*(matchCtx+0xe4)+0x30).
 - picker → breakpoint 0x817f3c, capture arg0/arg1/RNG before+after, selected index.
-- formula.xml → capture the Blowfish key/scheduled tables at setup, or the decrypted
-  buffer after load (yields the expression trees directly).
+- formula.xml → SOLVED statically (key `deliverance` derived from the loader; no runtime
+  needed). Formula trees + coefficients are decryptable with tools/decrypt_blowfish.py.
 - movement offsets → correct re-disassembly of the geometry accessors (clean bytes).
 No DRM bypass, no cracked-exe execution.

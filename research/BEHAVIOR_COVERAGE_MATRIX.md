@@ -14,7 +14,7 @@ runtime diff vs the original exe (that needs a lawful runtime; see §Runtime).
 | pending-event gate/lifecycle | Validated | cd40 set / cf20+ccb0 clear; integration test 1 |
 | GameOver trigger | Algorithm recovered | FUN_0077e850 (clk+0x4c≥3600 OR aux+0x4b4≥500000) |
 | HalfOver-vs-GameOver selector | Identified | half-counter field UNKNOWN |
-| **SetGameState writer** | Data-flow mapped (write not found) | bounded: thiscall method of *(matchCtx+0xe4), writes [this+0x30] in out-of-scope event-execution consumer; 009ef family REFUTED; 0 writer-idiom hits in 36MB → **needs runtime watchpoint** |
+| **SetGameState writer** | Algorithm recovered (VERIFIED) | FOUND statically: NOT one function — a family of per-state `__thiscall` enter-handlers in the match-flow module 0x6dd000-0x6ed000 (outside earlier dumps), each `mov [this+0x30]=<state>` (this=*(matchCtx+0xe4)) + resets +0x20/+0x24/+0x2c/flags/timers. 29 sites. See STATE_WRITER_FOUND.md |
 | Spotted→Activated lifecycle | Data-flow mapped (edges INFERRED) | Spotted=queue-time(cd40), Activated=execute-time(cf20) |
 
 ## Resolver / selection / RNG
@@ -65,7 +65,8 @@ Static analysis is exhausted for four items, all blocked by the SAME two causes:
    formula.xml.blowfish), the continuous movement integrator.
 
 Closeable ONLY by read-only observation of a lawful, unmodified CM2008 runtime:
-- SetGameState writer → write-watchpoint on *(*(matchCtx+0xe4)+0x30).
+- SetGameState writer → SOLVED statically (per-state enter-handlers @0x6dd000-0x6ed000;
+  the module was simply never dumped). See STATE_WRITER_FOUND.md.
 - picker → SOLVED statically (was a false alarm; disassembles to a deterministic
   find-by-key, no RNG). See PICKER_RECOVERY.md / match/sim/picker_real.h.
 - formula.xml → SOLVED statically (key `deliverance` derived from the loader; no runtime

@@ -333,7 +333,7 @@ int main(void) {
 
     /* Recovered predicate ranking weights (VERIFIED from FUN_009e5160 / .data) */
     {
-        CHECK(CM_PREDICATE_WEIGHT_COUNT==13);
+        CHECK(CM_PREDICATE_WEIGHT_COUNT==84);
         CHECK(cm_predicate_weight_of("GCMatchPredicateTeamGoals")==100.0f);
         CHECK(cm_predicate_weight_of("GCMatchPredicateWinsManyHeaders")==10.0f);
         CHECK(cm_predicate_weight_of("GCMatchPredicateNotARealOne")==-1.0f);

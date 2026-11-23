@@ -9,11 +9,12 @@
  * whose weight >= 80 survive that filter (TeamGoals, WeakDefence,
  * PlayerHadStrongAttackingMatch, TeamDoesManyQuickAttacks).
  *
- * VERIFIED: the 13 pairs below (value read from the .data float constant the
- * evaluator returns on each matching path). The evaluator covers ~84 predicate
- * type-names total; the remaining pairings were not resolved cleanly by the static
- * instruction-order pass (shared constants / deeply nested branches) and are tracked
- * as pending in research/MATCH_PREDICATE_WEIGHTS.md. These values are NOT invented.
+ * VERIFIED: all 84 pairs below (value read from the .data float constant the
+ * evaluator returns on each matching path). The evaluator's full nested if/else
+ * chain was transpiled to an AST and evaluated per predicate type-name; all 84
+ * type-names dispatched by FUN_009e5160 resolve to a non-zero weight constant
+ * (none return literal 0, none unresolved). The original 13 anchor pairs are a
+ * subset and still verify exactly. These values are NOT invented.
  *
  * NOTE: these ranking weights are distinct from the per-metric *Performance formula
  * coefficients, which live in the encrypted DataXML/formula.xml.blowfish (its key is
@@ -34,19 +35,90 @@ typedef struct cm_predicate_weight {
 #define CM_PREDICATE_RANK_THRESHOLD  80.0f
 
 static const cm_predicate_weight CM_PREDICATE_WEIGHTS[] = {
-    { "GCMatchPredicateTeamGoals",                                   100.0f, 0x00ba1714 },
-    { "GCMatchPredicateWeakDefence",                                  92.0f, 0x00bd5c48 },
-    { "GCMatchPredicatePlayerHadStrongAttackingMatch",               90.0f, 0x00b5b704 },
-    { "GCMatchPredicateTeamDoesManyQuickAttacks",                     85.0f, 0x00b5baf4 },
-    { "GCMatchPredicateDefensiveErrorsLeadsToShots",                  70.0f, 0x00b73990 },
-    { "GCMatchPredicateWinsManyDefensiveTackles",                     65.0f, 0x00b5bb8c },
-    { "GCMatchPredicatePlayerDoesNotGetTheBallAsAttackingFlankMidfielder", 60.0f, 0x00b5b1d8 },
-    { "GCMatchPredicateMakesLongPassesIntoAttackingThird",           45.0f, 0x00ba170c },
-    { "GCMatchPredicateShotAfterLongRun",                            40.0f, 0x00b5b6b4 },
-    { "GCMatchPredicateQuickAttack",                                 35.0f, 0x00b5baf8 },
-    { "GCMatchPredicatePlayerDoesNotGetTheBallAsSweeper",            30.0f, 0x00b63280 },
-    { "GCMatchPredicateAttackBandComments",                          20.0f, 0x00b5b600 },
-    { "GCMatchPredicateWinsManyHeaders",                             10.0f, 0x00b6016c },
+    { "GCMatchPredicateTeamGoals",                                           100.0f, 0x00ba1714 },
+    { "GCMatchPredicateStrongDefence",                                        92.0f, 0x00bd5c48 },
+    { "GCMatchPredicateStrongMidfield",                                       92.0f, 0x00bd5c48 },
+    { "GCMatchPredicateVeryBadDefence",                                       92.0f, 0x00bd5c48 },
+    { "GCMatchPredicateVeryBadMidfield",                                      92.0f, 0x00bd5c48 },
+    { "GCMatchPredicateWeakDefence",                                          92.0f, 0x00bd5c48 },
+    { "GCMatchPredicateWeakMidfield",                                         92.0f, 0x00bd5c48 },
+    { "GCMatchPredicatePlayerHadABadMatchAsCentralDefender",                  90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadABadMatchAsFullBack",                         90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadABadMatchAsSweeper",                          90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadABadMatchAsWingBack",                         90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsForward",                         90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsStriker",                         90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsWinger",                          90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadBadDefensiveMatch",                           90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadStrongAttackingMatch",                        90.0f, 0x00b5b704 },
+    { "GCMatchPredicatePlayerHadStrongDefensiveMatch",                        90.0f, 0x00b5b704 },
+    { "GCMatchPredicateTeamDoesManyQuickAttacks",                             85.0f, 0x00b5baf4 },
+    { "GCMatchPredicateDefensiveErrorsLeadsToShots",                          70.0f, 0x00b73990 },
+    { "GCMatchPredicateMakesAttackingPassesInBox",                            70.0f, 0x00b73990 },
+    { "GCMatchPredicateFailsManyDefensiveTackles",                            65.0f, 0x00b5bb8c },
+    { "GCMatchPredicateWinsHeadersCorner",                                    65.0f, 0x00b5bb8c },
+    { "GCMatchPredicateWinsHeadersCross",                                     65.0f, 0x00b5bb8c },
+    { "GCMatchPredicateWinsHeadersFreeKick",                                  65.0f, 0x00b5bb8c },
+    { "GCMatchPredicateWinsManyDefensiveTackles",                             65.0f, 0x00b5bb8c },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsAttackingCentralMidfielder",  60.0f, 0x00b5b1d8 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsAttackingFlankMidfielder",    60.0f, 0x00b5b1d8 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsForward",                     60.0f, 0x00b5b1d8 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsStriker",                     60.0f, 0x00b5b1d8 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsWinger",                      60.0f, 0x00b5b1d8 },
+    { "GCMatchPredicateSuccessfulCornersInBox",                               60.0f, 0x00b5b1d8 },
+    { "GCMatchPredicateDefensiveErrorsLeadsToGoals",                          45.0f, 0x00ba170c },
+    { "GCMatchPredicateFailsManyTackles",                                     45.0f, 0x00ba170c },
+    { "GCMatchPredicateLongPassChain",                                        45.0f, 0x00ba170c },
+    { "GCMatchPredicateLongRunGoal",                                          45.0f, 0x00ba170c },
+    { "GCMatchPredicateLostTackleLeadsToGoal",                                45.0f, 0x00ba170c },
+    { "GCMatchPredicateMakesLongPassesIntoAttackingThird",                    45.0f, 0x00ba170c },
+    { "GCMatchPredicatePassInterceptionLeadsToGoal",                          45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsCentralMidfielder",           45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsDefensiveCentralMidfielder",  45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsAttackingCentralMidfielder",      45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsAttackingFlankMidfielder",        45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsCentralDefender",                 45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsCentralMidfielder",               45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsDefensiveCentralMidfielder",      45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsDefensiveFlankMidfielder",        45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsFlankMidfielder",                 45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsFullBack",                        45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsSweeper",                         45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerHadAGoodMatchAsWingBack",                        45.0f, 0x00ba170c },
+    { "GCMatchPredicatePlayerScoredAnOwnGoal",                                45.0f, 0x00ba170c },
+    { "GCMatchPredicateSuccessfulCrossesInBox",                               45.0f, 0x00ba170c },
+    { "GCMatchPredicateTeamChainsManyPasses",                                 45.0f, 0x00ba170c },
+    { "GCMatchPredicateWinsDefensiveHeaders",                                 45.0f, 0x00ba170c },
+    { "GCMatchPredicateWinsDefensiveHeadersInBox",                            45.0f, 0x00ba170c },
+    { "GCMatchPredicateWinsHeadersGoal",                                      45.0f, 0x00ba170c },
+    { "GCMatchPredicateWinsManyTackles",                                      45.0f, 0x00ba170c },
+    { "GCMatchPredicateCrossAfterLongRun",                                    40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePassIntoBoxAfterLongRun",                              40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsAttackingCentralMidfielder",       40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsAttackingFlankMidfielder",         40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsCentralMidfielder",                40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsDefensiveCentralMidfielder",       40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsDefensiveFlankMidfielder",         40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsFlankMidfielder",                  40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsForward",                          40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsStriker",                          40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicatePlayerHadABadMatchAsWinger",                           40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicateShotAfterLongRun",                                     40.0f, 0x00b5b6b4 },
+    { "GCMatchPredicateQuickAttack",                                          35.0f, 0x00b5baf8 },
+    { "GCMatchPredicateWinsHeadersThrowIn",                                   35.0f, 0x00b5baf8 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsCentralDefender",             30.0f, 0x00b63280 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsDefensiveFlankMidfielder",    30.0f, 0x00b63280 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsFlankMidfielder",             30.0f, 0x00b63280 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsFullBack",                    30.0f, 0x00b63280 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsSweeper",                     30.0f, 0x00b63280 },
+    { "GCMatchPredicatePlayerDoesNotGetTheBallAsWingBack",                    30.0f, 0x00b63280 },
+    { "GCMatchPredicateAttackBandComments",                                   20.0f, 0x00b5b600 },
+    { "GCMatchPredicateDefenceBandComments",                                  20.0f, 0x00b5b600 },
+    { "GCMatchPredicateMidfieldBandComments",                                 20.0f, 0x00b5b600 },
+    { "GCMatchPredicateAttackingChancesInfluence",                            10.0f, 0x00b6016c },
+    { "GCMatchPredicateGoalChancesInfluence",                                 10.0f, 0x00b6016c },
+    { "GCMatchPredicateTeamOffsides",                                         10.0f, 0x00b6016c },
+    { "GCMatchPredicateWinsManyHeaders",                                      10.0f, 0x00b6016c },
 };
 #define CM_PREDICATE_WEIGHT_COUNT \
     (sizeof(CM_PREDICATE_WEIGHTS)/sizeof(CM_PREDICATE_WEIGHTS[0]))

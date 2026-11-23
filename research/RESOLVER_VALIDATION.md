@@ -19,3 +19,30 @@
 - U: section-total source (hard-coded vs derived) — needs loader FUN_00a098a0 body.
 - U: outer match clock/tick loop that submits node trees.
 - H: the 6 files == 6 position/tier contexts.
+
+## UPDATE — .dat value-semantics are UNRESOLVED (demonstrated)
+
+The parser STRUCTURE is verified, but a direct differential test exposed that the
+**triple field semantics are not yet correct**:
+- On real `MatchResolverDistributions.1.dat`, record "Corners" (section 2, total
+  412,134): `lo/hi` are integer-valued floats ranging `[0 .. ~7,004,008]`, always
+  `lo<=hi`; first group is a single triple `cum=12309, lo=20212, hi=60152`.
+- These are neither a 0..N metric value axis (corners are 0..~20) nor z-scores
+  (±~21). So the inverse-CDF `lerp(lo,hi)` hypothesis yields nonsensical samples
+  (Corners mean ≈ 40,268). CONCLUSION: `triple=(cum,lo,hi)` stride is right
+  (terminator aligns), but WHAT the fields mean and the transform to a metric
+  value is **UNKNOWN**.
+- Likely the sampler applies `block0` (the per-metric quantile/transform grid,
+  bucket0 = 9 symmetric breakpoints) and/or a further mapping; and the
+  node-tree evaluator (FUN_00818120) may belong to the formula/constants path,
+  NOT the `.dat` sampler. These are now the top open items.
+
+Status split (honest):
+- VERIFIED: file structure, record count, 12-byte triple stride, terminator,
+  metric names, LCG constants.
+- UNKNOWN: triple field meaning, block0 transform role, the actual `.dat`→metric
+  value sampler, the attribute→context index.
+
+The in-repo sampler (`cm_resolver_sample_group`) is therefore EXPERIMENTAL and is
+NOT wired into the match engine. The synthetic unit test covers the inverse-CDF
+*mechanism* only, not CM fidelity.

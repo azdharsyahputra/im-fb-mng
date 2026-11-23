@@ -25,6 +25,7 @@
 #include "../database/table_counts.h"
 #include "../match/resolver_metrics.h"
 #include "../match/sim/resolver_eval.h"
+#include "../match/sim/resolver_dat.h"
 #include "../match/resolver_format.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -201,6 +202,19 @@ int main(void) {
         cm_dist_node rnd = { CM_NODE_RANDOM,0,0, 0, tbl,5, 0,0, 0 };
         float v = cm_dist_eval(&rnd,&ctx);
         CHECK(v >= -2.0f && v <= 2.0f);                   /* within quantile axis */
+    }
+
+
+    /* Resolver inverse-CDF sampler on a synthetic record (not game data) */
+    {
+        static cm_triple tr[2] = { {50,0.0f,1.0f}, {100,1.0f,2.0f} };
+        cm_dist_record rec; rec.name[0]='X'; rec.name[1]=0;
+        rec.triples=tr; rec.n_triples=2; rec.total=100;
+        uint32_t st=12345u; int lo=0,hi=0,bad=0;
+        for(int i=0;i<4000;i++){ float v=cm_resolver_sample(&rec,&st);
+            if(v<0.0f||v>2.0f) bad++; else if(v<1.0f) lo++; else hi++; }
+        CHECK(bad==0);            /* all samples within the value axis */
+        CHECK(lo>800 && hi>800);  /* both halves populated (inverse-CDF spread) */
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

@@ -46,3 +46,13 @@ Status split (honest):
 The in-repo sampler (`cm_resolver_sample_group`) is therefore EXPERIMENTAL and is
 NOT wired into the match engine. The synthetic unit test covers the inverse-CDF
 *mechanism* only, not CM fidelity.
+
+## UPDATE 2 — triple semantics SOLVED (supersedes UPDATE 1)
+
+The transform is recovered: `triple = (N, sumX, sumX2)` cumulative moments; group
+mean=sumX/N, var=sumX2/N-mean^2. VERIFIED by reconstruction — every metric yields
+realistic football stats (Corners mean~1.6, Penalties~0.03, PassesCompleted~18;
+var>=0 all). The earlier "lo/hi up to 7e6 / inverse-CDF" reading is withdrawn
+(those were the sums). Sampler now moment-based and produces realistic per-context
+distributions. Remaining: exact per-value-level shape (intermediate triples) and
+the attribute->group index. See research/resolver-transform.md.

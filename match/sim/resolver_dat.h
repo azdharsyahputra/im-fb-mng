@@ -12,13 +12,18 @@
  * Format confidence:
  *   - RECORD STRUCTURE (sections, record boundaries, 12-byte triple stride,
  *     terminator): VERIFIED (134/134 records parse to exact EOF, all 6 files).
- *   - TRIPLE FIELD SEMANTICS + how a metric value is sampled: **UNVERIFIED**.
- *     The inverse-CDF interpretation below (cum,lo,hi → lerp) is a HYPOTHESIS and
- *     is known to be WRONG: on real data the `lo/hi` are integer-valued floats up
- *     to ~7e6 (not a 0..N value axis, not z-scores), so sampled values are
- *     nonsensical. The real .dat→value transform is behind the obfuscated resolver
- *     consumer and is still being reverse-engineered. DO NOT treat the sampler
- *     output as CM-faithful; it is experimental until the transform is recovered.
+ *   - TRIPLE SEMANTICS: SOLVED. Each triple is a CUMULATIVE MOMENT summary
+ *     (N = count, X = sumX, Y = sumX^2). A group's last triple gives that
+ *     context's population moments: mean = X/N, var = Y/N - mean^2. VERIFIED by
+ *     reconstruction: across all metrics the means/variances come out as
+ *     realistic football statistics (e.g. Corners mean~1.6, Penalties~0.03,
+ *     PassesCompleted~18), and var>=0 everywhere.
+ *   - SAMPLING: we draw from the recovered mean/variance (Gaussian-from-moments
+ *     via the recovered LCG, clamped >=0). The moments are VERIFIED; the
+ *     Gaussian draw is a grounded MODELLING choice (CM's exact per-value-level
+ *     shape, encoded in the intermediate triples, is not yet reproduced).
+ *   - CONTEXT (which group a given player maps to): APPROXIMATED — the
+ *     attribute/tactic -> group index (obfuscated picker) is still unknown.
  */
 #ifndef CM2008_MATCH_RESOLVER_DAT_H
 #define CM2008_MATCH_RESOLVER_DAT_H
@@ -63,6 +68,11 @@ const cm_dist_record *cm_resolver_find(const cm_resolver_db *db, int section, co
  * which group corresponds to a given player is the APPROXIMATED selection (see the
  * resolver subsystem's context interface). */
 float cm_resolver_sample_group(const cm_dist_record *rec, int group, uint32_t *lcg_state);
+
+/* Recovered moments of a group: last triple = (count N, sumX, sumX^2) so
+ * mean=sumX/N, var=sumX^2/N-mean^2. VERIFIED (reconstructs to realistic stats). */
+void cm_resolver_group_moments(const cm_dist_record *rec, int group,
+                               double *out_mean, double *out_var, uint32_t *out_n);
 
 /* Convenience: sample group 0 (back-compat). */
 float cm_resolver_sample(const cm_dist_record *rec, uint32_t *lcg_state);

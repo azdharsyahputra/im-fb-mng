@@ -2,10 +2,11 @@
  * Grammar is the validated one from research/resolver-format.md. Reads the
  * caller's own file; embeds no game data. */
 #include "resolver_dat.h"
-#include "resolver_eval.h"   /* cm_lcg_next */
+#include "resolver_eval.h"   /* cm_lcg_next, cm_lcg_unit */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct { const uint8_t *b; size_t n, p; } rd;
 static int ru32(rd *r, uint32_t *o){ if(r->p+4>r->n) return 0;
@@ -45,6 +46,25 @@ static int read_triples(rd *r, cm_dist_record *rec, int know_total, uint32_t tot
     return 1;
 }
 
+/* split triples into self-contained CDF groups (cum resets between groups) */
+static void build_groups(cm_dist_record *rec){
+    rec->groups=NULL; rec->n_groups=0;
+    if(rec->n_triples<=0) return;
+    int cap=8; rec->groups=malloc(sizeof(cm_cdf_group)*cap);
+    uint32_t prev=0; int start=0;
+    for(int i=0;i<rec->n_triples;i++){
+        uint32_t c=rec->triples[i].cum;
+        if(c<prev){ /* close previous group at i-1 */
+            if(rec->n_groups>=cap){cap*=2;rec->groups=realloc(rec->groups,sizeof(cm_cdf_group)*cap);}
+            rec->groups[rec->n_groups++] = (cm_cdf_group){start,i-start,rec->triples[i-1].cum};
+            start=i;
+        }
+        prev=c;
+    }
+    if(rec->n_groups>=cap){cap*=2;rec->groups=realloc(rec->groups,sizeof(cm_cdf_group)*cap);}
+    rec->groups[rec->n_groups++] = (cm_cdf_group){start,rec->n_triples-start,rec->triples[rec->n_triples-1].cum};
+}
+
 int cm_resolver_load(cm_resolver_db *db, const char *path){
     memset(db,0,sizeof *db);
     FILE *f=fopen(path,"rb"); if(!f) return 0;
@@ -66,6 +86,7 @@ int cm_resolver_load(cm_resolver_db *db, const char *path){
             if(!skip_block0(&r)){ free(buf); return 0; }
             if(i==0){ read_triples(&r,rec,0,0); sec_total=rec->total; }
             else    { read_triples(&r,rec,1,sec_total); }
+            build_groups(rec);
         }
     }
     free(buf);
@@ -75,7 +96,7 @@ int cm_resolver_load(cm_resolver_db *db, const char *path){
 
 void cm_resolver_free(cm_resolver_db *db){
     for(int s=0;s<3;s++){
-        for(int i=0;i<db->section[s].n_records;i++) free(db->section[s].records[i].triples);
+        for(int i=0;i<db->section[s].n_records;i++){ free(db->section[s].records[i].triples); free(db->section[s].records[i].groups); }
         free(db->section[s].records);
     }
     memset(db,0,sizeof *db);
@@ -88,20 +109,42 @@ const cm_dist_record *cm_resolver_find(const cm_resolver_db *db,int section,cons
     return NULL;
 }
 
-/* inverse-CDF sample: u in [0,total); first triple with cum>=u; interpolate lo..hi */
+/* Moment-based sampling (recovered semantics): a group's last triple holds the
+ * cumulative moments (count N, sumX, sumX^2) of that context's population, so
+ * mean = sumX/N and var = sumX^2/N - mean^2. We draw a value from a distribution
+ * with that mean/variance using the recovered LCG (Gaussian via Box-Muller,
+ * clamped >= 0). The MOMENTS are VERIFIED (reconstruct to realistic football
+ * stats for every metric); the choice of a Gaussian-from-moments draw is the
+ * grounded MODELLING approximation (CM's exact per-value-level shape uses the
+ * intermediate triples; not yet reproduced). */
+void cm_resolver_group_moments(const cm_dist_record *rec, int group,
+                               double *out_mean, double *out_var, uint32_t *out_n){
+    *out_mean=0; *out_var=0; *out_n=0;
+    if(!rec||rec->n_groups<=0) return;
+    if(group<0) group=0; if(group>=rec->n_groups) group=rec->n_groups-1;
+    cm_cdf_group g=rec->groups[group];
+    if(g.n<=0) return;
+    cm_triple t=rec->triples[g.start+g.n-1];   /* cumulative totals for the group */
+    if(t.cum==0) return;
+    double mean=(double)t.lo/(double)t.cum;
+    double var=(double)t.hi/(double)t.cum - mean*mean;
+    if(var<0) var=0;
+    *out_mean=mean; *out_var=var; *out_n=t.cum;
+}
+
+float cm_resolver_sample_group(const cm_dist_record *rec, int group, uint32_t *lcg){
+    double mean,var; uint32_t n;
+    cm_resolver_group_moments(rec,group,&mean,&var,&n);
+    if(n==0) return 0.0f;
+    /* Box-Muller using the recovered LCG */
+    float u1=cm_lcg_unit(lcg), u2=cm_lcg_unit(lcg);
+    if(u1<1e-7f) u1=1e-7f;
+    double z=sqrt(-2.0*log(u1))*cos(6.28318530718*u2);
+    double v=mean + z*sqrt(var);
+    if(v<0) v=0;
+    return (float)v;
+}
+
 float cm_resolver_sample(const cm_dist_record *rec, uint32_t *lcg){
-    if(!rec||rec->n_triples<=0||rec->total==0) return 0.0f;
-    uint32_t u = cm_lcg_next(lcg) % rec->total;
-    uint32_t prev=0;
-    for(int i=0;i<rec->n_triples;i++){
-        uint32_t c=rec->triples[i].cum;
-        if(c<prev) prev=0;                         /* new CDF group: reset base */
-        if(u < c){
-            uint32_t span = c-prev;
-            float frac = span? (float)(u-prev)/(float)span : 0.0f;
-            return rec->triples[i].lo + frac*(rec->triples[i].hi - rec->triples[i].lo);
-        }
-        prev=c;
-    }
-    return rec->triples[rec->n_triples-1].hi;
+    return cm_resolver_sample_group(rec, 0, lcg);
 }

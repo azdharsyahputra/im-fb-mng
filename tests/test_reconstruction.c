@@ -207,14 +207,17 @@ int main(void) {
 
     /* Resolver inverse-CDF sampler on a synthetic record (not game data) */
     {
-        static cm_triple tr[2] = { {50,0.0f,1.0f}, {100,1.0f,2.0f} };
+        /* moment summary: N=1000, sumX=5000, sumX2=30000 -> mean=5, var=5 */
+        static cm_triple tr[1] = { {1000, 5000.0f, 30000.0f} };
+        static cm_cdf_group gr[1] = { {0,1,1000} };
         cm_dist_record rec; rec.name[0]='X'; rec.name[1]=0;
-        rec.triples=tr; rec.n_triples=2; rec.total=100;
-        uint32_t st=12345u; int lo=0,hi=0,bad=0;
-        for(int i=0;i<4000;i++){ float v=cm_resolver_sample(&rec,&st);
-            if(v<0.0f||v>2.0f) bad++; else if(v<1.0f) lo++; else hi++; }
-        CHECK(bad==0);            /* all samples within the value axis */
-        CHECK(lo>800 && hi>800);  /* both halves populated (inverse-CDF spread) */
+        rec.triples=tr; rec.n_triples=1; rec.total=1000; rec.groups=gr; rec.n_groups=1;
+        double mean,var; uint32_t n; cm_resolver_group_moments(&rec,0,&mean,&var,&n);
+        CHECK(n==1000); CHECK(mean>4.9 && mean<5.1); CHECK(var>4.9 && var<5.1);
+        uint32_t st=12345u; double acc=0; int bad=0;
+        for(int i=0;i<8000;i++){ float v=cm_resolver_sample_group(&rec,0,&st); if(v<0)bad++; acc+=v; }
+        CHECK(bad==0);                       /* clamped >= 0 */
+        CHECK(acc/8000.0 > 4.5 && acc/8000.0 < 5.5);  /* sample mean ~= recovered mean */
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

@@ -1,5 +1,23 @@
 # CM2008 Match Engine — Master Status
 
+> **WAVE UPDATE (fidelity wave 2):**
+> - **Encrypted data cracked:** cipher = Blowfish ECB big-endian (VERIFIED vs test
+>   vectors). `MetParams.dat.blowfish` + `ProgramStep.xml.blowfish` DECRYPTED (keys in
+>   BLOWFISH_DATA_RECOVERY.md); `formula.xml.blowfish` key is non-literal + loader in a
+>   protected region = BOUNDARY. Tool: `tools/decrypt_blowfish.py`.
+> - **Predicate ranking weights recovered (VERIFIED):** FUN_009e5160 is a readable
+>   type-name→.data-float-constant evaluator. 13 weights recovered (TeamGoals=100 …
+>   WinsManyHeaders=10); c540 threshold 80.0 confirmed. See MATCH_PREDICATE_WEIGHTS.md,
+>   `match/sim/predicate_weights.h`. (~71 more predicates pending.)
+> - **eGameState:** full 32-entry table (31 states + Nums) implemented in match_state.h
+>   (EGAMESTATE_COMPLETE.md). SetGameState writer still UNKNOWN — the FUN_009efxxx
+>   family was dumped and is float/context init, NOT the writer; needs runtime watchpoint.
+> - **Resolve path** (RESOLVE_PATH.md): pending-bit lifecycle mapped (set cd40, clear
+>   cf20/ccb0). **008f90f0 = UI confirmed** (COMMAND_TREE_HANDLER_MAP.md). **Movement
+>   physics runs on worker threads**, not in the name-seeded dumps (MOVEMENT_ACTION_MAP.md).
+> - **Picker** FUN_005b5100: static baseline + runtime plan on branch `picker-investigation`
+>   (body anti-disassembly; needs runtime).
+
 > **CRITICAL CORRECTION (verified):** `FUN_008f90f0` is the top-level UI/game-flow
 > **command-tree** interpreter (89 recovered command names: SaveGame, SwitchMatchScreen,
 > ViewHalfTimeTeamTalks, Tactics…), NOT the match update. The REAL detailed match engine

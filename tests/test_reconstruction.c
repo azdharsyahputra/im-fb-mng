@@ -28,6 +28,7 @@
 #include "../match/sim/resolver_dat.h"
 #include "../match/sim/match_lifecycle.h"
 #include "../match/sim/detailed_engine.h"
+#include "../match/sim/predicate_weights.h"
 #include "../match/resolver_format.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -308,6 +309,40 @@ int main(void) {
         E.event_pending = 1;
         cm_detailed_update(&E, 60.0f, cm__test_resolve, &rc);
         CHECK(rc.calls==before);              /* terminal: resolve never runs */
+    }
+
+    /* Full 32-entry eGameState table (VERIFIED values from eGameState::ToString) */
+    {
+        CHECK(CM_GS_IN_PLAY==0x00 && CM_GS_HALF_OVER==0x0b && CM_GS_GAME_OVER==0x0c);
+        CHECK(CM_GS_APRES_GOAL==0x0d && CM_GS_KICKOFF_WAITING==0x0e && CM_GS_HALF_ACTIVATED==0x18);
+        CHECK(CM_GS_NUMS==0x1f);
+        CHECK(strcmp(cm_game_state_name(CM_GS_KICKOFF_SPOTTED),"KickOffSpotted")==0);
+        CHECK(strcmp(cm_game_state_name(CM_GS_SUBSTITUTION_HAPPENING),"SubstitutionHappening")==0);
+        CHECK(strcmp(cm_game_state_name(CM_GS_SETPIECE_FK_SPOTTED),"SetPieceFreeKickSpotted")==0);
+        CHECK(strcmp(cm_game_state_name((cm_game_state)0x55),"Unknown MatchState")==0);
+        /* every real state 0..0x1f has a non-empty name */
+        for (int i=0;i<=0x1f;i++) CHECK(cm_game_state_name((cm_game_state)i) &&
+                                         cm_game_state_name((cm_game_state)i)[0]);
+        /* spotted/activation pairing */
+        CHECK(cm_game_state_is_spotted(CM_GS_GOAL_SPOTTED)==1);
+        CHECK(cm_game_state_is_spotted(CM_GS_IN_PLAY)==0);
+        CHECK(cm_game_state_paired_activation(CM_GS_GOAL_SPOTTED)==CM_GS_GOAL_ACTIVATED);
+        CHECK(cm_game_state_paired_activation(CM_GS_THROW_IN_SPOTTED)==CM_GS_THROW_IN_ACTIVATED);
+        CHECK(cm_game_state_paired_activation(CM_GS_IN_PLAY)==CM_GS_NUMS); /* no pair */
+    }
+
+    /* Recovered predicate ranking weights (VERIFIED from FUN_009e5160 / .data) */
+    {
+        CHECK(CM_PREDICATE_WEIGHT_COUNT==13);
+        CHECK(cm_predicate_weight_of("GCMatchPredicateTeamGoals")==100.0f);
+        CHECK(cm_predicate_weight_of("GCMatchPredicateWinsManyHeaders")==10.0f);
+        CHECK(cm_predicate_weight_of("GCMatchPredicateNotARealOne")==-1.0f);
+        /* 80.0 threshold (c540): only weight>=80 survive */
+        CHECK(cm_predicate_passes_rank("GCMatchPredicateTeamGoals")==1);        /* 100 */
+        CHECK(cm_predicate_passes_rank("GCMatchPredicateTeamDoesManyQuickAttacks")==1); /* 85 */
+        CHECK(cm_predicate_passes_rank("GCMatchPredicateDefensiveErrorsLeadsToShots")==0); /* 70 */
+        CHECK(cm_predicate_passes_rank("GCMatchPredicateWinsManyHeaders")==0);  /* 10 */
+        CHECK(CM_PREDICATE_RANK_THRESHOLD==80.0f);
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

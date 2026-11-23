@@ -1,0 +1,6 @@
+PLdDirectInput
+PLdSoundBuffer
+PLdSoundBuffer_PC
+PLf0M1Y
+PLwWindow
+PLwo

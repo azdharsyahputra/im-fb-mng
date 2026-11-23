@@ -1,0 +1,22 @@
+/* Verified record counts of the CM2008 game database (extracted .dat tables).
+ * Observed from the DATa headers. See docs/findings/game-database.md. */
+#ifndef CM2008_DATABASE_TABLE_COUNTS_H
+#define CM2008_DATABASE_TABLE_COUNTS_H
+
+#define CM_DB_CLUB_COUNT 6571
+#define CM_DB_COMPETITION_COUNT 2856
+#define CM_DB_PLAYER_COUNT 85035
+#define CM_DB_PERSON_COUNT 102990
+#define CM_DB_CONTRACT_COUNT 109484
+#define CM_DB_STADIUM_COUNT 7781
+#define CM_DB_STAFF_COUNT 11109
+#define CM_DB_CITY_COUNT 3245
+#define CM_DB_SQUAD_COUNT 8885
+#define CM_DB_SEASON_COUNT 1038
+#define CM_DB_AREA_COUNT 227
+#define CM_DB_BOARD_COUNT 5386
+#define CM_DB_PLAYER_PROPERTIES_COUNT 76051
+#define CM_DB_GOALKEEPER_PROPERTIES_COUNT 8984
+#define CM_DB_AWARD_COUNT 4703
+
+#endif

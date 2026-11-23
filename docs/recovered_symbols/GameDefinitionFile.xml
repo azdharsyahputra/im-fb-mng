@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GameDefinitionFile xmlns="urn:schemas-microsoft-com:GameDescription.v1"
+  xmlns:baseTypes="urn:schemas-microsoft-com:GamesExplorerBaseTypes.v1">
+
+	<GameDefinition gameID="{E829D9EB-6B42-49AA-86B8-B84946BA9BBA}">
+
+		<Name>Championship Manager 2008</Name>
+
+		<Genres>
+			<Genre>Simulation</Genre>
+			<Genre>Sports/Racing</Genre>
+		</Genres>
+
+		<Version>
+			<VersionFile path="CM2008.exe" />
+		</Version>
+
+		<GameExecutables>
+			<GameExecutable path="CM2008.exe" />
+		</GameExecutables>
+
+		<SavedGames baseKnownFolderID="{FDD39AD0-238F-46AF-ADB4-6C85480369C7}" path="Eidos\Championship Manager 2008\Save Games" />
+
+		<WindowsSystemPerformanceRating minimum="1" recommended="2" />
+
+		<Ratings>
+
+			<!-- PEGI rating: 3+ -->
+			<Rating ratingSystemID="{36798944-B235-48ac-BF21-E25671F597EE}" ratingID="{464299D0-6D57-47e8-AA53-A849CBEA12CB}" />
+
+			<!-- PEGI and BBFC: rating: 3+ -->
+			<Rating ratingSystemID="{5B39D1B8-ED49-4055-8A47-04B29A579AD6}" ratingID="{FCC61B08-1352-4e5b-9D96-986EAB2FC503}" />
+
+			<!-- PEGI Finland: rating 3+ -->
+			<Rating ratingSystemID="{7F2A4D3A-23A8-4123-90E7-D986BF1D9718}" ratingID="{464299D0-6D57-47e8-AA53-A849CBEA12CB}" />
+
+			<!-- PEGI Portugal: rating 4+ (3+ isn't an option) -->
+			<Rating ratingSystemID="{9AAFBACD-EAB9-4946-8BE8-C4D997927C81}" ratingID="{BB63F1DB-83FB-4790-ABE5-920E0AC864BD}" />
+
+		</Ratings>
+
+		<Developers>
+			<Developer URI="http://www.championshipmanager.co.uk/">Beautiful Game Studios</Developer>
+		</Developers>
+
+		<Publishers>
+			<Publisher URI="http://www.eidos.com/">Eidos</Publisher>
+		</Publishers>
+
+	</GameDefinition>
+
+</GameDefinitionFile>

@@ -1,0 +1,14 @@
+# Build artifacts
+*.o
+*.a
+tests/test_reconstruction
+
+# Derivative / proprietary — NEVER redistribute:
+# raw decompilation of the copyrighted CM2008.exe, and any extracted game data.
+docs/ghidra_dumps/
+*.dat
+*.tac
+*.cab
+*.hdr
+*.exe
+*.iso

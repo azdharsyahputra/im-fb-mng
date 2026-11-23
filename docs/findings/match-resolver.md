@@ -62,6 +62,23 @@ alternate keying) that the single grammar above does not yet consume to the exac
 record boundary; and the mapping from a player's effective attributes/tactics to
 the (block,bucket) index used for sampling. Those remain the behavioral frontier.
 
+## Deeper blocks = quantised distributions (5-point monotonic threshold tables)
+
+Structural analysis of the blocks after the first shows the data is dominated by
+**short monotonically-increasing integer runs, predominantly length 5**, each
+separated by zero words with floats interleaved. Semantically this is a
+**quantile / CDF encoding**: every distribution is stored as a small set of
+cumulative threshold breakpoints (≈5 per curve) plus associated float weights —
+a compact way to sample a performance metric given a context index. (Only the
+*structure* is characterised here; the threshold/weight numbers are proprietary
+game data and are not reproduced.)
+
+The exact byte framing of these threshold tables (the zero-padding and the
+float-interleave order) is not yet pinned to the record boundary by structural
+analysis alone; the definitive layout needs the distribution *loader* function
+from the exe (the FUN_00822xxx cluster are the constant getters, not the file
+parser) — locating and decompiling that loader is the clear next step.
+
 ## Deliberately NOT reproduced
 
 The distribution **float values are proprietary game data** and are **not**

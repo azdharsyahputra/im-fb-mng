@@ -27,3 +27,8 @@ Confidence: V=VERIFIED, SI=STRONGLY INFERRED, H=HYPOTHESIS, U=UNKNOWN.
 | GCFormulaModule writer of *Performance | U (not located) | U | indexing |
 | FUN_005b5100 | resolver index/bucket picker (obfuscated) | U | consumers/indexing |
 | outer match clock/tick loop | U (not located) | U | pipeline |
+
+## RNG (VERIFIED)
+- LCG state=state*0x19660d+0x3c6ef35f mod 2^32 (inlined 95+ sites); uniform idiom ((state>>9)|0x3f800000)-1.0.
+- Seed=MatchSeed (MatchInputs+8), resolved at match start FUN_0077cd40; per-object state +0x1c; global multi-stream singleton +0x2c (0x40-byte slots via FUN_009fdd60).
+- Quick resolver vs detailed engine: same LCG+seed source, SEPARATE state; forks copy +0x18/+0x1c. Draws conditional/data-dependent. [engine-sharing INFERRED]

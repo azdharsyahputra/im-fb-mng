@@ -24,9 +24,12 @@ static inline uint32_t cm_lcg_next(uint32_t *state){
     *state = (*state) * 1664525u + 1013904223u;   /* VERIFIED constants */
     return *state;
 }
-/* uniform [0,1) from the recovered LCG (top 24 bits, like our engine RNG) */
+/* uniform [0,1) — EXACT recovered idiom: build a float in [1,2) from the top
+ * mantissa bits then subtract 1.0 (CM uses ((state>>9)|0x3f800000)-1.0, 26 sites). */
 static inline float cm_lcg_unit(uint32_t *state){
-    return (float)((cm_lcg_next(state) >> 8) & 0xFFFFFF) / (float)0x1000000;
+    uint32_t bits = (cm_lcg_next(state) >> 9) | 0x3f800000u;
+    float f; __builtin_memcpy(&f, &bits, sizeof f);
+    return f - 1.0f;
 }
 
 /* Distribution-tree node (layout mirrors the recovered object: type tag,

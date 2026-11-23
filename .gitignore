@@ -2,6 +2,7 @@
 *.o
 *.a
 tests/test_reconstruction
+tests/test_integration
 
 # Derivative / proprietary — NEVER redistribute:
 # raw decompilation of the copyrighted CM2008.exe, and any extracted game data.

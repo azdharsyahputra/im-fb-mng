@@ -25,7 +25,7 @@ runtime diff vs the original exe (that needs a lawful runtime; see §Runtime).
 | empirical sampler | Validated (vs recovered spec) | integration test 2 (200k draws, moment check) |
 | predicate ranking weights (84) | Validated | FUN_009e5160; predicate_weights.h; test 3 |
 | rank threshold 80.0 | Validated | FUN_0077c540; 18 survive |
-| **picker FUN_005b5100 reduction** | Data-flow mapped | inputs pinned {arg0,node+0x0c}; return indexes arg1; body anti-disassembly → **needs runtime** |
+| **picker FUN_005b5100** | Implemented (VERIFIED) | NOT anti-disassembly (false alarm) — disassembled: a deterministic LINEAR find-by-key (1-based index of first entry whose *(entry+0xc)==*target), NO RNG. match/sim/picker_real.h + tests. See PICKER_RECOVERY.md |
 
 ## Formula system
 | behavior | status | evidence |
@@ -66,7 +66,8 @@ Static analysis is exhausted for four items, all blocked by the SAME two causes:
 
 Closeable ONLY by read-only observation of a lawful, unmodified CM2008 runtime:
 - SetGameState writer → write-watchpoint on *(*(matchCtx+0xe4)+0x30).
-- picker → breakpoint 0x817f3c, capture arg0/arg1/RNG before+after, selected index.
+- picker → SOLVED statically (was a false alarm; disassembles to a deterministic
+  find-by-key, no RNG). See PICKER_RECOVERY.md / match/sim/picker_real.h.
 - formula.xml → SOLVED statically (key `deliverance` derived from the loader; no runtime
   needed). Formula trees + coefficients are decryptable with tools/decrypt_blowfish.py.
 - movement offsets → correct re-disassembly of the geometry accessors (clean bytes).

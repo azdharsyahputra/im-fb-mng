@@ -29,6 +29,7 @@
 #include "../match/sim/match_lifecycle.h"
 #include "../match/sim/detailed_engine.h"
 #include "../match/sim/predicate_weights.h"
+#include "../match/sim/picker_real.h"
 #include "../match/formula/formula.h"
 #include "../match/resolver_format.h"
 #include <stdint.h>
@@ -419,6 +420,21 @@ int main(void) {
         cm_fcondition cbad[1] = { { CM_FCMP_GT, &varU, &l2 } };
         s=cm_rule_conditions_hold(cbad,1,&fctx,0,&hold);
         CHECK(s==CM_FEVAL_UNRESOLVED && hold==0);
+    }
+
+    /* Resolver picker FUN_005b5100 — VERIFIED linear find-by-key (no RNG) */
+    {
+        int32_t keys[4] = { 100, 250, 7, 42 };
+        CHECK(cm_picker_index(keys, 4, 7)   == 3);   /* 1-based index of first match */
+        CHECK(cm_picker_index(keys, 4, 100) == 1);
+        CHECK(cm_picker_index(keys, 4, 42)  == 4);
+        CHECK(cm_picker_index(keys, 4, 999) == 0);   /* not found -> 0 */
+        CHECK(cm_picker_index(keys, 0, 100) == 0);   /* empty (cursor==end) -> 0 */
+        CHECK(cm_picker_index(NULL, 4, 1)   == 0);
+        int32_t dup[3] = { 5, 5, 9 };
+        CHECK(cm_picker_index(dup, 3, 5)    == 1);   /* FIRST match */
+        CHECK(cm_picker_selected_valid(cm_picker_index(keys,4,7)) == 1);
+        CHECK(cm_picker_selected_valid(0) == 0);
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

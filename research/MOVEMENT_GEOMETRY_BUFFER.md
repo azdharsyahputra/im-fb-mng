@@ -78,8 +78,27 @@ by ×(1/112.5). This matches A3's observed +0xb0/+0xc0/+0xd0 view-coordinate clu
   view cluster, and the block is the per-entity object). Velocity is the adjacent/second
   cluster (+0xc4/+0xd4 or the +0x160.. triple) — INFERRED, not yet isolated.
 
+## Velocity — chased to ground: not an exposed scalar (motion = integer waypoints)
+Followed the coordinate path one more level: `FUN_009f0c40` reads four u16 ref fields
+(+0xb4/+0xb6/+0xb8/+0xba, null=0xffff) and does `lea ecx,[esi+0xd0]; call FUN_009fd680`,
+and `FUN_009fd680` (body 0x9fd690) loops exactly 4× reading `{u16,u16}` pairs at stride 8
+from +0x12. So the +0xd0 coordinate sub-object holds a **4-point polyline of integer (u16,
+u16) coordinate pairs**, not a float velocity vector. VERIFIED.
+
+Conclusion (VERIFIED by absence + structure): the engine does NOT store an explicit per-
+player velocity in the exposed view/accessor data — motion is represented as INTEGER
+coordinate waypoints and interpolated for rendering. Any explicit velocity used by the
+continuous integrator lives only in the worker-thread sim's private state (the block's
+producer) — so there is no static "velocity offset" to pin on the exposed object; it is
+either implicit (inter-frame position delta) or thread-private. This is itself a fidelity
+finding: positions are integer fixed-point waypoints, not a float {pos,vel} record.
+
 ## Classification
 - per-entity geometry = 1012-byte block via entity+0x134 under [pool+0x3004c] — **VERIFIED**
+- world X/Y = integer at +0xc0/+0xd0 projected ×(1/112.5); +0xd0 sub-object = 4 u16 waypoint
+  pairs (stride 8 from +0x12) — **VERIFIED**
+- explicit velocity field — **does not exist in exposed data** (motion = integer waypoints;
+  any velocity is thread-private) — **VERIFIED(absence)/INFERRED**
 - resolver chain 009efa90/009efb70 + rep-movsd copy — **VERIFIED**
 - world X/Y = +0xc0/+0xd0 integer fixed-point, ×(1/112.5) projection — **VERIFIED** (projection);
   mapping onto the entity block — **INFERRED**

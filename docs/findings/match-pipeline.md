@@ -70,3 +70,5 @@ data read through FUN_00662cf0/FUN_00818120.
 - How FUN_00a1fdf0 turns attributes+tactics into target positions (the movement
   algorithm) — located, not decoded.
 - How the predicate tree connects to event emission and to the resolver sampling.
+
+> **Correction (validation + consumer RE):** FUN_00662cf0/FUN_00818120 read *scalar named fields* from in-memory data sources and drive the recursive distribution-tree **sampler**; the `.dat` files are loaded separately by **FUN_00a098a0** (see research/resolver-loader.md, research/resolver-consumers.md).

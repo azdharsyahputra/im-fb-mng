@@ -24,6 +24,7 @@
 #include "../clubs/club_finance_schema.h"
 #include "../database/table_counts.h"
 #include "../match/resolver_metrics.h"
+#include "../match/sim/resolver_eval.h"
 #include "../match/resolver_format.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -176,6 +177,30 @@ int main(void) {
         CHECK(cm_resolver_read_bucket(&rr, &key, &nv) == 1 && key == 10 && nv == 3);
         CHECK(cm_resolver_read_bucket(&rr, &key, &nv) == 1 && key == 20 && nv == 0);
         CHECK(rr.pos == sizeof fake); /* consumed exactly */
+    }
+
+
+    /* Resolver: exact recovered LCG determinism + tree evaluator (synthetic tree) */
+    {
+        uint32_t st1=12345u, st2=12345u;
+        for(int i=0;i<3;i++) cm_lcg_next(&st1);
+        for(int i=0;i<3;i++) cm_lcg_next(&st2);
+        CHECK(st1==st2);                                  /* deterministic */
+        uint32_t s=1u; cm_lcg_next(&s);
+        CHECK(s == 1u*1664525u + 1013904223u);            /* exact recovered constants */
+
+        cm_dist_node c2 = { CM_NODE_CONST,0,0, 2.0f, 0,0, 0,0, 0 };
+        cm_dist_node c3 = { CM_NODE_CONST,0,0, 3.0f, 0,0, 0,0, 0 };
+        cm_dist_node *kids[2] = { &c2, &c3 };
+        cm_dist_node add = { CM_NODE_BINOP, CM_OP_ADD,0, 0, 0,0, kids,2, 0 };
+        cm_dist_node mean= { CM_NODE_AGG, 0, CM_AGG_MEAN, 0, 0,0, kids,2, 0 };
+        cm_resolver_ctx ctx = { .rng=99u, .lookup=0, .lookup_ctx=0, .table_index=-1 };
+        CHECK(cm_dist_eval(&add,&ctx) == 5.0f);
+        CHECK(cm_dist_eval(&mean,&ctx) == 2.5f);
+        static const float tbl[5] = {-2,-1,0,1,2};
+        cm_dist_node rnd = { CM_NODE_RANDOM,0,0, 0, tbl,5, 0,0, 0 };
+        float v = cm_dist_eval(&rnd,&ctx);
+        CHECK(v >= -2.0f && v <= 2.0f);                   /* within quantile axis */
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

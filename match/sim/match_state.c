@@ -1,5 +1,13 @@
 #include "match_state.h"
-static const char *const NM[CM_GS_COUNT]={
- "KickoffWaiting","InPlay","HalfActivated","HalfOver","SecondHalf","GameOver",
- "Goal","Foul","Offside","Corner","ThrowIn","Penalty","Substitution"};
-const char *cm_game_state_name(cm_game_state s){ return (s<0||s>=CM_GS_COUNT)?0:NM[s]; }
+const char *cm_game_state_name(cm_game_state s){
+    switch(s){
+    case CM_GS_IN_PLAY:         return "InPlay";
+    case CM_GS_HALF_OVER:       return "HalfOver";
+    case CM_GS_GAME_OVER:       return "GameOver";
+    case CM_GS_APRES_GOAL:      return "ApresGoal";
+    case CM_GS_KICKOFF_WAITING: return "KickoffWaiting";
+    case CM_GS_HALF_ACTIVATED:  return "HalfActivated";
+    case CM_GS_NUMS:            return "Nums";
+    default:                    return (const char *)0;
+    }
+}

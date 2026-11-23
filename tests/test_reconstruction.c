@@ -27,6 +27,7 @@
 #include "../match/sim/resolver_eval.h"
 #include "../match/sim/resolver_dat.h"
 #include "../match/sim/match_lifecycle.h"
+#include "../match/sim/detailed_engine.h"
 #include "../match/resolver_format.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -36,6 +37,15 @@ int mock_get(void *ctx, const char *name, float *out) {
     (void)ctx;
     if (strcmp(name, "MarkingDistanceScale") == 0) { *out = 0.5f; return 1; }
     return 0;
+}
+
+/* integration resolve callback: records the minute observed at resolve time.
+ * struct layout must match the test's local `struct rctx { int minute; int calls; }`. */
+struct cm__rctx { int minute; int calls; };
+void cm__test_resolve(void *ctx, const cm_lifecycle *life){
+    struct cm__rctx *rc = (struct cm__rctx *)ctx;
+    rc->minute = cm_lifecycle_minute(life);  /* clock already advanced -> verifies order */
+    rc->calls++;
 }
 
 static int fails = 0;
@@ -239,17 +249,65 @@ int main(void) {
     /* Lifecycle FSM over continuous float clock (differential, verified states) */
     {
         cm_lifecycle L; cm_lifecycle_init(&L);
-        CHECK(L.state==CM_GS_KICKOFF_WAITING);
+        CHECK(L.state==CM_GS_KICKOFF_WAITING); CHECK(CM_GS_IN_PLAY==0 && CM_GS_GAME_OVER==0x0c); /* verified enum values */
         cm_lifecycle_advance(&L,0.0f); CHECK(L.state==CM_GS_IN_PLAY);   /* kickoff */
         cm_lifecycle_advance(&L,44.0f*60.0f);
         CHECK(L.state==CM_GS_IN_PLAY); CHECK(cm_lifecycle_minute(&L)==44);
         cm_lifecycle_advance(&L,2.0f*60.0f);       /* cross 45' */
         CHECK(L.state==CM_GS_HALF_OVER);
-        cm_lifecycle_advance(&L,0.0f); CHECK(L.state==CM_GS_SECOND_HALF && L.half==2);
+        cm_lifecycle_advance(&L,0.0f); CHECK(L.state==CM_GS_KICKOFF_WAITING && L.half==2);
         cm_lifecycle_advance(&L,0.0f); CHECK(L.state==CM_GS_IN_PLAY);   /* 2nd-half kickoff */
         cm_lifecycle_advance(&L,44.0f*60.0f);      /* ~90' total */
         CHECK(L.state==CM_GS_GAME_OVER && cm_lifecycle_minute(&L)>=90);
         cm_lifecycle_advance(&L,10.0f); CHECK(L.state==CM_GS_GAME_OVER); /* terminal */
+    }
+
+    /* INTEGRATION: detailed-engine update order (clock+FSM then resolve-when-live).
+     * Verifies data flow matches recovered architecture (FUN_0077ee80):
+     *   - resolve runs ONLY while IN_PLAY and an event is pending
+     *   - resolve observes the clock AFTER it was advanced (order), recorded below
+     *   - event-pending bit clears after a resolve (one resolve per pending event)
+     *   - events never fire during KICKOFF_WAITING / HALF_OVER / GAME_OVER */
+    {
+        struct cm__rctx rc = {-1,0};   /* cm__test_resolve writes minute+calls here */
+        cm_detailed_engine E; cm_detailed_init(&E, CM_HALF_SECONDS);
+
+        /* tick 1: KICKOFF_WAITING -> IN_PLAY, no event pending -> no resolve */
+        cm_game_state s = cm_detailed_update(&E, 0.0f, cm__test_resolve, &rc);
+        CHECK(s==CM_GS_IN_PLAY); CHECK(rc.calls==0);   /* resolve gated by event_pending */
+
+        /* tick 2: live + event pending -> exactly one resolve, bit cleared */
+        E.event_pending = 1;
+        s = cm_detailed_update(&E, 600.0f, cm__test_resolve, &rc);
+        CHECK(s==CM_GS_IN_PLAY); CHECK(rc.calls==1);
+        CHECK(rc.minute==10);                 /* resolve saw clock AFTER advance (10') */
+        CHECK(E.event_pending==0);            /* bit cleared -> no re-fire */
+
+        /* tick 3: event still cleared -> no further resolve */
+        s = cm_detailed_update(&E, 60.0f, cm__test_resolve, &rc);
+        CHECK(rc.calls==1);
+
+        /* drive to half: HALF_OVER must NOT resolve even if an event is queued */
+        E.event_pending = 1;
+        cm_detailed_update(&E, 45.0f*60.0f, cm__test_resolve, &rc); /* cross 45' */
+        CHECK(E.life.state==CM_GS_HALF_OVER); CHECK(rc.calls==1);   /* no resolve off-live */
+        CHECK(E.event_pending==1);            /* pending bit preserved across the break */
+
+        /* second half kickoff, then resolve resumes while live */
+        cm_detailed_update(&E, 0.0f, cm__test_resolve, &rc); /* HALF_OVER->KICKOFF_WAITING h2 */
+        cm_detailed_update(&E, 0.0f, cm__test_resolve, &rc); /* ->IN_PLAY (no resolve: kickoff tick is the state change) */
+        CHECK(E.life.state==CM_GS_IN_PLAY);
+        cm_detailed_update(&E, 1.0f, cm__test_resolve, &rc); /* live + pending -> resolve */
+        CHECK(rc.calls==2);
+
+        /* drive to GAME_OVER: no resolve past terminal state */
+        E.event_pending = 1;
+        cm_detailed_update(&E, 45.0f*60.0f, cm__test_resolve, &rc);
+        CHECK(E.life.state==CM_GS_GAME_OVER);
+        int before = rc.calls;
+        E.event_pending = 1;
+        cm_detailed_update(&E, 60.0f, cm__test_resolve, &rc);
+        CHECK(rc.calls==before);              /* terminal: resolve never runs */
     }
 
     if (fails == 0) { printf("ALL TESTS PASSED\n"); return 0; }

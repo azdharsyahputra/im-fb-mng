@@ -12,3 +12,7 @@ docs/ghidra_dumps/
 *.hdr
 *.exe
 *.iso
+match/sim/cmquick
+match/sim/cmdemo
+cmquick
+cmdemo

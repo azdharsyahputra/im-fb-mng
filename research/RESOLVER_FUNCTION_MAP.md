@@ -21,7 +21,7 @@ Confidence: V=VERIFIED, SI=STRONGLY INFERRED, H=HYPOTHESIS, U=UNKNOWN.
 | FUN_00495460..6c0 | discrete-count marshalling into 0x34c stat slab | SI | indexing |
 | FUN_008f90f0 | DETAILED-engine update: 96-way recursive type-dispatch tree visitor | V | pipeline |
 | 00724790->00a1fdf0 | movement/positioning leaf driver (vtable) | V/SI | pipeline |
-| 009b2600->009aecc0 | offside/duties leaf driver (vtable) | V/SI | pipeline |
+| 009b2600->009aecc0 | tactics/duties UI leaf driver (vtable) — NOT offside logic (reclassified) | V/SI | pipeline(UI) |
 | 0093c7f0->008a7770 | axiom registry (Tackles/Fouls/Cards) leaf | V/SI | pipeline |
 | FUN_009e9570->009e8f60/92b0/9200 | predicate DAG (build/walk) | V | pipeline |
 | GCFormulaModule writer of *Performance | U (not located) | U | indexing |

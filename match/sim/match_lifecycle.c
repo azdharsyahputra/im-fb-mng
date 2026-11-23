@@ -26,12 +26,8 @@ cm_game_state cm_lifecycle_advance(cm_lifecycle *L, float dt){
         }
         break;
     case CM_GS_HALF_OVER:
-        /* second-half restart */
         L->half = 2;
-        L->state = CM_GS_SECOND_HALF;
-        break;
-    case CM_GS_SECOND_HALF:
-        L->state = CM_GS_IN_PLAY;                 /* second half kickoff */
+        L->state = CM_GS_KICKOFF_WAITING;         /* second-half restart -> kickoff */
         break;
     case CM_GS_GAME_OVER:
     default:

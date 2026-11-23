@@ -6,8 +6,11 @@
 > is **`GCMatchModule::Update` = `FUN_0077ee80`** (vtable 0x00ba2904 slot +0xa8), invoked
 > virtually by the module manager; it iterates fixtures → FUN_0077cf20→FUN_0077c540→
 > FUN_009e9570 (predicate rule engine). Match **clock = continuous float seconds**
-> (FUN_0077c660), NOT fixed-tick. Half/full-time = **eGameState FSM, 31 states**
-> (FUN_0077ddc0). See research/COMMAND_TREE_*.md, MATCH_CLOCK_AND_UPDATE_LOOP.md.
+> (FUN_0077c660), NOT fixed-tick. eGameState has **31 states** (values recovered from
+> **eGameState::ToString = FUN_0077ddc0**, NOT the state writer). The state WRITER
+> (SetGameState) is UNKNOWN; GameOver trigger is VERIFIED (FUN_0077e850, end-counter
+> @clock+0x4c ≥ ~3600). See research/COMMAND_TREE_*.md, MATCH_CLOCK_AND_UPDATE_LOOP.md,
+> EGAMESTATE_MAPPING.md.
 
 Central index of the reverse-engineering + reconstruction. Categories reported
 separately: **VERIFIED** (binary/byte-backed + validated), **INFERRED** (strong,
@@ -35,8 +38,11 @@ Recursive typed-node-tree interpreters are the shared shape:
 | FUN_008f90f0 | UI/game-flow command-tree interpreter (NOT the match engine) | VERIFIED |
 | FUN_0077ee80 | GCMatchModule::Update — REAL detailed match engine (vtable 0x00ba2904+0xa8) | VERIFIED |
 | FUN_0077c660 | continuous float match clock (elapsed @ matchCtx+0xe4+0x44) | VERIFIED |
-| FUN_0077ddc0 | eGameState FSM (31 states: Kickoff/InPlay/HalfOver/GameOver+events) | VERIFIED |
-| 00724790→00a1fdf0 / 009b2600→009aecc0 / 0093c7f0→008a7770 | movement / offside-duties / axiom leaves | VERIFIED(edge) |
+| FUN_0077ddc0 | eGameState::ToString (name table → recovered the 31 state VALUES: InPlay=0, HalfOver=0x0b, GameOver=0x0c, ApresGoal=0x0d, KickoffWaiting=0x0e, HalfActivated=0x18, Nums=0x1f) — NOT the writer | VERIFIED(values) |
+| SetGameState (eGameState writer) | method of the +0xe4 clock/state sub-object; sets matchCtx+0xe4+0x30 | UNKNOWN (indirect; needs runtime capture) |
+| FUN_0077e850 | GameOver trigger: fires when end-counter (clock+0x4c) ≥ ~3600 (DAT_00c84c7c) AND matchCtx+0xd8+0x4b4 < 500000 | VERIFIED |
+| 00724790→00a1fdf0 / 0093c7f0→008a7770 | movement / axiom leaves | VERIFIED(edge) |
+| 009b2600→009aecc0 | tactics/duties UI leaf (NOT offside logic — reclassified) | V/SI (UI path) |
 | GCFormulaModule *Performance | NO writer — live formula-tree eval (FUN_00818120); coefficients in encrypted formula.xml.blowfish | VERIFIED(mechanism)/BOUNDARY(data) |
 | module-manager update loop | indirect-calls GCMatchModule::Update (FUN_0077ee80); clock=continuous float | VERIFIED(target)/UNKNOWN(indirect dispatch) |
 | LCG (inlined) | state=state*1664525+1013904223 | VERIFIED |

@@ -1,0 +1,4 @@
+/cm2008-lab
+/tests/lab_tests
+/traces/*.jsonl
+/experiments/*.json

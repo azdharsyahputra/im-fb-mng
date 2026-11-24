@@ -5,7 +5,7 @@ Confidence: V=VERIFIED, SI=STRONGLY INFERRED, H=HYPOTHESIS, U=UNKNOWN.
 | addr | role | confidence | source |
 |---|---|---|---|
 | FUN_00a098a0 | `.dat` distribution loader (builds `#Database#/MatchResolverDistributions.%i.dat`, loads 6 files) | V (xref) | loader |
-| FUN_00662cf0 | named-field lookup (category,name)->object; obfuscated body | SI | consumers |
+| FUN_00662cf0 | GCFormulaModule::Find — (category,name)->object via deterministic BINARY SEARCH (FUN_00662970 over 16-byte sorted records); "obfuscation" was a cpuid/rdtsc PROFILER scope (Ghidra false-alarm), no RNG | V | consumers |
 | FUN_00818120 | sampler entry; iterates child vec [+0x38,+0x3c), aggregates | V | consumers |
 | FUN_00817fe0 | node dispatch by type tag (table/random/named-ref/const) | SI | consumers |
 | FUN_00817f20 | table/bucket selector (via picker FUN_005b5100, RECOVERED — not obfuscated) | V | consumers |

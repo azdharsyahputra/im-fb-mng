@@ -25,16 +25,17 @@ are either looked-up pool entries or int/float attribute reads. A deterministic 
 ## LCG scans (VERIFIED)
 - Picker cluster VA 0x5b3000–0x5b5400 (9 KB): `0x19660d`/`0x3c6ef35f` = **NONE** (prior doc).
 - Formula evaluator VA 0x817000–0x81a000 (12 KB): `0x19660d`/`0x3c6ef35f`/`0x343fd` = **NONE**.
-- Code: **≥283** immediate sites of `0x19660d` (the LCG multiply), dense in 0x4c/0x4d/0x4f, spread
-  through 0x5xxxxx–0x6xxxxx; **168** have the float-uniform idiom `0x3f800000` within 64 bytes →
-  dominant draw `u = ((state>>9) | 0x3f800000) - 1.0` (uniform [0,1)).
-  > **⚠️ COUNT IS A FLOOR (capped scan).** That scan was accidentally truncated at file-off 0x311000
-  > (VA 0x711000), so the detailed match engine (0x77xxxx), the formula engine (0x818xxx) and the sim
-  > (0x9exxxx) were NOT scanned for the LCG — there are very likely MORE draws there. A full-range
-  > re-scan (0x401000–~0xa50000) with a per-region breakdown is in progress (RESIDUALS_RESOLUTION.md).
-  > The sub-claim below still holds: the resolver (0x817–0x81a) and picker (0x5b3–0x5b5) WERE in range
-  > and contain NONE (verified). The match-engine regions above the cap are expected to hold draws —
-  > which is consistent with (not contrary to) the statistical-engine root.
+- Full-range scan (VA 0x401000–0xa50000, corrected — the earlier 283 was a truncated scan):
+  **508** `imul r32,r32,0x19660d` sites, matched 1:1 by 508 `0x3c6ef35f` additive immediates;
+  **222** paired with `0x3f800000` within +0x80 → dominant draw `u = ((state>>9)|0x3f800000) - 1.0`.
+  Per-region breakdown: game logic 0x4–0x6xxxxx **282** · resolver band 0x70–0x76xxxx **144** ·
+  0xa0–0xa4 **36** · 0x78–0x816 **33** · detailed match 0x77xxxx **7** · 0x824–0x9d **3** ·
+  sim/seeder 0x9fxxxx **2** · sim 0x9exxxx **1** · **FORMULA ENGINE 0x817–0x81a = 0** ·
+  **QUICK-MATCH 0x822xxx = 0** (source: RESIDUALS_RESOLUTION.md). A single global match-RNG object
+  (ptr `0xc8d5d4`, accessor `0x7e7c10`, 449 refs) backs the draws → one pervasive RNG. The formula
+  engine's and quick-match's ZERO inline draws corroborate the deterministic evaluator; the draws
+  live in the shared resolvers/game-logic that feed the one global RNG, not in the thin 0x77 tick
+  layer (7 inline). Resolver evaluator 0x817–0x81a and picker 0x5b3–0x5b5 contain NONE (confirmed).
 
 ## ROOT CONCLUSION — CM2008 match = statistical/event engine, NOT a physics simulation
 Putting the three static results together (picker cluster, formula evaluator, and the worker-thread

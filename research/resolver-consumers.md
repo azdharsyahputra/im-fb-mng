@@ -80,7 +80,7 @@ generic reflective data-record system. The relevant functions:
 
 ## (b) Lookup by name
 
-### FUN_00662cf0 @ 00662cf0 (79 b)  — role STRONGLY INFERRED, body UNKNOWN (obfuscated)
+### FUN_00662cf0 @ 00662cf0 (79 b)  — GCFormulaModule::Find, RECOVERED (binary search; "obfuscation" was a profiler false-alarm)
 - **The by-name distribution resolver.** ~811 callers (every per-metric getter, the 52
   MatchResolver-cluster fns, and the named-ref node handler FUN_008181b0).
 - Call convention from clean call sites (e.g. in FUN_0083b860):
@@ -228,7 +228,7 @@ HomePossession, KeptPossession, LostPossession, GainedPossession, PossessionBarM
 |------|-------------|------------|
 | (a) schema/loader | FUN_00405530, FUN_00a72db0, FUN_00a76dc0 | STRONGLY INFERRED |
 | (a) dedicated dist-file parser | — (rides generic record system; FUN_007f4fa0/007f3130 serialize record) | UNKNOWN / HYPOTHESIS |
-| (b) lookup by name | FUN_00662cf0 | role STRONGLY INFERRED, body UNKNOWN (obfuscated) |
+| (b) lookup by name | FUN_00662cf0 = GCFormulaModule::Find | VERIFIED (deterministic binary search; profiler scope, not obfuscation — RESIDUALS_RESOLUTION.md) |
 | (c) sampler entry | FUN_00818120 | VERIFIED (structure) |
 | (c) node dispatch | FUN_00817fe0 | STRONGLY INFERRED |
 | (c) bucket select | FUN_00817f20 (+ FUN_005b5100 picker) | VERIFIED (picker body RECOVERED = key→index lookup, NO RNG — RESOLVER_PICKER_CLUSTER_RECOVERY.md) |

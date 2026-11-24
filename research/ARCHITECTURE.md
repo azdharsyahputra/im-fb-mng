@@ -13,7 +13,7 @@ children vector → recursive dispatch → leaf/aggregate):
 |---|---|---|---|
 | Command/axiom tree | `FUN_008f90f0` (96-way dispatch, 36 recursion sites) | the detailed match update; order data-driven by the node tree | VERIFIED (mechanism) |
 | Predicate DAG | `FUN_009e9570`→`FUN_009e8f60`/`009e92b0`/`009e9200` | performance judgment over axioms | VERIFIED (topology) |
-| Distribution tree | `FUN_00818120`→`00817fe0`/`00817f20`/`00818080`/`00817df0` | statistical sampler (quick resolver) | VERIFIED |
+| Formula/distribution tree | `FUN_00818120`→`00817fe0`/`00817f20`/`00818080`/`00817df0` | DETERMINISTIC formula evaluator (sum/avg/product + binop over attributes/records) — NOT a sampler, NO RNG (corrected; RESOLVER_DRAW_LOCALIZATION.md). Match randomness is the engine LCG upstream (283 sites). | VERIFIED |
 
 Leaf drivers of the command tree (vtable-dispatched, 1 static caller each):
 `00724790→00a1fdf0` ~~movement~~ (REFUTED: `dumpplayerstats` debug dump — see WAYPOINT_PROVIDER_RECOVERY.md) · `009b2600→009aecc0` offside/duties ·

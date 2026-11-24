@@ -45,10 +45,16 @@ Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness 
 [ ] REMAINING: the stat-dword OFFSET → which of the 64 named metrics — overlaps A1 (stat-block/
     PlayerProperties layout, coordinator). Once offsets are named, each GCMatchPredicate pins end-to-end.
 
-## P4 — Byte-prove the bit-packed field offsets (player/club/contract)
-[~] Currently INFERRED. Make them VERIFIED.
-- Method: disasm the decoder/getter functions in the crack; read each field's exact bit offset/width.
-- Deliverable: VERIFIED offsets in the data decoders.
+## P4 — Byte-prove the bit-packed field offsets (player/club/contract/staff)  [x] DONE (structures)
+[x] Record SIZES verified against the owner's real files: Person.dat 34B (102990), Staff.dat 34B,
+    StaffProperties.dat 48B (10879), PlayerProperties 158B (76051 = 4+77·u16), OfficialProperties 20B.
+[x] Club.dat / Contract.dat / PlayerProperties already byte-verified earlier (verified.go decoders).
+[x] StaffProperties.dat STRUCTURE byte-proven: u32 id + 22 u16 attr columns, 0..100 scale, 0xffff
+    sentinel (~95-98% sparse). Added staff.DecodeStaffProperties/LoadStaffProperties (super-manager-
+    engine da7395b). Corrected: the u8 coaching fields in the 34-byte Person model are a reconstruction
+    packing, not the on-disk layout.
+[ ] REMAINING (gap class = A1): column -> attribute-NAME for the 22 staff columns (and the player
+    columns) — value-matching, overlaps the coordinator's A1. Structure is VERIFIED; only names pend.
 
 ## P5 — 77 → 105 getter map (leaf accessors)
 [ ] Which PlayerProperties column each of the ~105 PlayerConstant getters reads.

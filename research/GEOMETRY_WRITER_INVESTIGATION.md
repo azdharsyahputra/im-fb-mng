@@ -96,3 +96,45 @@ GENUINELY_UNAVAILABLE — it is un-dumped, not protected.
 Items 1 & 3 are un-dumped regions of an unpacked DB (static-recoverable with more Ghidra passes),
 NOT protection boundaries. The SecuROM picker `0x5b37xx–0x5b52xx` remains the only runtime-only
 piece.
+
+---
+
+## UPDATE — FindGeom scan results (static locator run; DECISIVE for item 1)
+
+Ran `research/ghidra_reexport/find.sh` (FindGeom.java) over the unpacked DB. 33 SIM-range
+(0x9b–0x9f) +0xC0/+0xD0 store sites; the register-base (ESI/EDI) object writes matter, the
+[ESP+…] ones are stack locals.
+
+### Writer CONFIRMED: `FUN_009f0090` (DECOMPILED / BEHAVIORALLY_VALIDATED)
+FindGeom flagged `FUN_009f0090`: `FST [EDI+0xc0]`, `FST [EDI+0xd0]` (@0x9f00fc/010e) and
+`FSTP [EDI+0xc0]/[EDI+0xd0]` (@0x9f0604/063a) — **FLOAT** stores via the block pointer (EDI=arg0).
+This independently re-confirms `SIM_BLOCK_WRITER.md`: FUN_009f0090 is the per-entity physics-block
+**seeder/initializer** (writes the contiguous float record +0x00..+0x228 incl. +0xc0/+0xc4/+0xc8/
++0xcc/+0xd0/+0xd4 from player attributes via FUN_005d6d20 `attrByte*scale`). 1 callee, 1 caller.
+
+**Representation RESOLVED: the geometry block is FLOAT** (+0xc0..+0xd4), not integer. The earlier
+"integer fixed-point" came from the projection `fild` read path — that reads a DIFFERENT (view/
+derived) value; the per-entity sim block is float on the WRITE side (VERIFIED by writer + emulation).
+
+### Per-FRAME integrator candidate (distinct from the seeder): `0x9f5398` — LOCATED_NOT_UNDERSTOOD
+`[SIM] 009f5398  ?  FSTP [ESI+0xc0]` and `009f5404  ?  FSTP [ESI+0xd0]` — FLOAT stores to +0xc0/
++0xd0 via ESI, in a region with **NO defined function** (like the 0x6dd000 cluster). An un-analyzed
+code region writing the geometry floats is the strongest per-frame-integrator candidate (the seeder
+runs once; this may run per tick). Next: define/analyze the function at 0x9f5398 in Ghidra, then
+re-export it. Also FUN_009f81f0 writes [ESP+0xc0]/[ESP+0xd0] (locals — compute scratch, likely not
+the entity). Other int-base writers (FUN_009b3680/009b6ac0/009b6be0/009c3fe0/009c4270/009c5420/
+009c7d80) touch +0xc0/+0xd0 of other objects — NOT_INVESTIGATED individually.
+
+### Thread entry: still LOCATED_NOT_UNDERSTOOD
+Only `CreateThread` appears, as an EXTERNAL import with a single reference from 0x0156b873 (outside
+any defined function — import thunk region); no `_beginthreadex` symbol. So the match worker-thread
+start is not symbol-resolvable in this DB; the "ran on a thread" fixtures likely use a thread pool
+created outside the analyzed closure. Finding it needs analyzing the 0x0156xxxx thunk refs or the
+pool-creation site — NOT_INVESTIGATED further.
+
+### Net
+- item 1 writer (seeder): **CONFIRMED FUN_009f0090, FLOAT block** (was already VERIFIED; FindGeom
+  corroborates + resolves the float-vs-int question).
+- item 1 per-frame integrator: **candidate 0x9f5398 (undefined region)** — LOCATED_NOT_UNDERSTOOD.
+- Hand to Lab: geometry fields are FLOAT @+0xc0/+0xc4/+0xc8/+0xcc/+0xd0/+0xd4, seeded from
+  attributes (FUN_005d6d20 normalizer). The per-frame update formula still needs 0x9f5398 analyzed.

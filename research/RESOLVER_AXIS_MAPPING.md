@@ -154,6 +154,29 @@ match), not byte-proven; the def→att ordering and the Sweeper rarity make it h
 (The 4 wide roles — WingBack/FullBack/Winger/Roaming — fold into the central spine bins here,
 e.g. the cross-peak at b4; they are not separate bins on this 7-group axis.)
 
+#### Boosters are metric-relevant SKILL FAMILIES (new, decisive)
+
+Classifying every equal-frequency axis per metric by its per-bin gradient sign AND breakpoint
+signature (reproducible in `cmd/axisid`; locked by `TestBoosterSkillFamily`) shows the booster is
+**the player's skill relevant to that specific action**, reused across the whole metric family:
+
+| booster signature | metrics it boosts (last/first) | → skill family |
+|---|---|---|
+| `±[-10,-5,-2,1,4,9]` (centered/relative) | GoalsScored 4.5×, ShotsOnGoal 3.5×, ShotsOnTarget 3.2× | **finishing / shooting quality** |
+| `[3,4,5,6,6,7]` (positive) | Clearances 5.3×, HeadersKey 6.5×, TacklesLost 4.5×, ChallengesMade 3.2×, TacklesWon 2.9×, DirtyFouls 16×, FreeKickIndirect 17× | **tackling / defensive-challenge quality** |
+
+The shooting booster boosts **only** shooting metrics (never TacklesWon/Clearances) and the
+defensive booster boosts **only** defensive/challenge metrics (never GoalsScored) — a clean,
+non-leaking split. Same signature = same underlying attribute, reused across the family. So the
+resolver conditions each metric on its own relevant skill.
+
+**Candidate literal attributes (INFERRED, from `formula.xml` group PlayerConstant):** the shooting
+booster ↔ `ShotAccuracy` / `ShotComposure` / `ShotRange`; the defensive booster ↔
+`BlockTackleStrength` / `TackleFrequency` / `HardTackleFrequency`. The centering (symmetric
+breakpoints) of the shooting booster means it enters as a value **relative to the population mean**
+(z-scored), not a raw 1–20 rating. Which exact attribute of the family, and the centering
+transform, are not byte-proven — **INFERRED**.
+
 ### The equal-frequency context axes — continuous player/match quantities (booster vs suppressor)
 - **Supporting:** uniform marginals ⇒ quantile-binned continuous values. Per metric they split
   by SIGN of their per-bin gradient:
@@ -196,13 +219,22 @@ e.g. the cross-peak at b4; they are not separate bins on this 7-group axis.)
   lawful unmodified install + read-only debugger) — out of scope here (no DRM bypass, no running
   the cracked exe).
 
-**Net progress this pass:** the position axis is now tied to a **recovered literal taxonomy** —
-the game's own `eGoalKeeper … eStriker` 7-value vertical spine + `*Value` getters, matched by bin
-count and the def→att gradient; and the booster/suppressor axes have **named candidate fields**
-(own vs opponent `PerformanceLevel`/`LikelyResult`/`*Value`). What is still genuinely UNKNOWN is
-only the exact byte-level wiring of which accessor the obfuscated iterator reads for each axis —
-the obfuscation + no-runtime rule block confirming it to VERIFIED; the semantics and the candidate
-literal names are now evidence-backed, not guesses.
+**Net progress (cumulative):**
+- Position axis → tied to the **recovered literal taxonomy** (`eGoalKeeper … eStriker` 7-spine +
+  `*Value` getters), with each of the 7 bins **profile-matched to a position** (the 3% Sweeper bin
+  is the clincher).
+- Booster axes → identified as **metric-relevant SKILL FAMILIES**: a shooting-quality variable
+  drives only shooting metrics, a tackling/defensive variable drives only defensive metrics, with
+  named candidate attributes from `formula.xml` (ShotAccuracy/ShotComposure; BlockTackleStrength/
+  TackleFrequency). The shooting booster is centered (relative-to-average).
+- Suppressor axes → opposition/difficulty quantities by sign; candidates named (opponent
+  `PerformanceLevel`/`LikelyResult`; one TacklesWon suppressor is itself position-like, suggesting
+  the OPPONENT's position).
+
+What is still genuinely UNKNOWN is only the **exact byte-level wiring** — which specific accessor
+the obfuscated iterator reads for each axis, and the centering transform. The obfuscation +
+no-runtime rule block confirming these to VERIFIED; the axis semantics, the position per-bin map,
+and the skill-family / candidate-field identifications are now evidence-backed, not guesses.
 
 No distribution data or bulk copyrighted code is reproduced; figures are aggregate structure
 from the owner's local files and addresses/field offsets from the committed dumps.

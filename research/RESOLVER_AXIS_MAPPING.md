@@ -129,8 +129,30 @@ spine `eGoalKeeper … eStriker`** (bin 0 = defensive end, bin 6 = attacking end
 **the player's position on the recovered 7-position vertical spine**, computed by the `*Value`
 ("PositionValue") family. This is a literal-level identification of the axis's meaning; the exact
 binning value and which `*Value` accessor the obfuscated iterator reads are still not seen in
-bytes, so it stays **INFERRED (strong)**, not VERIFIED. (The 4 wide roles are off-spine and not
-resolved onto this 7-bin axis.)
+bytes, so it stays **INFERRED (strong)**, not VERIFIED.
+
+#### Per-bin position assignment (profile-matched)
+
+Profiling all 7 bins across discriminating metrics (same bin index = same group across metrics;
+reproducible via `cmd/axisid`):
+
+| bin | pop % | Goals | Clear | Intercept | Passes | Crosses | → position (INFERRED) |
+|----:|------:|------:|------:|----------:|-------:|--------:|---|
+| b0 | 26% | 0.03 | 16.6 | 11.0 | 25 | 0.19 | **Central Defender** (central, lowest crosses, most numerous) |
+| b1 | 13% | 0.03 | **21.5** | **14.8** | 30 | 0.56 | **Full-back / stopper** (peak clear+intercept) |
+| b2 | **3%** | **0.02** | 18.6 | 13.5 | 40 | 0.71 | **Sweeper / libero** (rare, defensive, high distribution, lowest goals) |
+| b3 | 17% | 0.04 | 13.0 | 13.6 | **43** | 1.18 | **Defensive Midfielder** (peak passing) |
+| b4 | 15% | 0.05 | 8.9 | 12.8 | 42 | **2.93** | **(wide) Midfielder** (peak crosses) |
+| b5 | 9% | 0.11 | 4.4 | 10.9 | 38 | 2.15 | **Attacking Midfielder** |
+| b6 | 18% | **0.28** | 1.1 | 6.7 | 31 | 2.32 | **Striker** (peak goals/shots, lowest clear) |
+
+The **3% bin = Sweeper** is the strongest corroboration (the rarest real position, with a libero
+profile: very defensive yet top-distribution and lowest goals). GoalKeeper is absent from this
+outfield-metric axis — keepers have their own metrics (ShotsHeld/Parried/Tipped) and
+`GoalkeeperProperties.dat`. The assignment is **INFERRED** (football-profile + population-rarity
+match), not byte-proven; the def→att ordering and the Sweeper rarity make it high-confidence.
+(The 4 wide roles — WingBack/FullBack/Winger/Roaming — fold into the central spine bins here,
+e.g. the cross-peak at b4; they are not separate bins on this 7-group axis.)
 
 ### The equal-frequency context axes — continuous player/match quantities (booster vs suppressor)
 - **Supporting:** uniform marginals ⇒ quantile-binned continuous values. Per metric they split

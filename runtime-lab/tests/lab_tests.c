@@ -277,6 +277,21 @@ static void test_solvers(const char *dir) {
         CHECK(best == cand, "Solver B: correlator recovers cand=%d (got %d)", cand, best);
         CHECK(step == 1, "Solver B: 1-step LCG advance detected (cand=%d, step=%d)", cand, step);
     }
+
+    /* Solver B on the EXACT RUNTIME_CAPTURE_HOWTO.md schema (trace ingest): recover the
+     * generating candidate incl. FLOAT_CDF vs MOD_CDF, at a 1-step advance. */
+    const char *ep = "traces/_selftest_exact.jsonl";
+    for (int cand = 0; cand <= 3; cand++) {
+        CHECK(lab_trace_gen_exact(ep, cand, 2500, 909u), "trace ingest: exact-schema trace cand=%d", cand);
+        int step = -1; int best = lab_trace_best_exact(ep, &step);
+        if (cand == PR_CAND_ARGMAX) {
+            /* ARGMAX consumes a data-dependent number of steps; just require candidate recovery */
+            CHECK(best == cand, "trace ingest: recovers ARGMAX (got %d)", best);
+        } else {
+            CHECK(best == cand, "trace ingest: recovers cand=%d on howto schema (got %d)", cand, best);
+            CHECK(step == 1, "trace ingest: 1-step advance (cand=%d, step=%d)", cand, step);
+        }
+    }
 }
 
 int main(void) {

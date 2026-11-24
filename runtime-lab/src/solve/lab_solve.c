@@ -15,6 +15,7 @@
  */
 #include "lab_fit.h"
 #include "lab_cli.h"
+#include "lab_context.h"
 #include "picker_ref.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,6 +164,137 @@ int lab_solve_best_candidate(const char *path, int *step_out) {
     if (step_out) { int bk = 0; for (int k = 1; k <= 8; k++) if (stepk[k] > stepk[bk]) bk = k; *step_out = bk; }
     int bestc = 0; for (int c = 1; c < 4; c++) if (match[c] > match[bestc]) bestc = c;
     return ((double)match[bestc] / usable > 0.999) ? bestc : -1;
+}
+
+/* ---- `trace ingest` : consume the exact RUNTIME_CAPTURE_HOWTO.md schema ------------- */
+/* Schema fields: call_seq, pool_ptr, cursor, state_before, state_after, weight_block[],
+ * entry_array[], return_index, file, metric, position, duty, squad, performance_level,
+ * mentality, match_seed. The correlator derives cum[] from weight_block (hex/dec values =
+ * the cumulative counts the picker searched), confirms the LCG step count, and replays each
+ * picker_ref candidate from state_before to identify the real reduction. */
+
+/* parse an array field like "weight_block":[0x1,0x5,...] or [1,5,...] into cum[] */
+static int parse_num_array(const char *line, const char *key, double *out, int cap) {
+    char pat[64]; snprintf(pat, sizeof pat, "\"%s\":[", key);
+    const char *p = strstr(line, pat); if (!p) return 0;
+    p += strlen(pat); int k = 0;
+    while (*p && *p != ']' && k < cap) {
+        while (*p == ' ' || *p == '"' || *p == ',') p++;
+        if (*p == ']') break;
+        int hex = (p[0] == '0' && (p[1] == 'x' || p[1] == 'X'));
+        out[k++] = (double)strtoul(p, NULL, hex ? 16 : 10);
+        while (*p && *p != ',' && *p != ']') p++;
+    }
+    return k;
+}
+static int parse_int_field(const char *line, const char *key, long *out) {
+    char pat[64]; snprintf(pat, sizeof pat, "\"%s\":", key);
+    const char *p = strstr(line, pat); if (!p) return 0;
+    *out = strtol(p + strlen(pat), NULL, 10); return 1;
+}
+static void parse_str_field(const char *line, const char *key, char *out, int n) {
+    out[0] = 0; char pat[64]; snprintf(pat, sizeof pat, "\"%s\":\"", key);
+    const char *p = strstr(line, pat); if (!p) return; p += strlen(pat);
+    int i = 0; while (*p && *p != '"' && i < n - 1) out[i++] = *p++; out[i] = 0;
+}
+
+int lab_trace_best_exact(const char *path, int *step_out) {
+    FILE *f = fopen(path, "rb"); if (!f) return -2;
+    int usable = 0, match[4] = {0,0,0,0}; long stepk[9] = {0};
+    char line[16384]; double cum[4096];
+    while (fgets(line, sizeof line, f)) {
+        long sb, sa, ri;
+        if (!parse_int_field(line, "state_before", &sb)) continue;
+        if (!parse_int_field(line, "state_after", &sa)) continue;
+        if (!parse_int_field(line, "return_index", &ri)) continue;
+        int n = parse_num_array(line, "weight_block", cum, 4096);
+        if (n <= 0) continue;
+        usable++;
+        int k = lcg_steps((uint32_t)sb, (uint32_t)sa, 8); if (k >= 0 && k <= 8) stepk[k]++;
+        for (int c = 0; c < 4; c++) { uint32_t st = (uint32_t)sb; pr_weights w = { cum, n, 1 }; if (pr_pick(&w, &st, (pr_candidate)c) == (int)ri) match[c]++; }
+    }
+    fclose(f);
+    if (!usable) return -1;
+    if (step_out) { int bk = 0; for (int k = 1; k <= 8; k++) if (stepk[k] > stepk[bk]) bk = k; *step_out = bk; }
+    int bestc = 0; for (int c = 1; c < 4; c++) if (match[c] > match[bestc]) bestc = c;
+    return ((double)match[bestc] / usable > 0.999) ? bestc : -1;
+}
+
+int lab_trace_ingest(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) { fprintf(stderr, "trace ingest: cannot open %s\n", path); return 2; }
+    int rows = 0, usable = 0, match[4] = {0,0,0,0}; long stepk[9] = {0};
+    int by_pos[POS__N][4]; memset(by_pos, 0, sizeof by_pos);
+    int pos_rows[POS__N]; memset(pos_rows, 0, sizeof pos_rows);
+    char line[16384]; double cum[4096];
+    while (fgets(line, sizeof line, f)) {
+        rows++;
+        long sb, sa, ri;
+        if (!parse_int_field(line, "state_before", &sb) || !parse_int_field(line, "state_after", &sa) ||
+            !parse_int_field(line, "return_index", &ri)) continue;
+        int n = parse_num_array(line, "weight_block", cum, 4096);
+        if (n <= 0) continue;
+        usable++;
+        int k = lcg_steps((uint32_t)sb, (uint32_t)sa, 8); if (k >= 0 && k <= 8) stepk[k]++;
+        char poss[16]; parse_str_field(line, "position", poss, sizeof poss);
+        lab_position pp; int have_pos = poss[0] && lab_position_parse(poss, &pp);
+        for (int c = 0; c < 4; c++) {
+            uint32_t st = (uint32_t)sb; pr_weights w = { cum, n, 1 };
+            if (pr_pick(&w, &st, (pr_candidate)c) == (int)ri) { match[c]++; if (have_pos) by_pos[pp][c]++; }
+        }
+        if (have_pos) pos_rows[pp]++;
+    }
+    fclose(f);
+    printf("trace ingest — %d usable rows (of %d) from %s\n\n", usable, rows, path);
+    if (!usable) { printf("no usable rows; see research/RUNTIME_CAPTURE_HOWTO.md for the exact schema\n"
+                          "(needs state_before/state_after/return_index + weight_block[]).\n"); return 3; }
+
+    printf("LCG step count (state_before -> state_after), confirms [ECX+0x1c] is the RNG:\n");
+    for (int k = 0; k <= 8; k++) if (stepk[k]) printf("  %d step(s): %ld rows\n", k, stepk[k]);
+    printf("\npicker reduction — candidate agreement replayed from state_before over weight_block:\n");
+    int bestc = 0;
+    for (int c = 0; c < 4; c++) { double fr = (double)match[c]/usable;
+        printf("  %-10s %6.2f%% (%d/%d)\n", pr_candidate_name((pr_candidate)c), 100*fr, match[c], usable);
+        if (match[c] > match[bestc]) bestc = c; }
+    double bf = (double)match[bestc]/usable;
+    printf("\nverdict: ");
+    if (bf > 0.999) printf("picker reduction = %s  [VERIFIED by runtime capture]\n", pr_candidate_name((pr_candidate)bestc));
+    else if (bf > 0.9) printf("%s strong (%.1f%%) [INFERRED]; check the misses / weight_block encoding\n", pr_candidate_name((pr_candidate)bestc), 100*bf);
+    else printf("no candidate dominates [UNKNOWN]; verify the weight_block is the cum[] the picker searched\n");
+
+    /* context->axis tie: if positions were varied, report per-position agreement of the winner */
+    int any_pos = 0; for (int i = 0; i < POS__N; i++) if (pos_rows[i]) any_pos = 1;
+    if (any_pos) {
+        printf("\ncontext tie (winner agreement by position; validates position->axis binning):\n");
+        for (int i = 0; i < POS__N; i++) if (pos_rows[i])
+            printf("  %-4s %6.2f%% (%d rows)\n", lab_position_str((lab_position)i),
+                   100.0 * by_pos[i][bestc] / pos_rows[i], pos_rows[i]);
+        printf("  (uniform high agreement across positions = the reduction is position-agnostic,\n"
+               "   consistent with position selecting the distribution, not the reduction.)\n");
+    }
+    return 0;
+}
+
+/* synthetic trace in the EXACT howto schema (for testing the ingest without the game) */
+int lab_trace_gen_exact(const char *path, int cand, int rows, uint32_t seed) {
+    FILE *f = fopen(path, "wb"); if (!f) return 0;
+    const char *POSN[] = { "DC","DM","MC","AMC","ST" };
+    uint32_t st = seed ? seed : 1;
+    for (int r = 0; r < rows; r++) {
+        int n = 3 + (int)(pr_lcg_next(&st) % 7);
+        double cum[16]; double acc = 0;
+        for (int i = 0; i < n; i++) { acc += 1 + (pr_lcg_next(&st) % 20); cum[i] = acc; }
+        uint32_t sb = st, stc = sb; pr_weights w = { cum, n, 1 };
+        int ret = pr_pick(&w, &stc, (pr_candidate)cand); uint32_t sa = stc; st = sa;
+        fprintf(f, "{\"call_seq\":%d,\"pool_ptr\":\"0x0\",\"cursor\":0,\"state_before\":%u,\"state_after\":%u,"
+                   "\"weight_block\":[", r, sb, sa);
+        for (int i = 0; i < n; i++) fprintf(f, "%.0f%s", cum[i], i + 1 < n ? "," : "");
+        fprintf(f, "],\"entry_array\":[],\"return_index\":%d,\"file\":1,\"metric\":\"GoalsScored\","
+                   "\"position\":\"%s\",\"duty\":\"Support\",\"squad\":2,\"performance_level\":7,"
+                   "\"mentality\":3,\"match_seed\":%u}\n", ret, POSN[r % 5], seed);
+    }
+    fclose(f);
+    return 1;
 }
 
 int lab_cmd_solve(int argc, char **argv) {

@@ -35,6 +35,14 @@ It **reuses** the repo's VERIFIED resolver parser + LCG (`../match/sim/resolver_
     ./cm2008-lab report axis-mapping --model 1 --metric GoalsScored   # Solver A + C
     ./cm2008-lab solve  capture-spec                                   # Solver B recipe
     ./cm2008-lab solve  picker --trace YOURCAPTURE.jsonl              # Solver B correlator
+    ./cm2008-lab trace  ingest --file YOURCAPTURE.jsonl              # ingest the howto-schema capture
+
+Runtime capture (Solver B, LAWFUL install only — the lab never runs the game): capture the
+picker at VA `0x00817f3c` (rebase to `module_base + 0x417f3c` under ASLR) read-only per
+`../research/RUNTIME_CAPTURE_HOWTO.md`, then `trace ingest --file` it. The correlator confirms
+the LCG step count, identifies the reduction (FLOAT_CDF/MOD_CDF/UNIFORM_N/ARGMAX), and reports
+the per-position tie. Validate the pipeline without the game via `trace gen-exact --cand C` then
+`trace ingest`.
 
 Data dir: `--dir PATH` or `$RESOLVER_DIR` (default: the canonical extracted path).
 Traces go to `traces/<id>.jsonl`; reproducibility manifests to `experiments/<id>.json`.

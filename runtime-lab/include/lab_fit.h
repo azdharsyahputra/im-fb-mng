@@ -71,4 +71,9 @@ int lab_solve_gen_synthetic(const char *path, int cand, int rows, uint32_t seed)
 int lab_solve_correlate(const char *path);
 int lab_solve_best_candidate(const char *path, int *step_out);
 
+/* `trace ingest` on the exact RUNTIME_CAPTURE_HOWTO.md schema + test hooks. */
+int lab_trace_ingest(const char *path);
+int lab_trace_gen_exact(const char *path, int cand, int rows, uint32_t seed);
+int lab_trace_best_exact(const char *path, int *step_out);
+
 #endif /* CM2008_LAB_FIT_H */

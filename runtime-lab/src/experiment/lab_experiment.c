@@ -6,6 +6,7 @@
 #include "lab_statistics.h"
 #include "lab_trace.h"
 #include "lab_version.h"
+#include "lab_fit.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -247,7 +248,21 @@ int lab_cmd_experiment(int argc, char **argv) {
 
 int lab_cmd_trace(int argc, char **argv) {
     const char *sub = argc > 0 ? argv[0] : "";
-    if (strcmp(sub, "inspect") != 0) { printf("usage: trace inspect --id EXPERIMENT_ID [--dir traces]\n"); return 2; }
+    if (strcmp(sub, "ingest") == 0) {
+        const char *file = opt(argc, argv, "--file", NULL);
+        if (!file) { fprintf(stderr, "trace ingest: --file CAPTURE.jsonl required (see research/RUNTIME_CAPTURE_HOWTO.md)\n"); return 2; }
+        return lab_trace_ingest(file);
+    }
+    if (strcmp(sub, "gen-exact") == 0) { /* demo/test: synthetic trace in the howto schema */
+        const char *out = opt(argc, argv, "--out", "traces/exact.jsonl");
+        int cand = atoi(opt(argc, argv, "--cand", "0"));
+        int rows = atoi(opt(argc, argv, "--rows", "2000"));
+        uint32_t seed = (uint32_t)strtoul(opt(argc, argv, "--seed", "777"), NULL, 10);
+        if (!lab_trace_gen_exact(out, cand, rows, seed)) { fprintf(stderr, "gen-exact failed\n"); return 2; }
+        printf("wrote %s (howto schema, cand=%d, rows=%d) -> validate: trace ingest --file %s\n", out, cand, rows, out);
+        return 0;
+    }
+    if (strcmp(sub, "inspect") != 0) { printf("usage: trace inspect --id EXPERIMENT_ID [--dir traces]  |  trace ingest --file CAPTURE.jsonl\n"); return 2; }
     const char *id = opt(argc, argv, "--id", NULL);
     const char *dir = opt(argc, argv, "--dir", "traces");
     if (!id) { fprintf(stderr, "trace inspect: --id required\n"); return 2; }

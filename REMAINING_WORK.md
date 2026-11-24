@@ -61,11 +61,15 @@ Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness 
 - Method: disasm the getter stubs (crack) → column index per getter. Complements P2.
 - Deliverable: getter→column table.
 
-## P6 — SetGameState writer + worker-thread event cadence
-[~] 32 eGameState values known; the writer + the per-fixture event timing (dt/cadence) unresolved.
-- Method: disasm the state-write sites + the per-fixture worker loop (0x4700b0 run() already located)
-  for the clock/counter that paces events.
-- Deliverable: VERIFIED state transitions + event cadence (feeds the real dt/rate for P1).
+## P6 — SetGameState writer + worker-thread event cadence  [~] cadence+clock VERIFIED; writer partial
+[x] CADENCE + CLOCK VERIFIED (research/MATCH_CLOCK_CADENCE.md): match time is in SECONDS; clock
+    FUN_0077c660 formats H:MM (×1/3600 hours 5-bit, ×1/60 minutes 6-bit). Per-entity event cadence =
+    +10.0 s (FUN_009d52e0, const 0xc5d43c=10.0) → each entity acts ~once per 10 sim-seconds
+    (~540/entity per 90'). This is the real dt/interval basis.
+[ ] SetGameState writer: e850's byte stores are boolean flags, not the eGameState enum; the enum
+    write site (InPlay=0/HalfOver=0x0b/GameOver=0x0c) not pinned (lifecycle already VERIFIED in the Go
+    state/match pkgs; only the original writer offset pends).
+- Optional wiring: give the native tick a 10-s per-entity cadence (no engine numbers changed yet).
 
 ## P7 — Validate the formula runtime semantics
 [ ] Confirm the clean-room evaluator (`formula` pkg) matches the real engine on sample formulas.

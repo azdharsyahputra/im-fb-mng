@@ -45,3 +45,20 @@ confirming this is that table's schema. NAMES are VERIFIED (the game's own schem
   (attrmap.Solve / the 76k-player fingerprints — owned by the A1/coordinator work).
 
 This closes the "what are the names" half of A1 statically; the column-binding half is value-matching.
+
+## Column-shape cross-check vs real PlayerProperties.dat (76,051 records) — PARTIAL binding
+Profiling every on-disk u16 column's shape confirms the schema order for the TAIL and one sparse attr,
+but leaves the main block for value-matching:
+- **cols 63–76 CONFIRMED** = the 14 "…OrX…" tendency fields (schema 63–76): all max=15, distinct≈15,
+  ~99.5% sentinel. The count (14) and 0–15 range match exactly.
+- **cols 61–62 CONFIRMED-ish** = PenaltyTaking / PreferredFoot (schema 61–62): ~98.8% sentinel (set for
+  few players).
+- **col 7 CONFIRMED** = ThrowIns (schema 7): 99.9% of values ≤2, max 79 — a rare specialist attribute.
+- **cols 18–60**: uniformly ~82% sentinel (⇒ ≈18% ≈ 13.7k real players carry attributes; the rest are
+  empty person slots) and near-continuous 0–100 (distinct 80–98). A consistent attribute block, but the
+  naive map fails a spot-check (col48-as-GoalKeeper → 99.8% of non-sentinel ≥15, not keeper-sparse), so
+  the 0–60 on-disk order may be permuted vs schema and/or positions use a different scale.
+- **cols 0–17**: ~48–73% sentinel, distinct≈24 (quantized) — structurally distinct from 18–60.
+
+**Verdict:** names VERIFIED; on-disk order CONFIRMED for cols 7 and 61–76; the 0–60 block binding needs
+value-matching against real captures / the 76k-player fingerprints (A1/coordinator tooling).

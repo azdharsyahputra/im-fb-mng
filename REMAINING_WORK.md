@@ -85,10 +85,11 @@ Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness 
     number (super-manager-engine d6a492d). (EventModel keeps its coarser rate; FlowProbs action-mix
     unchanged.)
 
-## P7 — Validate the formula runtime semantics
-[ ] Confirm the clean-room evaluator (`formula` pkg) matches the real engine on sample formulas.
-- Method: static-trace `FUN_00818120` on a couple of known formula trees; compare to the Go output.
-- Deliverable: evaluator validation note.
+## P7 — Validate the formula runtime semantics  [x] DONE (Go evaluator VERIFIED 1:1)
+[x] Cross-checked the Go `formula` evaluator vs FUN_00818120→817fe0/817df0/818080 (crack disasm,
+    research/FORMULA_EVALUATOR_VALIDATION.md): binop op@+0x24 {1=ADD(faddp),2=SUB,3=MUL,4=DIV,
+    5=UNARY} and agg@+0x20 {0=SUM,1=MEAN,2=PRODUCT} and node offsets (children +0x28/+0x2c, result
+    +0x30) all match the port exactly. The evaluator is a faithful 1:1 port, not an approximation.
 
 ---
 

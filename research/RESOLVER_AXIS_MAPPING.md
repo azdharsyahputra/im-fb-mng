@@ -64,8 +64,24 @@ consistent with file selection = a context partition (position/tier) over the sa
 ## 3. Within-record axes — hypothesis testing (Workstream 4)
 
 The axes are shared within a file and identified by breakpoint signature (they move slot per
-metric). Roles below come from effect sizes, collapse patterns, and breakpoint signs. **None is
-a recovered variable name.**
+metric). Roles below come from effect sizes, collapse patterns, breakpoint signs, and — new in
+this pass — **marginal-shape analysis** and **per-bin preference gradients**. **None is a
+recovered literal variable name**, but the SEMANTICS are now strongly characterised.
+Reproducible via `super-manager-engine/cmd/axisid`; locked by `TestAxisIdentity`.
+
+### New method: population-marginal shape (the decisive discriminator)
+
+Summing each cell's population count along one axis gives that axis variable's marginal
+distribution. In file 1:
+
+- **The draw axis and axes 2/3/4 have a UNIFORM marginal** (1/9, 1/7, 1/6, 1/5 to 3 decimals,
+  maxDev ≤ 0.007) ⇒ they are **equal-frequency (quantile) binned**: the draw axis is the RNG
+  dimension; the others are **continuous quantities** sliced into equal-population bins (so the
+  marginal alone cannot name them — by construction it is flat).
+- **Exactly ONE context axis has a NON-uniform, fixed marginal** `[0.255, 0.134, 0.028, 0.165,
+  0.145, 0.093, 0.180]` (maxDev ≈ 0.11), **identical across every metric** and carrying the
+  recurring signature `[4,5,7,8,9,13]`. A 7-group variable with lumpy fixed proportions is
+  **categorical**, not a quantile-binned scalar.
 
 ### axis0 — the draw / quantile dimension
 - **Supporting:** breakpoints are the universal symmetric ±20.9 grid, byte-identical across
@@ -78,44 +94,65 @@ a recovered variable name.**
 - **Confidence / status:** **VERIFIED** (as the always-active shared axis) / **INFERRED** (as
   the RNG draw specifically — the picker reduction that would consume it is obfuscated).
 
-### axis1 — primary involvement / volume (HYPOTHESIS: position/role-driven)
-- **Supporting:** dominant effect on counting stats (Crosses ~28×, ShotsOnTarget ~16×, Assists
-  ~6×); its signature `[4,5,7,8,9,13]` is the most frequent (46×) and **relocates slot per
-  metric** (slot1 for attacking, slot3 for TacklesWon, slot2 for Clearances) — i.e. the same
-  variable reused across metrics, as a positional/role grouping would be.
-- **Potentially refuting:** it also modulates some defensive metrics; a pure "position" axis
-  might be expected to be more category-like, yet its breakpoints are continuous-valued.
-- **Alternative:** expected-touches / opportunity volume (a derived count), not raw position.
-- **Confidence / status:** **INFERRED** (role = volume) / **UNKNOWN** (literal field).
+### The categorical axis — PLAYER POSITION / role (upgraded: HYPOTHESIS → INFERRED-strong)
+- **Supporting (decisive):** it is the only non-equal-frequency context axis (fixed categorical
+  marginal); and its **per-bin metric preferences trace a defence→midfield→attack gradient**
+  (same bin index = same group across metrics):
+  - GoalsScored mean per bin: `0.029 0.030 0.024 0.038 0.048 0.105 0.284` — rises to the last bin.
+  - ShotsOnTarget: `0.081 0.081 0.066 0.120 0.158 0.426 1.046` — same attack-end rise.
+  - Clearances: `16.6 21.5 18.6 13.0 8.9 4.4 1.1` — falls from the defence end.
+  - Interceptions: `11.0 14.8 13.5 13.6 12.8 10.9 6.7` — defence/mid peak.
+  - PassesCompleted: `25.2 29.9 40.1 43.3 42.4 37.6 30.9` — midfield peak.
+  Goals/shots peak at one end, clearances at the other, passes in the middle — the textbook
+  position ordering. It also dominates counting-stat effect sizes (Crosses ~28×, Shots ~16×) and
+  relocates slot per metric, exactly as a reused positional grouping would.
+- **Potentially refuting:** none found; the gradient is monotone and consistent across metrics.
+- **Alternative:** a role/duty grouping rather than raw position — but either way it is the
+  categorical defence↔attack role axis.
+- **Confidence / status:** **INFERRED (strong)** — position/role axis. Literal CM field (e.g.
+  `EPositionValue`) unproven from bytes, but the semantic is now evidence-backed, not a guess.
 
-### axis2 — quality / matchup differential (HYPOTHESIS: conversion or player-vs-opponent)
-- **Supporting:** drives *success-given-involvement* (GoalsScored ~5.5×) but barely moves raw
-  volume (Crosses ~1.1×); **collapsed to 2 bins by the pure-volume metrics** GroundCovered and
-  Touches (a volume metric does not need a quality axis); several metrics give it symmetric
-  breakpoints (a relative/differential quantity).
-- **Potentially refuting:** not all metrics give it symmetric breakpoints, so "differential" is
-  not universal.
-- **Alternative:** finishing/conversion skill (absolute, not relative).
-- **Confidence / status:** **INFERRED** (role = quality) / **UNKNOWN** (literal field).
-
-### axes 3, 4 — secondary modifiers
-- **Supporting:** small effect sizes (mostly ≤2×); collapsed for specific defensive/keeper/foul
-  pockets.
-- **Potentially refuting:** low signal makes role assignment weak.
-- **Alternative:** interaction/trim dimensions (e.g. fatigue, set-piece context).
-- **Confidence / status:** **HYPOTHESIS**.
+### The equal-frequency context axes — continuous player/match quantities (booster vs suppressor)
+- **Supporting:** uniform marginals ⇒ quantile-binned continuous values. Per metric they split
+  by SIGN of their per-bin gradient:
+  - **booster axes** rise monotonically with the metric (GoalsScored has one at ~4.5× from first
+    to last bin; TacklesWon has two at ~2.9× / ~2.6×) ⇒ the player's own relevant ability/skill
+    for that action.
+  - **suppressor axes** fall monotonically (GoalsScored has ones at 0.25× and 0.36×; TacklesWon
+    at 0.33×) ⇒ an opposition / difficulty / defensive-pressure quantity.
+  - PassesCompleted is ~flat on all of them (last/first ≈ 1.0) — passing volume is governed by
+    position/possession, not these ability axes (a useful negative control).
+- **Potentially refuting:** which specific continuous quantity (own rating vs opponent rating vs
+  form/condition vs performance level) maps to which booster/suppressor axis is not pinned; the
+  booster/suppressor SIGN is clear, the exact field is not.
+- **Alternative:** some may be match-context (tempo, possession) rather than player attributes.
+- **Confidence / status:** **INFERRED** (booster = own ability, suppressor = opposition/difficulty
+  by sign) / **UNKNOWN** (exact field per axis).
 
 ## 4. Conclusion
 
 - **Recovered (VERIFIED):** the output-statistic ↔ record ↔ grid-axis structure; the file/record
-  selector names; `*Performance` = scalar base rates; the picker interface.
-- **INFERRED:** axis0 = draw axis; axis1 = volume; axis2 = quality; same-population re-binning.
-- **UNKNOWN (and provably not caller-derivable):** the literal engine quantity behind each
-  within-record context axis, and the picker's internal bin-reduction. WS2 shows the context is
-  read internally by the obfuscated iterators, so this is a protector boundary, not an
-  unfinished analysis. Promoting the role hypotheses to literal names requires the runtime
-  capture in `RUNTIME_PICKER_INVESTIGATION.md` Part 2 (a lawful unmodified install + read-only
-  debugger) — explicitly out of scope here (no DRM bypass, no running the cracked exe).
+  selector names; `*Performance` = scalar base rates; the picker interface; the draw axis
+  (equal-frequency, universal, never collapses).
+- **INFERRED (strong):** the categorical context axis = **player position/role** on a
+  defence→attack ordering (decisive: lumpy fixed marginal + clean per-bin goals↑/clearances↓/
+  passes-mid gradient). **INFERRED:** the equal-frequency context axes are continuous
+  quantile-binned quantities that split into **boosters** (own relevant ability, monotonic-up)
+  and **suppressors** (opposition/difficulty, monotonic-down) by the sign of their per-bin
+  gradient; the six files are re-binnings of one population.
+- **UNKNOWN (and provably not caller-derivable):** the LITERAL engine field behind each context
+  axis (which attribute/rating is each booster/suppressor; the exact position enum), and the
+  picker's internal bin-reduction. WS2 shows the context is read internally by the obfuscated
+  iterators, so this is a protector boundary, not an unfinished analysis. Promoting the semantics
+  to literal names requires the runtime capture in `RUNTIME_PICKER_INVESTIGATION.md` Part 2 (a
+  lawful unmodified install + read-only debugger) — out of scope here (no DRM bypass, no running
+  the cracked exe).
+
+**Net progress this pass:** two previously-vague roles were upgraded — axis "volume" → **position/
+role** (INFERRED-strong, decisive gradient evidence), and the remaining context axes were split
+into evidence-backed **booster vs suppressor** continuous quantities. The only piece still fully
+UNKNOWN is the literal field name per axis, which the obfuscation + no-runtime rule genuinely
+block.
 
 No distribution data or bulk copyrighted code is reproduced; figures are aggregate structure
 from the owner's local files and addresses/field offsets from the committed dumps.

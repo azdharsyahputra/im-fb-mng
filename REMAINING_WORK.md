@@ -1,66 +1,72 @@
-# CM2008 Reconstruction — Remaining Work
+# REMAINING_WORK.md — the road to a faithful CM2008 engine (knock out 1/1)
 
-What is **done**, and what is **not yet done** and why. Honest status: VERIFIED (proven against the
-owner's real bytes/files), INFERRED (strong, evidence-backed), UNKNOWN (not recovered). Nothing is
-fabricated — where logic/data isn't recovered it's left as an explicit gap, not invented.
+Everything static is now **much easier**: the crack image `/Volumes/CM2008/Crack JPN/cm2008.exe`
+is unpacked, so `.text` reads clean with capstone (file_off = VA−0x400000). Items that used to say
+"runtime capture only" / "protector boundary" are mostly STATIC now — proven this session (picker,
+FUN_00662cf0, the contest duel, the 267 event names all cracked statically from this image).
 
-Last updated from the running sessions; regenerate structural parts with `cmd/dbscan` / `cmd/mgmtdeps`.
-
----
-
-## ✅ Done (foundation — solid)
-
-- **Crypto/format**: formula.xml Blowfish cracked (key `deliverance`); DATa `.dat` envelope; MatchResolver grid.
-- **MatchResolver**: context grid recovered (draw + position + booster/suppressor axes); position bins mapped; VERIFIED.
-- **Formula layer**: 1189 formulas parse, 0 dangling refs; management subsystems evaluated from real bodies.
-- **Management (ungated)**: Budget, WageLimits, CompetitionIncome, BoardInvest (input-driven) + ManagerSacking, ContractInterest, NewPlayerSalary, ContractualDesires, PlayerReputation, TransferModule, FinancialCosts, ClubInfo, BoardExpectation (incl. ManagerSackability). All from real formula.xml.
-- **Database structure**: 88 DATa tables scanned (id/f64/date fields, 370 FK candidates) → `research/DATABASE_SCHEMA_MAP.md`. Club/Contract byte-aligned decoders corrected + tested.
-- **Engine**: resolver sampler, league/season, squad strength from real attributes, LCG, contest, picker interface.
+Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness × feasibility now).
 
 ---
 
-## ⏳ A. Gated — waiting on a CAPTURE from you (tooling is READY)
+## P1 — Exact per-event RATES  ⟵ the #1 blocker to "faithful"
+[ ] Recover the real probability/threshold constants each event uses, to replace the APPROXIMATE
+    clean-room guesses in `match.FlowProbs` / `match.EventProbs`.
+- Why feasible now: the agent already found the shape statically — `FUN_0077be30` does
+  `draw→mul10>>32` (≈10% trigger) then `draw→mul2>>32` (50/50). So the thresholds ARE inline
+  constants in the crack, not hidden.
+- Method: disasm the dispatcher `FUN_0077cd40` + the resolver-band LCG sites (0x70–0x76xxxx = 144
+  draws) and the duel callers; harvest each `imul <const>>>32` / compare constant → that IS the
+  event's probability. Map const → event via the counter it bumps (see P3).
+- Deliverable: `FlowProbs`/`EventProbs` values replaced with recovered constants (VERIFIED), or the
+  ones that stay unrecovered clearly kept APPROXIMATE.
 
-| # | Item | Blocker | Unblock |
-|---|---|---|---|
-| A1 | 77 PlayerProperties columns → attribute **names** | column→name map not in static data | run `cmd/attrmap` on a `capture.json` (player_id + named attrs from your game) — see `research/ATTRIBUTE_CAPTURE_HOWTO.md` |
-| A2 | Picker internal reduction + **literal axis names** | logic is in the SecuROM-protected picker, runtime-only | `cm2008-native trace ingest` on a read-only debugger capture from your lawful install — see `research/RUNTIME_CAPTURE_HOWTO.md` |
-| A3 | Attribute-driven formula groups: PlayerConstant (113), PlayerDegradeable, PlayerFluid, PlayerHappiness, TeamSelection (56) | need A1 (player attribute inputs) | build after A1 lands |
+## P2 — PlayerProperties column → attribute-NAME map (77 cols)
+[~] Unblocks per-player FACETS (attack/defence/finishing/keeper/pace…) so TeamRating stops being
+    flat-from-Overall. `attrmap.Solve` already exists (value-matching solver).
+- Why feasible now: crack reads all 77 columns; solver just needs anchors.
+- Method (pick one): (a) a tiny REAL capture — ~8–10 players' named attrs read off the owned game
+  UI (read-only) → `attrmap.Solve` resolves columns uniquely; OR (b) correlate columns against the
+  VERIFIED skill-family split (shooting vs defensive metrics) + known PlayerConstant getter names.
+- Deliverable: resolved column→name map → real per-facet TeamRating.
 
-## 🔨 B. In progress — Lab session (`local_4973aa86`, match-engine/geometry)
+## P3 — Per-name counter-bit wiring (GCMatchPredicate → counter)
+[~] Tie each of the 267 event names to its stat counter bit + dispatch flag (names VERIFIED, wiring
+    currently INFERRED).
+- Method: disasm `FUN_005cd020` (saturating 5-bit counter) + the dispatcher flags [ebx+4/5/6];
+  map flag → resolver → counter bits → the packed-stat dword → the predicate name.
+- Deliverable: EVENT_CATALOG rows upgraded to VERIFIED flag→counter per event. (Also feeds P1.)
 
-| # | Item | Status |
-|---|---|---|
-| B1 | Detailed match engine real execution (per-actor contest c710 wired; pass/shot/tackle/GK math) | partial |
-| B2 | Movement integrator writer (`FUN_009f0090` seeder VERIFIED; integrator hunt) | Milestone-2 Agent C running |
-| B3 | Event **cadence/timing** (threaded sim) | UNKNOWN statically; 1 labeled calibration param until a runtime capture |
+## P4 — Byte-prove the bit-packed field offsets (player/club/contract)
+[~] Currently INFERRED. Make them VERIFIED.
+- Method: disasm the decoder/getter functions in the crack; read each field's exact bit offset/width.
+- Deliverable: VERIFIED offsets in the data decoders.
 
-## 🗂️ C. Database — structure done, NAMES not
+## P5 — 77 → 105 getter map (leaf accessors)
+[ ] Which PlayerProperties column each of the ~105 PlayerConstant getters reads.
+- Method: disasm the getter stubs (crack) → column index per getter. Complements P2.
+- Deliverable: getter→column table.
 
-| # | Item | Blocker | Unblock |
-|---|---|---|---|
-| C1 | Field **names** for the 88 tables (offsets/types/FKs mapped; names unknown except Club's 111) | no byte-aligned on-disk loader / field registrar in the dumps | decompile the loader, or cross-ref A1-style |
-| C2 | FK **disambiguation** (small-id tables overlap → multiple candidates) | id-range overlap | tighten by value-range / cardinality heuristics |
+## P6 — SetGameState writer + worker-thread event cadence
+[~] 32 eGameState values known; the writer + the per-fixture event timing (dt/cadence) unresolved.
+- Method: disasm the state-write sites + the per-fixture worker loop (0x4700b0 run() already located)
+  for the clock/counter that paces events.
+- Deliverable: VERIFIED state transitions + event cadence (feeds the real dt/rate for P1).
 
-## 🧠 D. Behavioural systems — NOT built (need recovered logic, not just constants)
-
-| # | Item | Blocker |
-|---|---|---|
-| D1 | Native **decision logic** combining constants+inputs: sack decision (beyond score), transfer-valuation combination, contract-offer generation, squad selection | bodies native, un-dumped/corrupt |
-| D2 | **Multi-season career loop** | **DONE** (super-manager-engine `career` pkg): single-season (finance/board from real formulas), multi-season carry-forward, multi-division **promotion/relegation** (pyramid), knockout **cup** with the recovered penalty shootout. Real amounts; scheduling/position→ranking/prize-split are labelled models. |
-| D2b | **Transfers actually executing** + training/development/injury as running systems | **GATED**: transfer execution needs the native valuation-combination logic (D1, un-dumped) and squad-fit (needs the attribute mapping, A1). Not built — would require inventing. |
-| D3 | **AI manager** (lineup / tactics / transfer choices) | thin / UNKNOWN |
-
-## 🧱 E. True wall
-
-| # | Item | Why |
-|---|---|---|
-| E1 | Picker internal reduction math | SecuROM runtime-decrypted; static = junk (verified). Only via A2 runtime capture. |
+## P7 — Validate the formula runtime semantics
+[ ] Confirm the clean-room evaluator (`formula` pkg) matches the real engine on sample formulas.
+- Method: static-trace `FUN_00818120` on a couple of known formula trees; compare to the Go output.
+- Deliverable: evaluator validation note.
 
 ---
 
-## Suggested next (no fabrication required)
+## Already DONE this run (for context)
+[x] Resolver context grid cracked · [x] LCG + uniform · [x] Formula evaluator (grammar) ·
+[x] Picker + whole 0x5b3–0x5b5 cluster (deterministic, no RNG) · [x] Contest duel p=A/(A+B) ·
+[x] 267 event names + 3×3 zone model · [x] SCALE=1/255 · [x] Seeder · [x] Integrator VERIFIED-NEGATIVE ·
+[x] FUN_00662cf0 = GCFormulaModule::Find · [x] LCG map (508 sites) · [x] Native engine: event-loop +
+rich taxonomy + season, all deterministic from real squad Overalls.
 
-1. **D2 multi-season loop** — compose the existing `league` (fixtures/table) + `mgmt` (budget/finance/board) into a season-over-season sim. Real inputs, real formulas; the only approximations are clearly-labeled scheduling choices.
-2. **C2 FK disambiguation** — cheap refinement of the DB map.
-3. Everything else waits on **your captures (A1/A2)** or the **lab (B)**.
+## Suggested order
+P1 → P3 (they feed each other: counter wiring names the events whose rate constants P1 harvests) →
+P2 (facets) → P4/P5 (data offsets/getters) → P6 (cadence) → P7 (formula validation).

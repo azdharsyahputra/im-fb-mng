@@ -17,6 +17,7 @@
 #include "lab_context.h"
 #include "lab_sampler.h"
 #include "lab_experiment.h"
+#include "lab_cli.h"
 
 static int usage(void) {
     printf(
@@ -44,16 +45,6 @@ static int usage(void) {
 "  common: --dir PATH (data dir; default $RESOLVER_DIR), --help\n"
 "\n"
 "Confidence tags in output: VERIFIED / INFERRED / APPROXIMATE / UNKNOWN.\n");
-    return 0;
-}
-
-/* tiny flag parser */
-const char *opt(int argc, char **argv, const char *name, const char *def) {
-    for (int i = 0; i < argc - 1; i++) if (strcmp(argv[i], name) == 0) return argv[i + 1];
-    return def;
-}
-int has(int argc, char **argv, const char *name) {
-    for (int i = 0; i < argc; i++) if (strcmp(argv[i], name) == 0) return 1;
     return 0;
 }
 

@@ -18,8 +18,8 @@ LABSRC  := src/main.c \
            src/trace/lab_trace.c \
            src/statistics/lab_statistics.c
 
-# Only include modules that exist yet (trace/statistics land in later phases).
-LABSRC  := $(wildcard src/main.c src/model/*.c src/context/*.c src/sampler/*.c src/experiment/*.c src/trace/*.c src/statistics/*.c)
+# All lab sources (top-level helpers + every module directory).
+LABSRC  := $(wildcard src/*.c src/model/*.c src/context/*.c src/sampler/*.c src/experiment/*.c src/trace/*.c src/statistics/*.c)
 
 .PHONY: all test clean
 all: cm2008-lab

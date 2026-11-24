@@ -5,7 +5,18 @@ p=A/(A+B), formula evaluator, record layouts, 10s cadence). What is NOT yet 1:1 
 gameplay engine** — the logic that makes CM2008 play like CM2008. These are large tasks (essentially
 porting the match AI + tactics + macro). Honest scope flags below. Work them in order.
 
-## G1 — Causal match-engine logic (the per-event decision tree)  ⟵ START HERE
+## G1 — Causal match-engine logic (the per-event decision tree)  [~] atoms mapped; generator is a huge subsystem
+PROGRESS (VERIFIED, research/G1_*.md): the tick SKELETON (ProcessData orchestration, pump loop over
+0x2768 per-entity records, dispatcher cd40 routing by desc+4/5/6, activate cf20, clock+cadence), the
+descriptor model (0x20B, 2 contestants→7-bit attrs, event-type handle), and that the 9efaXX class
+handlers are the 2D VIEWER (presentation, no stats). All match STATS come from 3 resolver ATOMS —
+duel FUN_0077c710 (ported), FUN_00a029c0 (3-stage sequential gate), penalty shootout FUN_00a023f0 —
+each a `draw×prob>>32` gate over real participant attributes. Mechanisms understood.
+OPEN (the hard core): the event GENERATOR — which atom fires when, between whom, from game state/
+tactics. The event-object pool is touched by ~190 functions (hub FUN_006bee40); this is a large
+multi-week port, NOT an incremental find. Without it the atoms can't be assembled into a causal match.
+DECISION NEEDED (user): commit to the big generator port, or keep realstats (1:1 output) as canonical
+and treat the causal generator as out of scope.
 `realstats` SAMPLES the output distributions; it does NOT run the original's per-event decision tree.
 G1 = recover and port the real per-tick logic so the engine DECIDES which events happen (from state,
 not from an aggregate draw).

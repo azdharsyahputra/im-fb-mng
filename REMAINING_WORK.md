@@ -69,7 +69,10 @@ Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness 
 [ ] SetGameState writer: e850's byte stores are boolean flags, not the eGameState enum; the enum
     write site (InPlay=0/HalfOver=0x0b/GameOver=0x0c) not pinned (lifecycle already VERIFIED in the Go
     state/match pkgs; only the original writer offset pends).
-- Optional wiring: give the native tick a 10-s per-entity cadence (no engine numbers changed yet).
+[x] WIRED: match.EntityActionCadenceSeconds = 10.0 now drives PossessionModel's on-ball interval
+    (perTick = dt/10s), replacing the clean-room EventRatePerMin — the event INTERVAL is now a game
+    number (super-manager-engine d6a492d). (EventModel keeps its coarser rate; FlowProbs action-mix
+    unchanged.)
 
 ## P7 — Validate the formula runtime semantics
 [ ] Confirm the clean-room evaluator (`formula` pkg) matches the real engine on sample formulas.

@@ -26,3 +26,19 @@ EMULATE FUN_0077c710 on sample (A,B) inputs (or single-step it) to pin the exact
 and the neutral-band rule, THEN port a 3-outcome contest.ResolveDuel and migrate callers. Confidence:
 shares/scalars/two-threshold structure VERIFIED; the symmetric 25/50/25 reading INFERRED (needs
 emulation to confirm the compare directions).
+
+## Precise formula (VERIFIED from full disasm 0x77c887–0x77c9a0)
+- A = `(*(u32)(contestantA+0x3c) >> 12) & 0x7f`  (7-bit attr, 0..127)
+- B = `(*(u32)(contestantB+0x3c) >> 12) & 0x7f`
+- if A+B==0: shares stay 0.5/0.5. else: shareA = 0.5 · A/(A+B), shareB = 0.5 · B/(A+B) (the 0.5 =
+  DAT 0xbbb51c/0xc31b38). Thresholds stored at [esp+0x14]/[esp+0x20].
+- ONE uniform u = lcg.Unit() is compared against the two thresholds across 3 branches (x87
+  fcomp/fnstsw/test ah,5 with jp=`st0>=src`, jnp=`st0<src`): outcome A (counter0) / NEUTRAL / B
+  (counter1). At A=B → shareA=shareB=0.25, neutral band 0.5 → symmetric 25/50/25.
+
+## Why NOT auto-fixed
+The three compare branches reuse the x87 top-of-stack across fsub/fsubr/fxch; getting the exact
+threshold each branch tests (and the > vs >= edges) wrong would mis-weight the CORE gameplay atom and
+every match. Needs a faithful x87 emulation of 0x77c91b–0x77c9a0 (or single-step) to pin before
+changing contest.Resolve + migrating its callers (matchsim/events/possession). Flagged as the #1
+1:1 correctness item for careful (reviewed) handling, not an autonomous edit.

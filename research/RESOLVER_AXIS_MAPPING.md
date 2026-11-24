@@ -191,14 +191,32 @@ transform, are not byte-proven — **INFERRED**.
   form/condition vs performance level) maps to which booster/suppressor axis is not pinned; the
   booster/suppressor SIGN is clear, the exact field is not.
 - **Alternative:** some may be match-context (tempo, possession) rather than player attributes.
-- **Candidate literal names (INFERRED):** the boosters are CENTERED (symmetric breakpoints, e.g.
-  GoalsScored's booster ≈ ±[0.85..10]) ⇒ a *relative* quantity (ability minus population mean),
-  which fits the named GCMatchInputs field `Home/AwayPerformanceLevel` (own performance level) or
-  a per-position `*Value` suitability; the suppressors fit the OPPONENT side of the same pair
-  (opponent `PerformanceLevel` / `LikelyResult` / team strength). These are named, VERIFIED-exist
-  match inputs; tying a specific one to a specific axis is INFERRED, not proven.
-- **Confidence / status:** **INFERRED** (booster = own relative ability, suppressor = opposition/
-  difficulty by sign) / **UNKNOWN** (exact field per axis; candidates named above).
+- **Confidence / status:** **INFERRED** (booster = own relative skill — see the skill-family table
+  above) / **UNKNOWN** (exact field per axis).
+
+#### Suppressor axes — analysed (new); less cleanly separable than boosters
+
+Classifying every suppressor (per-bin gradient < 0.77) by signature + the metrics it suppresses
+(reproducible in `cmd/axisid`):
+
+- **A tested symmetry hypothesis was REFUTED.** "Suppressor = the opponent's copy of a booster,
+  same signature" does NOT hold: the defensive-booster signature `[3,4,5,6,6,7]` appears as a
+  suppressor only for MinorInjuries/MissControlled, **not** for shooting metrics. So boosters and
+  suppressors are not simply the same skill variable applied to own vs opponent team.
+- **Position reappears as a suppressor.** The position signature `[4,5,7,8,9,13]` is the single
+  biggest suppressor (15 metrics: NumberYellowCards 0.17, CynicalFouls 0.08, NumberRedCards 0.01,
+  TacklesKey 0.01, Interceptions 0.61, FreeKickIndirect 0.02 …) — i.e. discipline/defensive
+  metrics fall toward the attacking positions. This is the SAME categorical position variable with
+  a negative gradient, not a new axis. **INFERRED (strong)** — it is literally the position sig.
+- **Conceding/keeper metrics ride a centered defending-quality axis.** A centered suppressor
+  `[-9,-4,-1,2,5,10]` (nearly the mirror of the attacking-booster shape) suppresses GoalsConceded
+  0.21, ShotsHeld 0.14, ShotsTipped 0.00, OwnGoalsScored 0.19 ⇒ the defending side's keeper/defence
+  quality cutting concessions. **INFERRED.**
+- **A broad attacking-output suppressor exists but is NOT pinned.** `[3,4,5,6,7]` suppresses
+  GoalsScored 0.25, CrossesCompleted 0.55, RunsMadeKey 0.20 (and co-moves with injuries/lost
+  possession). Candidates — opponent defensive strength, match difficulty, or a tactical/condition
+  factor — but the injury co-movement rules out a clean "fatigue" reading, so this stays
+  **UNKNOWN** (named candidates, none confirmed).
 
 ## 4. Conclusion
 
@@ -227,9 +245,11 @@ transform, are not byte-proven — **INFERRED**.
   drives only shooting metrics, a tackling/defensive variable drives only defensive metrics, with
   named candidate attributes from `formula.xml` (ShotAccuracy/ShotComposure; BlockTackleStrength/
   TackleFrequency). The shooting booster is centered (relative-to-average).
-- Suppressor axes → opposition/difficulty quantities by sign; candidates named (opponent
-  `PerformanceLevel`/`LikelyResult`; one TacklesWon suppressor is itself position-like, suggesting
-  the OPPONENT's position).
+- Suppressor axes → analysed, but LESS cleanly separable than boosters (the "opponent copy of a
+  booster, same signature" symmetry was tested and REFUTED). Three partial reads: position reused
+  as a suppressor for discipline/defensive metrics; a centered defending-quality axis governs
+  conceding/keeper metrics; a broad attacking-output suppressor exists whose exact identity stays
+  UNKNOWN (candidates only).
 
 What is still genuinely UNKNOWN is only the **exact byte-level wiring** — which specific accessor
 the obfuscated iterator reads for each axis, and the centering transform. The obfuscation +

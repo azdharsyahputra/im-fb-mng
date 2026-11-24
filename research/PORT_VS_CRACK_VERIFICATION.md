@@ -8,14 +8,17 @@ Each row = a Go component checked byte-for-byte against the crack. ✅ matches /
 | `lcg.Unit` ((Next()>>9)\|0x3f800000 − 1.0) | shr eax,9; or 0x3f800000; fld1; fsub @0x77c90f | ✅ VERIFIED 1:1 |
 | `lcg.IntN` ((Next()*n)>>32) | mov 0x7d; mul [scale] (high dword) @0xa02638 | ✅ VERIFIED 1:1 |
 | `contest.Shootout` PK odds | FUN_00a023f0: (draw*125)>>32 ≤50 miss, else score (p=74/125≈0.592) | 🔧 FIXED (was inverted 0.408) → commit 30d2ad1 |
-| `contest.Resolve` duel | FUN_0077c710: 3-outcome (A / NEUTRAL / B), u vs TWO shares (×0.5), symmetric 25/50/25 at A=B | ⚠️ Go is binary+asymmetric (25/75, no neutral) — likely NOT 1:1; flagged for emulation+fix (e6320b4) |
+| `contest.Resolve` duel | FUN_0077c710: repeated GEOMETRIC tally — while u<shareA bump ctrA, then while u<shareB bump ctrB; shareA=0.5·A/(A+B); + aggregation mode (full trace e1a644a) | ⚠️ Go is a single binary winner (25/75 at A=B) — NOT 1:1; mechanism PINNED, port is user-flagged (stay flagged). See DUEL_RESOLVER_GEOMETRIC_TALLY.md |
+| `predicate.RankThreshold` = 80.0 | `fld [0xb5b10c]`(=80.0f) pushed to rank-filter FUN_009e9570 in FUN_0077c540 @0x77c575 | ✅ VERIFIED 1:1 |
 | `geometry` SCALE=1/255 | byte read .rdata @0xb73954 | ✅ VERIFIED (prior) |
 | `formula` evaluator ops (binop 1-5, agg 0-2) | FUN_00818080/00817df0 jump tables | ✅ VERIFIED 1:1 (prior, 300c46a) |
 
-## Open high-value 1:1 fix
-The DUEL (contest.Resolve) — the core gameplay atom — appears not 1:1 (3-outcome symmetric vs binary
-asymmetric). This is the highest-impact correctness item; needs careful emulation of FUN_0077c710's
-x87 compare idiom before fixing (many callers). See DUEL_THREE_OUTCOME_FINDING.md.
+## Open high-value 1:1 fix (user-flagged — stays flagged, not ported)
+The DUEL (contest.Resolve) is not 1:1: the real FUN_0077c710 is a repeated GEOMETRIC stat tally into
+two 5-bit counters (shareA=0.5·A/(A+B), shareB=0.5·B/(A+B)) plus an aggregation mode, while the Go
+port returns a single binary winner. Mechanism now fully PINNED by instruction-level trace
+(DUEL_RESOLVER_GEOMETRIC_TALLY.md, e1a644a). The user decided to keep it FLAGGED (not port): a 1:1
+port would change match stats and touches many callers (matchsim/events/possession), a reviewed change.
 
 ## Macro data-layout verification (G4) vs real .dat records
 | Go decoder | real file | result |

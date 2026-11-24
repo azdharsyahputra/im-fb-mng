@@ -47,7 +47,8 @@ Last updated from the running sessions; regenerate structural parts with `cmd/db
 | # | Item | Blocker |
 |---|---|---|
 | D1 | Native **decision logic** combining constants+inputs: sack decision (beyond score), transfer-valuation combination, contract-offer generation, squad selection | bodies native, un-dumped/corrupt |
-| D2 | **Multi-season loop**: promotion/relegation, cups, transfers actually executing, finances evolving season-to-season, training/development/injury as running systems | not built (formulas/constants exist; driving loop doesn't) — **buildable now from `league`+`mgmt` without fabricating** |
+| D2 | **Multi-season career loop** | **DONE** (super-manager-engine `career` pkg): single-season (finance/board from real formulas), multi-season carry-forward, multi-division **promotion/relegation** (pyramid), knockout **cup** with the recovered penalty shootout. Real amounts; scheduling/position→ranking/prize-split are labelled models. |
+| D2b | **Transfers actually executing** + training/development/injury as running systems | **GATED**: transfer execution needs the native valuation-combination logic (D1, un-dumped) and squad-fit (needs the attribute mapping, A1). Not built — would require inventing. |
 | D3 | **AI manager** (lineup / tactics / transfer choices) | thin / UNKNOWN |
 
 ## 🧱 E. True wall

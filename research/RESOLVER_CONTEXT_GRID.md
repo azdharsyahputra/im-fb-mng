@@ -179,5 +179,19 @@ grid shape, draw/context split, axis roles, the 6-model structure, and a working
 recovered. Promoting the roles to literal names requires a lawful unmodified runtime + read-only
 debugger (plan in `RUNTIME_PICKER_INVESTIGATION.md` Part 2).
 
+### Caller reconstruction confirms the context is not caller-supplied (Workstream 2)
+
+A full enumeration of the sampler's callers (`PICKER_CALLER_CONTEXT.md`) settles *where* the
+context enters: the **~191 clean callers** of the sampler entry `FUN_00818120` each build an
+**identical zeroed 0x1c-byte eval/output struct**, pass it by pointer, and read the sampled
+float back at `ctx+0x14`. **No per-sample context (position / duty / squad / rating / performance
+level) is pushed at any readable call site.** So the within-record axes are **read internally by
+the obfuscated iterators** (`FUN_005b3770/4870/4880/4db0/4900`, bodies absent), not handed in by
+callers — independent confirmation that the literal axis identities are UNKNOWN statically and
+*cannot* be recovered from the caller side. The file/record selectors (group+name via
+`FUN_00662cf0`, the `GCMatchInputs` schema `FUN_00a72db0`, player selection `FUN_009d5c20`) ARE
+named and are kept separate from the within-record axes. Full chain and hypothesis testing:
+`RESOLVER_AXIS_MAPPING.md`.
+
 No distribution data is reproduced here or embedded in code — all figures are aggregate
 structure derived from the owner's local file at runtime.

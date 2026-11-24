@@ -9,9 +9,16 @@ Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness 
 
 ---
 
-## P1 — Exact per-event RATES  ⟵ the #1 blocker to "faithful"
-[ ] Recover the real probability/threshold constants each event uses, to replace the APPROXIMATE
-    clean-room guesses in `match.FlowProbs` / `match.EventProbs`.
+## P1 — Exact per-event RATES  ⟵ the #1 blocker to "faithful"  [x] DONE (rates wired from game data)
+[x] Found the honest source: rates live in the 6 MatchResolverDistributions (64 section-0 metrics,
+    n=4,121,340), NOT inline constants (the duel scalars 0.5/0.5/1.0 were already in contest.go; the
+    trigger thresholds in FUN_0077be30 are indirect params). Wired:
+    - `resolver stats` dumps the 64 real metric means (super-manager-engine 9114c3d).
+    - `resolver.TeamMetric` + `match realstats` produce a full match stat line sampled 100% from the
+      real distributions — zero clean-room numbers (ed89bda).
+    REMAINING (optional): calibrate the possession/event NARRATIVE model's FlowProbs to these real
+    means too (today the narrative keeps labelled APPROXIMATE flow; the real-rate stat line is faithful).
+[ ] ~~Recover the real probability/threshold constants each event uses~~ — superseded by the above.
 - Why feasible now: the agent already found the shape statically — `FUN_0077be30` does
   `draw→mul10>>32` (≈10% trigger) then `draw→mul2>>32` (50/50). So the thresholds ARE inline
   constants in the crack, not hidden.

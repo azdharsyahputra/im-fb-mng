@@ -64,8 +64,29 @@ pieces (Corner/ThrowIn/FreeKick/GoalKick) → Offside/Foul/Clearance, with Posse
 Each is a duel `p=A/(A+B)` outcome bumping its named counter. Expanding EventModel to this taxonomy +
 emitting named events is the next build step; the per-event RATES stay the only APPROXIMATE part.
 
+## Counter / stat-accumulation mechanism (P3 — VERIFIED from the crack)
+How a resolved event becomes a stat count:
+- **Storage (VERIFIED, FUN_005cd020, 103 b):** each stat is a packed dword holding TWO saturating
+  5-bit counters — `arg==0` bumps **bits 21–25** (`+0x200000`, cap `0x3e00000`), `arg!=0` bumps
+  **bits 26–30** (`+0x4000000`, cap `0x7c000000`). Max 31 each; the two sub-counters are the two
+  OUTCOMES of the duel (e.g. won/lost, on/off). `ecx` = the stat dword address.
+- **Duel → counter (VERIFIED, FUN_0077c710):** resolve two contestants' 7-bit attrs (two
+  `FUN_005a6170(desc,0|1)` → `FUN_00593cc0`), draw the single global match RNG
+  (`[0xc8d5d4]`→`FUN_007e7c10`), compare the LCG uniform against `p=A/(A+B)` (scalars 0.5/0.5/1.0),
+  then `FUN_005cd020(outcome)` on the event's stat dword. Up to two sub-events per duel (the three
+  call sites push a dynamic arg, then `0`, then `1`).
+- **Event → stat selector (STRUCTURALLY_UNDERSTOOD):** the stat dword is `edi = FUN_005a6330(eventDesc)`;
+  `eventDesc` is chosen by the dispatcher `FUN_0077cd40` from the event-record flags [ebx+4/5/6].
+- **Remaining join (needs the stat-block schema):** the stat dword's OFFSET → which of the 64 named
+  metrics. That offset→name map overlaps A1 (PlayerProperties / stat-block layout, owned by the
+  coordinating session). Once the stat-block offsets are named, each `GCMatchPredicate` pins to its
+  exact counter — VERIFIED end to end.
+
 ## Classifications
 - The 267 `GCMatchPredicate*` NAMES — **VERIFIED** (string table @0xb5650c..0xb5992c).
+- Counter storage (2×5-bit packed) + duel→counter wiring — **VERIFIED** (FUN_005cd020 + FUN_0077c710).
+- Event→stat selector FUN_005a6330 + dispatcher flags — **STRUCTURALLY_UNDERSTOOD**.
+- Stat-offset → metric-name join — **PENDING** (needs the stat-block schema; overlaps A1).
 - Base event = duel → `FUN_005cd020` counter — **VERIFIED mechanism** (RESIDUALS_RESOLUTION.md).
 - Which predicate name maps to which exact counter bit/dispatch flag — **INFERRED** (families are
   unambiguous by name; per-name byte wiring not individually traced).

@@ -37,12 +37,13 @@ Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness 
   VERIFIED skill-family split (shooting vs defensive metrics) + known PlayerConstant getter names.
 - Deliverable: resolved column→name map → real per-facet TeamRating.
 
-## P3 — Per-name counter-bit wiring (GCMatchPredicate → counter)
-[~] Tie each of the 267 event names to its stat counter bit + dispatch flag (names VERIFIED, wiring
-    currently INFERRED).
-- Method: disasm `FUN_005cd020` (saturating 5-bit counter) + the dispatcher flags [ebx+4/5/6];
-  map flag → resolver → counter bits → the packed-stat dword → the predicate name.
-- Deliverable: EVENT_CATALOG rows upgraded to VERIFIED flag→counter per event. (Also feeds P1.)
+## P3 — Per-name counter-bit wiring (GCMatchPredicate → counter)  [~] mechanism VERIFIED; join pending
+[x] Counter STORAGE + duel→counter wiring VERIFIED (EVENT_CATALOG.md §Counter mechanism):
+    FUN_005cd020 = packed dword, two saturating 5-bit counters (bits 21–25 outcome-0, 26–30 outcome-1,
+    cap 31); duel FUN_0077c710 draws the global RNG, compares p=A/(A+B), bumps the event's stat dword.
+    Event→stat selector = FUN_005a6330(eventDesc); eventDesc from dispatcher FUN_0077cd40 flags.
+[ ] REMAINING: the stat-dword OFFSET → which of the 64 named metrics — overlaps A1 (stat-block/
+    PlayerProperties layout, coordinator). Once offsets are named, each GCMatchPredicate pins end-to-end.
 
 ## P4 — Byte-prove the bit-packed field offsets (player/club/contract)
 [~] Currently INFERRED. Make them VERIFIED.

@@ -66,3 +66,54 @@ alone. Two ways:
 
 All measured from the owner's own file; no game data committed, no names invented, no column bound
 on a guess.
+
+## Role-contrast binding (INFERRED) — Man Utd 2007/08 archetypes
+
+A capture-free anchoring method: pull the raw 77-column vectors of several real players whose
+footballing ROLE is public fact, and read each column by how it discriminates roles. No display
+numbers are assumed — only well-known archetypes. Players used (all located in PlayerProperties.dat
+by name → Person.id):
+
+| id | player | role |
+|---|---|---|
+| 56386 | Nemanja Vidić | CB |
+| 10930 | Rio Ferdinand | CB |
+| 18951 | Patrice Evra | LB |
+| 9251 | Michael Carrick | CM |
+| 10287 | Paul Scholes | CM (playmaker) |
+| 11263 | Ryan Giggs | W |
+| 59196 | Cristiano Ronaldo | W |
+| 63121 | Wayne Rooney | ST |
+
+Structural confirmation: **Edwin van der Sar (GK) has NO PlayerProperties row** — keepers live only
+in GoalkeeperProperties. So schema index 48 "GoalKeeper" is a *positional-familiarity* field (can an
+outfielder deputise in goal), not a keeper skill, which is why disk col 48 is a normal 0..100 bell,
+not keeper-sparse. (Resolves the earlier col48 refutation.)
+
+### Inferred bindings (strong role evidence; INFERRED, not VERIFIED)
+
+| disk col | reading | evidence (Vidic/Ferd=CB, Giggs/Ron=W, Rooney=ST, Scholes=CM) |
+|---|---|---|
+| 5  | Finishing (shooting) | Rooney 100, Ron 80, Giggs 80, Scholes 60, CBs 1, Evra 1 |
+| 9  | Crossing | Evra 100, Giggs 100, Ron 100; CBs & Rooney low (wide-player skill) |
+| 12 | Dribbling | Ron 100, attackers high, CBs ~20 |
+| 44 | Pace | Vidić 15 (famously slow), Ron 97, Giggs 84, Evra 70 |
+| 20 | Acceleration (speed pair w/44) | Ron 91, attackers high, CBs 35–42 |
+| 38 | Strength | Rooney 91, Vidić 81, Ferdinand 61; Giggs 31, Ron 46 (wingers weak) |
+| 2  | Marking/Tackling (pure defensive) | CBs 100, everyone else 1 |
+| 15 | Marking/Tackling (defensive, CB-only) | CBs 60, everyone else 1 |
+| 54 | CentralDefender (positional familiarity) | Vidić 92, Ferdinand 90, Carrick 47 |
+| 13 | Vision/Creativity (playmaking) | Scholes 80, rest ~0 (Scholes signature) |
+| 33 | Heading/Jumping (aerial) | CBs 90, Ron 93, Rooney 69; Scholes 48 |
+
+Columns 0..17 are coarse-quantised (values in {1,20,40,60,80,100}) and carry the technical-skill
+discrimination above; cols 18..62 are the fine 0..100 attributes/positional familiarities; cols
+63..76 the <=20 instruction sliders (already VERIFIED). Note col 7 is 1 for all these players — rare
+across the board, consistent with schema[7]=ThrowIns but not uniquely proven by them.
+
+### Still ambiguous (needs 1–2 more anchors)
+
+Within-category pairs can't be split by these 8 players: Marking vs Tackling (both CB-extreme),
+Pace vs Acceleration (cols 20/44), Finishing vs LongShots, Heading vs Jumping. A pure full-back and
+a target-man would separate crossing/pace and finishing/heading respectively. The full per-column
+role table is in the session work (contrast_table).

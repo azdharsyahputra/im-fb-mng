@@ -1,5 +1,12 @@
 # REMAINING_WORK.md — the road to a faithful CM2008 engine (knock out 1/1)
 
+> **CANONICAL ENGINE = `match realstats` (distribution-sampled, 1:1).** Per the user's "1:1 with the
+> reference" directive, the match engine is the distribution-sampled path — every stat drawn straight
+> from the game's real section-0 distributions (resolver.TeamMetric, n=4.1M). The EventModel/
+> PossessionModel event-by-event NARRATIVE is a modelling layer with inferred flow structure — it is
+> SIDELINED / NON-CANONICAL (kept, not deleted; not 1:1). No clean-room flow variations in the
+> canonical path. (super-manager-engine 4dc9831)
+
 Everything static is now **much easier**: the crack image `/Volumes/CM2008/Crack JPN/cm2008.exe`
 is unpacked, so `.text` reads clean with capstone (file_off = VA−0x400000). Items that used to say
 "runtime capture only" / "protector boundary" are mostly STATIC now — proven this session (picker,

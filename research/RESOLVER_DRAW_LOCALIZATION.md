@@ -25,11 +25,16 @@ are either looked-up pool entries or int/float attribute reads. A deterministic 
 ## LCG scans (VERIFIED)
 - Picker cluster VA 0x5b3000–0x5b5400 (9 KB): `0x19660d`/`0x3c6ef35f` = **NONE** (prior doc).
 - Formula evaluator VA 0x817000–0x81a000 (12 KB): `0x19660d`/`0x3c6ef35f`/`0x343fd` = **NONE**.
-- Whole .text: **283** immediate sites of `0x19660d` (the LCG multiply) across **67 functions**, all
-  in the match/game engine (dense in 0x4c/0x4d/0x4f, spread through 0x5xxxxx–0x6xxxxx). **168 of the
-  283** have the float-uniform idiom constant `0x3f800000` within 64 bytes → the dominant draw is
-  `u = ((state>>9) | 0x3f800000) - 1.0` (uniform [0,1)). **NONE** of the 283 is in the resolver
-  (0x817–0x81a) or the picker cluster (0x5b3–0x5b5).
+- Code: **≥283** immediate sites of `0x19660d` (the LCG multiply), dense in 0x4c/0x4d/0x4f, spread
+  through 0x5xxxxx–0x6xxxxx; **168** have the float-uniform idiom `0x3f800000` within 64 bytes →
+  dominant draw `u = ((state>>9) | 0x3f800000) - 1.0` (uniform [0,1)).
+  > **⚠️ COUNT IS A FLOOR (capped scan).** That scan was accidentally truncated at file-off 0x311000
+  > (VA 0x711000), so the detailed match engine (0x77xxxx), the formula engine (0x818xxx) and the sim
+  > (0x9exxxx) were NOT scanned for the LCG — there are very likely MORE draws there. A full-range
+  > re-scan (0x401000–~0xa50000) with a per-region breakdown is in progress (RESIDUALS_RESOLUTION.md).
+  > The sub-claim below still holds: the resolver (0x817–0x81a) and picker (0x5b3–0x5b5) WERE in range
+  > and contain NONE (verified). The match-engine regions above the cap are expected to hold draws —
+  > which is consistent with (not contrary to) the statistical-engine root.
 
 ## ROOT CONCLUSION — CM2008 match = statistical/event engine, NOT a physics simulation
 Putting the three static results together (picker cluster, formula evaluator, and the worker-thread

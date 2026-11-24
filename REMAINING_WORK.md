@@ -16,8 +16,12 @@ Legend: [ ] todo · [~] partial · [x] done. Ordered by (impact on faithfulness 
     - `resolver stats` dumps the 64 real metric means (super-manager-engine 9114c3d).
     - `resolver.TeamMetric` + `match realstats` produce a full match stat line sampled 100% from the
       real distributions — zero clean-room numbers (ed89bda).
-    REMAINING (optional): calibrate the possession/event NARRATIVE model's FlowProbs to these real
-    means too (today the narrative keeps labelled APPROXIMATE flow; the real-rate stat line is faithful).
+    [x] DONE: possession FlowProbs now DERIVED from the real means too — match.FlowFromReal computes
+        Conversion=Goals/Shots (~0.132), PFoulOnTackle=Fouls/Challenges (~0.124), PCardOnFoul,
+        PRedOnCard, POffside, shot:cross split from real ratios; wired via season.RealFlow +
+        `--engine rich` / `match rich --squad real` (super-manager-engine a898232). Fouls now ~34/match.
+        Event interval = recovered 10s cadence (d6a492d). Residual: crosses/headers need the per-action
+        lane re-roll (structural, reverted earlier on request) to fire the real shot/cross split.
 [ ] ~~Recover the real probability/threshold constants each event uses~~ — superseded by the above.
 - Why feasible now: the agent already found the shape statically — `FUN_0077be30` does
   `draw→mul10>>32` (≈10% trigger) then `draw→mul2>>32` (50/50). So the thresholds ARE inline

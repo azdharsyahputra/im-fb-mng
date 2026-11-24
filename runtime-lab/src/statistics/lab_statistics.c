@@ -64,12 +64,16 @@ void lab_diff_compute(double *a, size_t na, double *b, size_t nb, lab_diff *out)
     out->var_diff = sb.var - sa.var;
     out->sensitivity = fabs(out->mean_diff) / (sa.sd + 1e-9);
 
-    /* KS: max gap between the two empirical CDFs (merge-walk over sorted arrays) */
+    /* KS: max gap between the two empirical CDFs. Step to each distinct value and advance
+     * past ALL equal entries before measuring, so ties (and identical arrays) are correct. */
     double d = 0; size_t i = 0, j = 0;
-    while (i < na && j < nb) {
+    while (i < na || j < nb) {
+        double v;
+        if (j >= nb || (i < na && a[i] <= b[j])) v = a[i]; else v = b[j];
+        while (i < na && a[i] <= v) i++;
+        while (j < nb && b[j] <= v) j++;
         double fa = (double)i / (double)na, fb = (double)j / (double)nb;
         double gap = fabs(fa - fb); if (gap > d) d = gap;
-        if (a[i] <= b[j]) i++; else j++;
     }
     out->ks = d;
 

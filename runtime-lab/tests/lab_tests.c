@@ -122,6 +122,61 @@ static void test_phase2(const char *dir) {
     }
 }
 
+/* Phase 3: differential-statistics correctness + experiment invariants (via public API). */
+static void test_phase3(const char *dir) {
+    /* lab_stats on a known array */
+    double x[] = { 0,1,2,3,4,5,6,7,8,9 };
+    double xc[10]; memcpy(xc, x, sizeof x);
+    lab_stats st; lab_stats_compute(xc, 10, &st);
+    CHECK(fabs(st.mean - 4.5) < 1e-9, "stats mean of 0..9 = 4.5 (got %.6f)", st.mean);
+    CHECK(st.min == 0 && st.max == 9, "stats min/max");
+    CHECK(st.q50 > 4.0 && st.q50 < 5.0, "stats median in (4,5)");
+
+    /* lab_diff: identical arrays -> zero everything; shifted -> positive mean_diff, ks>0 */
+    double a1[200], a2[200], a3[200];
+    for (int i = 0; i < 200; i++) { a1[i] = i % 10; a2[i] = i % 10; a3[i] = (i % 10) + 5; }
+    lab_diff d0; lab_diff_compute(a1, 200, a2, 200, &d0);
+    CHECK(fabs(d0.mean_diff) < 1e-9 && d0.ks < 1e-9 && d0.js_divergence < 1e-9, "diff of identical arrays is zero");
+    double b1[200], b3[200]; for (int i = 0; i < 200; i++) { b1[i] = i % 10; b3[i] = (i % 10) + 5; }
+    lab_diff d1; lab_diff_compute(b1, 200, b3, 200, &d1);
+    CHECK(fabs(d1.mean_diff - 5.0) < 1e-9, "diff mean_diff of +5 shift = 5 (got %.4f)", d1.mean_diff);
+    CHECK(d1.ks > 0.1, "diff ks of shifted distribution > 0.1 (got %.4f)", d1.ks);
+
+    LabModel m; CHECK(lab_model_load(&m, 1, dir), "phase3 load model 1"); if (!m.loaded) return;
+    const cm_dist_record *rec = cm_resolver_find(&m.db, 0, "GoalsScored");
+    if (!rec) { lab_model_free(&m); return; }
+
+    /* stamina NULL mapping: combined-hypothesis context identical for stamina 20 vs 100 */
+    lab_runtime_state s20, s100; lab_state_default(&s20); lab_state_default(&s100);
+    s20.player.stamina = 20; s100.player.stamina = 100;
+    lab_context c20, c100; lab_build_context(&s20, rec, "combined", &c20); lab_build_context(&s100, rec, "combined", &c100);
+    int same_ctx = (c20.n == c100.n);
+    if (same_ctx) for (int i = 0; i < c20.n; i++) if (c20.values[i] != c100.values[i]) { same_ctx = 0; break; }
+    CHECK(same_ctx, "stamina is not mapped: context identical for stamina 20 vs 100 (no fabricated link)");
+
+    /* skill monotonicity under the quality hypothesis: skill 20 analytic mean >= skill 5 */
+    lab_runtime_state s5, s20b; lab_state_default(&s5); lab_state_default(&s20b);
+    s5.player.skill = 5; s20b.player.skill = 20;
+    lab_context q5, q20; lab_build_context(&s5, rec, "quality", &q5); lab_build_context(&s20b, rec, "quality", &q20);
+    double m5, v5, m20, v20; uint32_t n5, n20;
+    cm_resolver_conditional_moments(rec, q5.values, q5.n, &m5, &v5, &n5);
+    cm_resolver_conditional_moments(rec, q20.values, q20.n, &m20, &v20, &n20);
+    CHECK(m20 >= m5, "quality hypothesis: skill20 mean (%.4f) >= skill5 (%.4f)", m20, m5);
+
+    /* cross-model: overall identical across all six (VERIFIED same population) */
+    double ref = -1; int cross_ok = 1;
+    for (int id = 1; id <= LAB_N_MODELS; id++) {
+        LabModel mm; if (!lab_model_load(&mm, id, dir)) { cross_ok = 0; break; }
+        const cm_dist_record *r = cm_resolver_find(&mm.db, 0, "GoalsScored");
+        double om, ov; uint32_t on; cm_resolver_overall(r, &om, &ov, &on);
+        if (ref < 0) ref = om; else if (fabs(om - ref) > 1e-6) cross_ok = 0;
+        lab_model_free(&mm);
+    }
+    CHECK(cross_ok, "cross-model: GoalsScored overall mean identical across all six");
+
+    lab_model_free(&m);
+}
+
 int main(void) {
     const char *dir = lab_model_default_dir();
     if (!files_present(dir)) {
@@ -131,6 +186,7 @@ int main(void) {
     printf("cm2008-lab tests (data: %s)\n", dir);
     test_phase1(dir);
     test_phase2(dir);
+    test_phase3(dir);
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

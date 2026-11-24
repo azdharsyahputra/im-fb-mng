@@ -1,0 +1,10 @@
+{
+  "model": 1,
+  "metric": "GoalsScored",
+  "samples": 10000,
+  "seed": 12345,
+  "trace_dir": "traces",
+  "manifest_dir": "experiments",
+  "data_dir": "$RESOLVER_DIR or /Users/csadeveloper/cm/extracted_game/DatabaseFiles",
+  "note": "Defaults for cm2008-lab experiments. CLI flags override these."
+}

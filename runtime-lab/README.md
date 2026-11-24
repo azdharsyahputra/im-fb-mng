@@ -20,17 +20,41 @@ It **reuses** the repo's VERIFIED resolver parser + LCG (`../match/sim/resolver_
     ./cm2008-lab models list
     ./cm2008-lab models inspect --id 1
     ./cm2008-lab models compare --a 1 --b 6
+    ./cm2008-lab player inspect
+    ./cm2008-lab simulate --model 1 --metric GoalsScored --position ST --duty Attack \
+                 --skill 18 --hypothesis combined --samples 20000 --seed 123
+    ./cm2008-lab experiment position-perturbation --samples 10000 --seed 7
+    ./cm2008-lab experiment duty-perturbation
+    ./cm2008-lab experiment stamina-perturbation      # explicit NULL result (no mapping)
+    ./cm2008-lab experiment skill-perturbation
+    ./cm2008-lab experiment cross-model
+    ./cm2008-lab experiment axis-correlation --model 1
+    ./cm2008-lab experiment all
+    ./cm2008-lab trace  inspect  --id skill-perturbation
+    ./cm2008-lab report generate --id skill-perturbation
 
 Data dir: `--dir PATH` or `$RESOLVER_DIR` (default: the canonical extracted path).
+Traces go to `traces/<id>.jsonl`; reproducibility manifests to `experiments/<id>.json`.
 
 ## Tests
 
     make test
 
+## What is VERIFIED vs INFERRED vs UNKNOWN
+
+- **VERIFIED**: the .dat envelope + the context-grid structure; the LCG; the six files
+  re-bin ONE population (bit-identical grand-total N/sumX/sumX2); the ±20.9 draw axis.
+- **INFERRED**: each context axis's *role* (effect size + breakpoint symmetry).
+- **APPROXIMATE**: the Gaussian-from-moments draw SHAPE; the projection of a hypothesised
+  runtime quantity onto an axis range.
+- **UNKNOWN**: the literal engine quantity behind each context axis (read internally by the
+  obfuscated iterators — not caller-supplied, see `PICKER_CALLER_CONTEXT.md`); the engine's
+  model-selection logic; the exact picker reduction. The lab never fabricates these.
+
 ## Status by phase
-- Phase 1 (models load / inspect / compare + invariant tests): **done**.
-- Phases 2–4 (runtime state + context engine + sampler + trace; experiments +
-  differential stats; reporting + reproducibility): in progress.
+All four phases **done**: (1) models load/inspect/compare; (2) runtime state + context
+engine + sampler + trace; (3) perturbation + cross-model + differential stats; (4) report +
+reproducibility + regression. `make test` = 119 checks.
 
 See `../research/RESOLVER_CONTEXT_GRID.md`, `RESOLVER_CROSS_MODEL_ANALYSIS.md`,
 `PICKER_CALLER_CONTEXT.md` for the recovered structure and its evidence.

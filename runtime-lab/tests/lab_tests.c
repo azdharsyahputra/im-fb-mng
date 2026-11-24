@@ -177,6 +177,26 @@ static void test_phase3(const char *dir) {
     lab_model_free(&m);
 }
 
+/* Phase 4: reproducibility — independent model reloads + same seed/context must match. */
+static void test_phase4(const char *dir) {
+    LabModel m1, m2;
+    CHECK(lab_model_load(&m1, 1, dir) && lab_model_load(&m2, 1, dir), "phase4 double-load model 1");
+    if (!m1.loaded || !m2.loaded) return;
+    const cm_dist_record *r1 = cm_resolver_find(&m1.db, 0, "ShotsOnTarget");
+    const cm_dist_record *r2 = cm_resolver_find(&m2.db, 0, "ShotsOnTarget");
+    lab_runtime_state s; lab_state_default(&s); s.player.position = POS_ST; s.player.duty = DUTY_ATTACK;
+    lab_context c1, c2; lab_build_context(&s, r1, "combined", &c1); lab_build_context(&s, r2, "combined", &c2);
+    lab_sample_result a, b;
+    lab_sample(1, r1, &c1, 2024u, 3000, &a);
+    lab_sample(1, r2, &c2, 2024u, 3000, &b);
+    int ident = (a.n == b.n);
+    if (ident) for (size_t i = 0; i < a.n; i++) if (a.samples[i] != b.samples[i]) { ident = 0; break; }
+    CHECK(ident, "reproducibility: two independent loads, same seed/context -> identical stream");
+    CHECK(a.stats.mean == b.stats.mean, "reproducibility: identical mean across reloads");
+    lab_sample_free(&a); lab_sample_free(&b);
+    lab_model_free(&m1); lab_model_free(&m2);
+}
+
 int main(void) {
     const char *dir = lab_model_default_dir();
     if (!files_present(dir)) {
@@ -187,6 +207,7 @@ int main(void) {
     test_phase1(dir);
     test_phase2(dir);
     test_phase3(dir);
+    test_phase4(dir);
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

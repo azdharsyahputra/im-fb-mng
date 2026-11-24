@@ -5,9 +5,28 @@
 #include "lab_sampler.h"
 #include "lab_statistics.h"
 #include "lab_trace.h"
+#include "lab_version.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
+static const char *manifest_dir = "experiments";
+
+/* Reproducibility manifest: everything needed to reproduce the run exactly. */
+static void write_manifest(const char *expname, int model, const char *metric,
+                           size_t samples, uint32_t seed, const char *hyp, const char *ddir) {
+    mkdir(manifest_dir, 0755);
+    char path[1200]; snprintf(path, sizeof path, "%s/%s.json", manifest_dir, expname);
+    FILE *f = fopen(path, "wb"); if (!f) return;
+    fprintf(f,
+        "{\n  \"experiment\": \"%s\",\n  \"model\": %d,\n  \"metric\": \"%s\",\n"
+        "  \"samples\": %zu,\n  \"seed\": %u,\n  \"hypothesis\": \"%s\",\n"
+        "  \"sampler_version\": \"%s\",\n  \"experiment_version\": \"%s\",\n  \"data_dir\": \"%s\"\n}\n",
+        expname, model, metric, samples, seed, hyp ? hyp : "n/a",
+        LAB_SAMPLER_VERSION, LAB_EXPERIMENT_VERSION, ddir ? ddir : "");
+    fclose(f);
+}
 
 /* Evaluate one runtime state: build context, analytic conditional mean (deterministic =
  * the pure input effect), and a sampled distribution (adds LCG noise). */
@@ -38,7 +57,10 @@ static int run_perturb(const char *expname, const char *dim, int model, const ch
     const cm_dist_record *rec = cm_resolver_find(&m.db, 0, metric);
     if (!rec) { fprintf(stderr, "metric %s not found\n", metric); lab_model_free(&m); return 2; }
 
+    write_manifest(expname, model, metric, samples, seed, hyp, data_dir);
     lab_trace t; lab_trace_open(&t, tracedir, expname);
+    lab_trace_step(&t, "manifest", model, seed, "VERIFIED",
+                   "\"stage\":\"manifest\"", "\"sampler_version\":\"" LAB_SAMPLER_VERSION "\"");
 
     eval_out eb;
     if (!eval_state(&m, rec, &variants[base], hyp, seed, samples, &eb)) { fprintf(stderr, "baseline eval failed (scalar metric?)\n"); lab_trace_close(&t); lab_model_free(&m); return 3; }
@@ -125,6 +147,7 @@ static int exp_cross_model(const char *metric, size_t samples, uint32_t seed, co
     printf("All six re-bin ONE population, so the context-free OVERALL is identical; the\n");
     printf("conditional output can differ because the axis factorization differs per model.\n\n");
     printf("%-6s %-8s %-10s %-14s %-12s\n", "model", "axes", "overallM", "condMean", "sampledMean");
+    write_manifest("cross-model", 0, metric, samples, seed, "combined", data_dir);
     lab_trace t; lab_trace_open(&t, td, "cross-model");
     lab_runtime_state s; base_state(&s);
     for (int id = 1; id <= LAB_N_MODELS; id++) {
@@ -158,6 +181,7 @@ static int exp_axis_correlation(int model, const char *metric, const char *td) {
     printf("Per-axis fingerprint (effect size + symmetry); roles are INFERRED, names UNKNOWN.\n\n");
     printf("draw axis slot %d = universal +-20.9 quantile axis [VERIFIED]\n", c.draw_axis);
     printf("%-6s %-10s %-10s %-40s %-12s\n", "axis", "effectx", "symmetric", "role", "confidence");
+    write_manifest("axis-correlation", model, metric, 0, 0, "n/a", data_dir);
     lab_trace t; lab_trace_open(&t, td, "axis-correlation");
     for (int i = 0; i < c.n; i++) {
         printf("%-6d %-10.2f %-10s %-40s %-12s\n", c.items[i].axis_index, c.items[i].effect_ratio,
@@ -174,6 +198,7 @@ static int exp_axis_correlation(int model, const char *metric, const char *td) {
 
 int lab_cmd_experiment(int argc, char **argv) {
     data_dir = opt(argc, argv, "--dir", lab_model_default_dir());
+    manifest_dir = opt(argc, argv, "--manifest", "experiments");
     const char *td = opt(argc, argv, "--trace", "traces");
     int model = atoi(opt(argc, argv, "--model", "1"));
     const char *metric = opt(argc, argv, "--metric", "GoalsScored");
@@ -219,8 +244,53 @@ int lab_cmd_trace(int argc, char **argv) {
     return 0;
 }
 
+/* extract a numeric JSON field value from a line, or NAN if absent */
+static double jnum(const char *line, const char *key) {
+    char pat[64]; snprintf(pat, sizeof pat, "\"%s\":", key);
+    const char *p = strstr(line, pat);
+    if (!p) return (double)(0.0 / 0.0);
+    return atof(p + strlen(pat));
+}
+static void jstr(const char *line, const char *key, char *out, int n) {
+    out[0] = 0; char pat[64]; snprintf(pat, sizeof pat, "\"%s\":\"", key);
+    const char *p = strstr(line, pat); if (!p) return;
+    p += strlen(pat); int i = 0; while (*p && *p != '"' && i < n - 1) out[i++] = *p++; out[i] = 0;
+}
+
 int lab_cmd_report(int argc, char **argv) {
-    (void)argc; (void)argv;
-    printf("[report] reporting lands in Phase 4 (not yet implemented).\n");
+    const char *sub = argc > 0 ? argv[0] : "";
+    if (strcmp(sub, "generate") != 0) { printf("usage: report generate --id EXPERIMENT_ID [--trace traces] [--manifest experiments]\n"); return 2; }
+    const char *id = opt(argc, argv, "--id", NULL);
+    const char *td = opt(argc, argv, "--trace", "traces");
+    const char *md = opt(argc, argv, "--manifest", "experiments");
+    if (!id) { fprintf(stderr, "report generate: --id required\n"); return 2; }
+
+    printf("================ cm2008-lab report: %s ================\n", id);
+    /* manifest */
+    char mpath[1200]; snprintf(mpath, sizeof mpath, "%s/%s.json", md, id);
+    FILE *mf = fopen(mpath, "rb");
+    if (mf) { printf("\n-- reproducibility manifest --\n"); char l[1024]; while (fgets(l, sizeof l, mf)) fputs(l, stdout); fclose(mf); }
+    else printf("\n(no manifest at %s)\n", mpath);
+
+    /* trace */
+    char tpath[1200]; snprintf(tpath, sizeof tpath, "%s/%s.jsonl", td, id);
+    FILE *tf = fopen(tpath, "rb");
+    if (!tf) { fprintf(stderr, "\nreport: no trace at %s\n", tpath); return 2; }
+    printf("\n-- experiment steps --\n");
+    printf("%-10s %-14s %-12s %-12s %-10s %-8s\n", "stage", "value", "analyticM", "sampledM", "meanDiff", "ks");
+    char line[4096]; int steps = 0, variants = 0;
+    while (fgets(line, sizeof line, tf)) {
+        steps++;
+        char stage[48], value[48]; jstr(line, "stage", stage, sizeof stage); jstr(line, "value", value, sizeof value);
+        double am = jnum(line, "analytic_mean"), sm = jnum(line, "sampled_mean"), mdf = jnum(line, "mean_diff"), ks = jnum(line, "ks");
+        if (strcmp(stage, "variant") == 0 || strcmp(stage, "baseline") == 0 || strcmp(stage, "model") == 0) {
+            if (strcmp(stage, "variant") == 0) variants++;
+            printf("%-10s %-14s %-12.4f %-12.4f %-10.4f %-8.4f\n", stage, value[0]?value:"-",
+                   am == am ? am : 0, sm == sm ? sm : 0, mdf == mdf ? mdf : 0, ks == ks ? ks : 0);
+        }
+    }
+    fclose(tf);
+    printf("\n%d trace records (%d variants). Confidence: INFERRED (axis->input mapping is a hypothesis).\n", steps, variants);
+    printf("Limits: model selection + exact picker reduction UNKNOWN; draw shape APPROXIMATE.\n");
     return 0;
 }

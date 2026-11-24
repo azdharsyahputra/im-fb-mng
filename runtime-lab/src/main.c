@@ -17,6 +17,7 @@
 #include "lab_context.h"
 #include "lab_sampler.h"
 #include "lab_experiment.h"
+#include "lab_fit.h"
 #include "lab_cli.h"
 
 static int usage(void) {
@@ -100,7 +101,11 @@ int main(int argc, char **argv) {
     if (strcmp(cmd, "simulate") == 0)   return lab_cmd_simulate(rest_argc, rest);
     if (strcmp(cmd, "experiment") == 0) return lab_cmd_experiment(rest_argc, rest);
     if (strcmp(cmd, "trace") == 0)      return lab_cmd_trace(rest_argc, rest);
-    if (strcmp(cmd, "report") == 0)     return lab_cmd_report(rest_argc, rest);
+    if (strcmp(cmd, "solve") == 0)      return lab_cmd_solve(rest_argc, rest);
+    if (strcmp(cmd, "report") == 0) {
+        if (rest_argc > 0 && strcmp(rest[0], "axis-mapping") == 0) return lab_cmd_report_axismapping(rest_argc, rest);
+        return lab_cmd_report(rest_argc, rest);
+    }
 
     fprintf(stderr, "unknown command: %s\n\n", cmd);
     return usage();

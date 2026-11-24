@@ -6,8 +6,9 @@ REPO    := ..
 INCL    := -Iinclude -I$(REPO)/match/sim
 LDLIBS  := -lm
 
-# Reused repo sources (parser + grid API; resolver_eval.h is header-only LCG).
-REUSE   := $(REPO)/match/sim/resolver_dat.c
+# Reused repo sources (parser + grid API; resolver_eval.h is header-only LCG;
+# picker_ref = the standalone candidate reductions reused by the solvers).
+REUSE   := $(REPO)/match/sim/resolver_dat.c $(REPO)/match/sim/picker_ref/picker_ref.c
 
 # Lab sources (every module except test mains).
 LABSRC  := src/main.c \
@@ -18,8 +19,9 @@ LABSRC  := src/main.c \
            src/trace/lab_trace.c \
            src/statistics/lab_statistics.c
 
-# All lab sources (top-level helpers + every module directory).
-LABSRC  := $(wildcard src/*.c src/model/*.c src/context/*.c src/sampler/*.c src/experiment/*.c src/trace/*.c src/statistics/*.c)
+# All lab sources (top-level helpers + every module directory one level down).
+LABSRC  := $(wildcard src/*.c) $(wildcard src/*/*.c)
+INCL    += -I$(REPO)/match/sim/picker_ref
 
 .PHONY: all test clean
 all: cm2008-lab

@@ -5,6 +5,8 @@
 #include "lab_sampler.h"
 #include "lab_statistics.h"
 #include "lab_trace.h"
+#include "lab_fit.h"
+#include "picker_ref.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -237,6 +239,46 @@ static void test_taxonomy(const char *dir) {
     lab_model_free(&m);
 }
 
+/* Solvers A (data-fit), C (picker consistency), B (synthetic-trace correlator). */
+static void test_solvers(const char *dir) {
+    /* Solver A: properties load + per-axis fit */
+    lab_props props; int hp = lab_props_load(&props, dir);
+    CHECK(hp && props.nrecs > 1000, "Solver A: PlayerProperties loaded (%d recs)", hp ? props.nrecs : 0);
+    if (hp) {
+        LabModel m; lab_model_load(&m, 1, dir);
+        const cm_dist_record *rec = cm_resolver_find(&m.db, 0, "GoalsScored");
+        lab_axis_fit fits[LAB_MAX_AXES]; int nf = lab_fit_record(rec, &props, fits, LAB_MAX_AXES);
+        CHECK(nf == rec->n_axes, "Solver A: fit all %d axes (got %d)", rec->n_axes, nf);
+        int saw_cont = 0;
+        for (int i = 0; i < nf; i++) {
+            if (fits[i].is_draw || fits[i].is_position) continue;
+            saw_cont = 1;
+            CHECK(fits[i].top[0].column >= 0 && fits[i].top[0].r2 > 0.9,
+                  "Solver A: continuous axis%d has a high-R^2 candidate (col %d, R^2=%.3f)",
+                  fits[i].axis_index, fits[i].top[0].column, fits[i].top[0].r2);
+        }
+        CHECK(saw_cont, "Solver A: at least one continuous axis found");
+
+        /* Solver C: ARGMAX must fail the marginal, a weighted-CDF must pass */
+        lab_picker_fit pf[4];
+        CHECK(lab_fit_picker(rec, 12345u, 20000, pf), "Solver C: picker consistency ran");
+        CHECK(pf[PR_CAND_ARGMAX].marginal_fit < 0.6, "Solver C: ARGMAX rejected (fit %.3f)", pf[PR_CAND_ARGMAX].marginal_fit);
+        CHECK(pf[PR_CAND_FLOAT_CDF].marginal_fit > 0.9, "Solver C: FLOAT_CDF reproduces marginal (%.3f)", pf[PR_CAND_FLOAT_CDF].marginal_fit);
+        lab_model_free(&m);
+    }
+    if (hp) lab_props_free(&props);
+
+    /* Solver B: the correlator recovers the exact candidate that generated a synthetic trace,
+     * at a 1-step LCG advance — and distinguishes FLOAT_CDF from MOD_CDF. */
+    const char *tp = "traces/_selftest_solverB.jsonl";
+    for (int cand = 0; cand <= 2; cand++) {
+        CHECK(lab_solve_gen_synthetic(tp, cand, 2000, 4242u), "Solver B: synthetic trace cand=%d", cand);
+        int step = -1; int best = lab_solve_best_candidate(tp, &step);
+        CHECK(best == cand, "Solver B: correlator recovers cand=%d (got %d)", cand, best);
+        CHECK(step == 1, "Solver B: 1-step LCG advance detected (cand=%d, step=%d)", cand, step);
+    }
+}
+
 int main(void) {
     const char *dir = lab_model_default_dir();
     if (!files_present(dir)) {
@@ -249,6 +291,7 @@ int main(void) {
     test_phase3(dir);
     test_phase4(dir);
     test_taxonomy(dir);
+    test_solvers(dir);
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

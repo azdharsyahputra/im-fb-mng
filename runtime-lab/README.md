@@ -32,6 +32,9 @@ It **reuses** the repo's VERIFIED resolver parser + LCG (`../match/sim/resolver_
     ./cm2008-lab experiment all
     ./cm2008-lab trace  inspect  --id skill-perturbation
     ./cm2008-lab report generate --id skill-perturbation
+    ./cm2008-lab report axis-mapping --model 1 --metric GoalsScored   # Solver A + C
+    ./cm2008-lab solve  capture-spec                                   # Solver B recipe
+    ./cm2008-lab solve  picker --trace YOURCAPTURE.jsonl              # Solver B correlator
 
 Data dir: `--dir PATH` or `$RESOLVER_DIR` (default: the canonical extracted path).
 Traces go to `traces/<id>.jsonl`; reproducibility manifests to `experiments/<id>.json`.

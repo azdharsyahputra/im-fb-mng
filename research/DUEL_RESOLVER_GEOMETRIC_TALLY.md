@@ -77,9 +77,13 @@ e.g. summing per-minute tallies into a match total. Exact target semantics INFER
 - INFERRED: that counters 0/1 are specific match stats; the gameplay meaning of the two modes and of
   the aggregation target; whether a caller invokes this once per event or per tick.
 
-## Status — still NOT auto-fixed in the engine (deliberate)
-Per the standing instruction, the Go `contest` package is left untouched. This is pure RE. A correct
-1:1 port would replace the binary `Resolve` with a **two-counter geometric tally** (two independent
-`while lcg.Unit() < share: count++` loops over shareA/shareB), saturating at 5 bits, plus the
-aggregation mode — and then migrate callers (matchsim/events/possession), which is a reviewed change,
-not an autonomous one. Flagged as the #1 1:1 correctness item, now with the mechanism pinned.
+## Status — PORTED ✅ (super-manager-engine commit 47aa8b2)
+The faithful 1:1 atom is now `contest.TallyDuel` (+ `DuelShares`, `MaxTally`): two independent
+`for lcg.Unit() < share { count++ }` loops over shareA/shareB, each saturating at 5 bits (31) while
+the loop keeps consuming draws (RNG-stream faithful). VERIFIED against the derived geometric
+distribution — A==B: E[countA]=E[countB]=1/3 symmetric, P(count=0)=0.75 (measured 0.333/0.335/0.751);
+100 vs 20: E=0.714/0.091 (measured 0.717/0.090); determinism + cap tested; `match duel` CLI demos it.
+The old binary `contest.Resolve` is relabelled a clean-room projection for the SIDELINED narrative
+engines only (not the 1:1 atom); its callers are unchanged and the canonical realstats engine never
+used it. OPEN (not ported, lower value): the aggregation mode (al≥2, sums existing 5-bit fields) —
+documented in G1_STAT_RESOLVERS.md; no caller context for it yet.

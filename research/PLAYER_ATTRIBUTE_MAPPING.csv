@@ -1,0 +1,106 @@
+getter_addr,getter_name,class,accessor_addr,offset,bit_range,column_index,semantic_name,derived_or_stored,confidence,evidence
+FUN_00820090,Acceleration,PlayerDegradeable,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,Acceleration,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_00819e30,BodyBalance,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,Dribbling)",DERIVED,VERIFIED(formula),formula.xml: BodyBalance result over leaves Balance|Dribbling
+FUN_00819d10,BodyStrength,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,Strength)",DERIVED,VERIFIED(formula),formula.xml: BodyStrength result over leaves Balance|Strength
+FUN_0081bbf0,ClearanceAgilityLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,LeftFoot,Tackling)",DERIVED,VERIFIED(formula),formula.xml: ClearanceAgilityLeft result over leaves Balance|LeftFoot|Tackling
+FUN_0081bd10,ClearanceAgilityRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,RightFoot,Tackling)",DERIVED,VERIFIED(formula),formula.xml: ClearanceAgilityRight result over leaves Balance|RightFoot|Tackling
+FUN_0081b890,CrossAgilityLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Agility,Crossing,LeftFoot)",DERIVED,VERIFIED(formula),formula.xml: CrossAgilityLeft result over leaves Agility|Crossing|LeftFoot
+FUN_0081b9b0,CrossAgilityRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Agility,Crossing,RightFoot)",DERIVED,VERIFIED(formula),formula.xml: CrossAgilityRight result over leaves Agility|Crossing|RightFoot
+FUN_008201b0,Deceleration,PlayerDegradeable,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Acceleration),DERIVED,VERIFIED(formula),formula.xml: Deceleration result over leaves Acceleration
+FUN_00819770,DribbleAgility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,Dribbling)",DERIVED,VERIFIED(formula),formula.xml: DribbleAgility result over leaves Balance|Dribbling
+FUN_00818450,DribbleCaution,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Dribbling,Flair)",DERIVED,VERIFIED(formula),formula.xml: DribbleCaution result over leaves Dribbling|Flair
+FUN_0081aa90,Fitness,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(FitnessStat,Stamina)",DERIVED,VERIFIED(formula),formula.xml: Fitness result over leaves FitnessStat|Stamina
+FUN_0081cf10,Height,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,Height,STORED,INFERRED-high,formula.xml single-leaf==name
+FUN_00818330,Mobility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Movement),DERIVED,VERIFIED(formula),formula.xml: Mobility result over leaves Movement
+FUN_008187b0,PassingAgilityLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,LeftFoot)",DERIVED,VERIFIED(formula),formula.xml: PassingAgilityLeft result over leaves Balance|LeftFoot
+FUN_008188d0,PassingAgilityRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,RightFoot)",DERIVED,VERIFIED(formula),formula.xml: PassingAgilityRight result over leaves Balance|RightFoot
+FUN_0081ff70,PlayerDegradeable,(meta),UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,(locomotion/no-leaf),COMPUTE-ONLY,UNKNOWN,formula.xml: no int leaves (physics/compute-only)
+FUN_0081fe50,Reaction,PlayerFluid,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Anticipation,Flair)",DERIVED,VERIFIED(formula),formula.xml: Reaction result over leaves Anticipation|Flair
+FUN_00818c30,ShotAgilityLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Agility,LeftFoot)",DERIVED,VERIFIED(formula),formula.xml: ShotAgilityLeft result over leaves Agility|LeftFoot
+FUN_00818d50,ShotAgilityRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Agility,RightFoot)",DERIVED,VERIFIED(formula),formula.xml: ShotAgilityRight result over leaves Agility|RightFoot
+FUN_0081d030,Spring,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Agility,Jumping)",DERIVED,VERIFIED(formula),formula.xml: Spring result over leaves Agility|Jumping
+FUN_0081a850,TrickDelivery,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(CurrentAbility),DERIVED,VERIFIED(formula),formula.xml: TrickDelivery result over leaves CurrentAbility
+FUN_0081a730,TrickReading,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Anticipation,Tackling)",DERIVED,VERIFIED(formula),formula.xml: TrickReading result over leaves Anticipation|Tackling
+FUN_0081a610,Trickyness,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Confidence,Flair)",DERIVED,VERIFIED(formula),formula.xml: Trickyness result over leaves Confidence|Flair
+FUN_0081eb30,CrossAccuracy,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Crossing),DERIVED,VERIFIED(formula),formula.xml: CrossAccuracy result over leaves Crossing
+FUN_0081b770,CrossRangeRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Crossing,RightFoot)",DERIVED,VERIFIED(formula),formula.xml: CrossRangeRight result over leaves Crossing|RightFoot
+FUN_00819650,PassCaution,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(DecisionMaking,Vision)",DERIVED,VERIFIED(formula),formula.xml: PassCaution result over leaves DecisionMaking|Vision
+FUN_0081d930,PassCreativity,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Creativity,Vision)",DERIVED,VERIFIED(formula),formula.xml: PassCreativity result over leaves Creativity|Vision
+FUN_0081e110,PassingAccuracy,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Passing),DERIVED,VERIFIED(formula),formula.xml: PassingAccuracy result over leaves Passing
+FUN_00818570,PassingRangeLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(LeftFoot,Passing,Vision)",DERIVED,VERIFIED(formula),formula.xml: PassingRangeLeft result over leaves LeftFoot|Passing|Vision
+FUN_00818690,PassingRangeRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Passing,RightFoot,Vision)",DERIVED,VERIFIED(formula),formula.xml: PassingRangeRight result over leaves Passing|RightFoot|Vision
+FUN_0081dff0,ThrowAccuracy,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(ThrowIns),DERIVED,VERIFIED(formula),formula.xml: ThrowAccuracy result over leaves ThrowIns
+FUN_0081ded0,ThrowPower,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Strength,ThrowIns)",DERIVED,VERIFIED(formula),formula.xml: ThrowPower result over leaves Strength|ThrowIns
+FUN_0081d5d0,BallControl,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(FirstTouch),DERIVED,VERIFIED(formula),formula.xml: BallControl result over leaves FirstTouch
+FUN_0081d6f0,CurlAbilityLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Creativity,LeftFoot)",DERIVED,VERIFIED(formula),formula.xml: CurlAbilityLeft result over leaves Creativity|LeftFoot
+FUN_0081d810,CurlAbilityRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Creativity,LeftFoot)",DERIVED,VERIFIED(formula),formula.xml: CurlAbilityRight result over leaves Creativity|LeftFoot
+FUN_00818f90,DeadballTakingSkill,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Confidence,DeadBalls)",DERIVED,VERIFIED(formula),formula.xml: DeadballTakingSkill result over leaves Confidence|DeadBalls
+FUN_0081d390,DivingHeader,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Agility,Bravery)",DERIVED,VERIFIED(formula),formula.xml: DivingHeader result over leaves Agility|Bravery
+FUN_0081d270,HeadAccuracy,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(FirstTouch,Heading)",DERIVED,VERIFIED(formula),formula.xml: HeadAccuracy result over leaves FirstTouch|Heading
+FUN_0081d150,HeadRange,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Heading,Jumping)",DERIVED,VERIFIED(formula),formula.xml: HeadRange result over leaves Heading|Jumping
+FUN_00818e70,PenaltyTakingSkill,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Confidence,PenaltyTaking)",DERIVED,VERIFIED(formula),formula.xml: PenaltyTakingSkill result over leaves Confidence|PenaltyTaking
+FUN_0081da50,ShootingBrain,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(DecisionMaking,Finishing)",DERIVED,VERIFIED(formula),formula.xml: ShootingBrain result over leaves DecisionMaking|Finishing
+FUN_0081db70,ShootingFinesse,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(CurrentAbility,Flair)",DERIVED,VERIFIED(formula),formula.xml: ShootingFinesse result over leaves CurrentAbility|Flair
+FUN_0081ec50,ShotAccuracy,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Finishing),DERIVED,VERIFIED(formula),formula.xml: ShotAccuracy result over leaves Finishing
+FUN_008190b0,ShotComposureLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(LeftFoot),DERIVED,VERIFIED(formula),formula.xml: ShotComposureLeft result over leaves LeftFoot
+FUN_008191d0,ShotComposureRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(RightFoot),DERIVED,VERIFIED(formula),formula.xml: ShotComposureRight result over leaves RightFoot
+FUN_008189f0,ShotRangeLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Confidence,LeftFoot,LongShots)",DERIVED,VERIFIED(formula),formula.xml: ShotRangeLeft result over leaves Confidence|LeftFoot|LongShots
+FUN_00818b10,ShotRangeRight,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Confidence,LongShots,RightFoot)",DERIVED,VERIFIED(formula),formula.xml: ShotRangeRight result over leaves Confidence|LongShots|RightFoot
+FUN_0081e590,Aggression,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,Aggression,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_00819410,BlockTackleStrength,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Bravery,Determination,Strength)",DERIVED,VERIFIED(formula),formula.xml: BlockTackleStrength result over leaves Bravery|Determination|Strength
+FUN_0081f0d0,CentralDefenderAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(CentralDefender),DERIVED,VERIFIED(formula),formula.xml: CentralDefenderAbility result over leaves CentralDefender
+FUN_0081bad0,ClearancePower,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Determination,Strength)",DERIVED,VERIFIED(formula),formula.xml: ClearancePower result over leaves Determination|Strength
+FUN_0081d4b0,Handball,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(DecisionMaking,Sportsmanship)",DERIVED,VERIFIED(formula),formula.xml: Handball result over leaves DecisionMaking|Sportsmanship
+FUN_0081a070,HardTackleFrequency,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Aggression,Bravery)",DERIVED,VERIFIED(formula),formula.xml: HardTackleFrequency result over leaves Aggression|Bravery
+FUN_0081c2b0,KeeperAgility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Agility,Anticipation)",DERIVED,VERIFIED(formula),formula.xml: KeeperAgility result over leaves Agility|Anticipation
+FUN_0081be30,KeeperBravery,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Bravery,OneOnOnes)",DERIVED,VERIFIED(formula),formula.xml: KeeperBravery result over leaves Bravery|OneOnOnes
+FUN_0081cbb0,KeeperCoordinateDefence,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(CoordinatingDefense),DERIVED,VERIFIED(formula),formula.xml: KeeperCoordinateDefence result over leaves CoordinatingDefense
+FUN_0081c730,KeeperCrosses,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Crosses),DERIVED,VERIFIED(formula),formula.xml: KeeperCrosses result over leaves Crosses
+FUN_0081cdf0,KeeperEccentricity,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Eccentricity),DERIVED,VERIFIED(formula),formula.xml: KeeperEccentricity result over leaves Eccentricity
+FUN_0081c4f0,KeeperGrip,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Concentration,Handling)",DERIVED,VERIFIED(formula),formula.xml: KeeperGrip result over leaves Concentration|Handling
+FUN_0081c610,KeeperHandStrength,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(ShotStopping,Strength)",DERIVED,VERIFIED(formula),formula.xml: KeeperHandStrength result over leaves ShotStopping|Strength
+FUN_0081c850,KeeperKicking,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Kicking),DERIVED,VERIFIED(formula),formula.xml: KeeperKicking result over leaves Kicking
+FUN_0081ca90,KeeperPunching,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Aggression,Eccentricity,ShotStopping)",DERIVED,VERIFIED(formula),formula.xml: KeeperPunching result over leaves Aggression|Eccentricity|ShotStopping
+FUN_0081c190,KeeperReach,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Handling,ShotStopping)",DERIVED,VERIFIED(formula),formula.xml: KeeperReach result over leaves Handling|ShotStopping
+FUN_0081c3d0,KeeperRecovery,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Balance,Positioning)",DERIVED,VERIFIED(formula),formula.xml: KeeperRecovery result over leaves Balance|Positioning
+FUN_0081bf50,KeeperRunningOut,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Eccentricity,OneOnOnes)",DERIVED,VERIFIED(formula),formula.xml: KeeperRunningOut result over leaves Eccentricity|OneOnOnes
+FUN_0081c970,KeeperThrowing,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Throwing),DERIVED,VERIFIED(formula),formula.xml: KeeperThrowing result over leaves Throwing
+FUN_0081e230,Marking,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Marking,TeamWork)",DERIVED,VERIFIED(formula),formula.xml: Marking result over leaves Marking|TeamWork
+FUN_0081a3d0,OverAggression,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Aggression,Pressure,Sportsmanship)",DERIVED,VERIFIED(formula),formula.xml: OverAggression result over leaves Aggression|Pressure|Sportsmanship
+FUN_00819ad0,ShirtPulling,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Determination,Sportsmanship)",DERIVED,VERIFIED(formula),formula.xml: ShirtPulling result over leaves Determination|Sportsmanship
+FUN_0081c070,SmotheringAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Handling,OneOnOnes)",DERIVED,VERIFIED(formula),formula.xml: SmotheringAbility result over leaves Handling|OneOnOnes
+FUN_0081a4f0,TackleAvoidance,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Dribbling),DERIVED,VERIFIED(formula),formula.xml: TackleAvoidance result over leaves Dribbling
+FUN_0081a2b0,TackleCaution,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Positioning,Tackling)",DERIVED,VERIFIED(formula),formula.xml: TackleCaution result over leaves Positioning|Tackling
+FUN_008192f0,TackleChaseRange,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Tackling,WorkRate)",DERIVED,VERIFIED(formula),formula.xml: TackleChaseRange result over leaves Tackling|WorkRate
+FUN_00819f50,TackleFrequency,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(TeamWork,WorkRate)",DERIVED,VERIFIED(formula),formula.xml: TackleFrequency result over leaves TeamWork|WorkRate
+FUN_0081a190,TacklingAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(DecisionMaking,Tackling)",DERIVED,VERIFIED(formula),formula.xml: TacklingAbility result over leaves DecisionMaking|Tackling
+FUN_00819890,ActingAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Sportsmanship),DERIVED,VERIFIED(formula),formula.xml: ActingAbility result over leaves Sportsmanship
+FUN_0081ea10,Adaptability,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,Adaptability,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_00819530,Alertness,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Anticipation,Concentration)",DERIVED,VERIFIED(formula),formula.xml: Alertness result over leaves Anticipation|Concentration
+FUN_0081e7d0,Ambition,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,Ambition,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_0081f670,AttackingMidAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(AttackingMidfielder),DERIVED,VERIFIED(formula),formula.xml: AttackingMidAbility result over leaves AttackingMidfielder
+FUN_0081faf0,CentralAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Central),DERIVED,VERIFIED(formula),formula.xml: CentralAbility result over leaves Central
+FUN_00818210,Composure,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Confidence,DecisionMaking)",DERIVED,VERIFIED(formula),formula.xml: Composure result over leaves Confidence|DecisionMaking
+FUN_0081e350,Consistency,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Consistency,CurrentAbility)",DERIVED,VERIFIED(formula),formula.xml: Consistency result over leaves Consistency|CurrentAbility
+FUN_0081f310,DefensiveMidAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(DefensiveMidfielder),DERIVED,VERIFIED(formula),formula.xml: DefensiveMidAbility result over leaves DefensiveMidfielder
+FUN_0081abb0,DegreesControlStepLeft,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,(locomotion/no-leaf),COMPUTE-ONLY,UNKNOWN,formula.xml: no int leaves (physics/compute-only)
+FUN_0081f9d0,ForwardAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Forward),DERIVED,VERIFIED(formula),formula.xml: ForwardAbility result over leaves Forward
+FUN_0081efb0,FullBackAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(FullBack),DERIVED,VERIFIED(formula),formula.xml: FullBackAbility result over leaves FullBack
+FUN_0081ccd0,GameAwareness,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Anticipation,DecisionMaking)",DERIVED,VERIFIED(formula),formula.xml: GameAwareness result over leaves Anticipation|DecisionMaking
+FUN_0081e470,Leadership,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Leadership,TeamWork)",DERIVED,VERIFIED(formula),formula.xml: Leadership result over leaves Leadership|TeamWork
+FUN_0081ed70,LeftFoot,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,LeftFoot,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_0081fc10,LeftSideAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(LeftSide),DERIVED,VERIFIED(formula),formula.xml: LeftSideAbility result over leaves LeftSide
+FUN_0081f790,MidfieldAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Midfielder),DERIVED,VERIFIED(formula),formula.xml: MidfieldAbility result over leaves Midfielder
+FUN_008199b0,PhysicalPlay,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Aggression,Sportsmanship)",DERIVED,VERIFIED(formula),formula.xml: PhysicalPlay result over leaves Aggression|Sportsmanship
+FUN_00819bf0,PlayerAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(CurrentAbility),DERIVED,VERIFIED(formula),formula.xml: PlayerAbility result over leaves CurrentAbility
+FUN_0081e6b0,Professionalism,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,Professionalism,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_0081a970,Resilience,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Anticipation,InjuryResistance)",DERIVED,VERIFIED(formula),formula.xml: Resilience result over leaves Anticipation|InjuryResistance
+FUN_0081ee90,RightFoot,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,RightFoot,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_0081fd30,RightSideAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(RightSide),DERIVED,VERIFIED(formula),formula.xml: RightSideAbility result over leaves RightSide
+FUN_0081dc90,Roaming,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Creativity,Roaming)",DERIVED,VERIFIED(formula),formula.xml: Roaming result over leaves Creativity|Roaming
+FUN_0081ddb0,RunFrequency,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,"f(Creativity,WorkRate)",DERIVED,VERIFIED(formula),formula.xml: RunFrequency result over leaves Creativity|WorkRate
+FUN_0081f8b0,StrikerAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Striker),DERIVED,VERIFIED(formula),formula.xml: StrikerAbility result over leaves Striker
+FUN_0081f1f0,SweeperAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Sweeper),DERIVED,VERIFIED(formula),formula.xml: SweeperAbility result over leaves Sweeper
+FUN_0081e8f0,Versatility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,Versatility,STORED,INFERRED-high,formula.xml single-leaf==name; name double-confirmed
+FUN_0081f430,WingBackAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(WingBack),DERIVED,VERIFIED(formula),formula.xml: WingBackAbility result over leaves WingBack
+FUN_0081f550,WingerAbility,PlayerConstant,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,f(Winger),DERIVED,VERIFIED(formula),formula.xml: WingerAbility result over leaves Winger

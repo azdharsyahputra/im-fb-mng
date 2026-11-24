@@ -35,6 +35,14 @@ typedef struct cm_triple { uint32_t cum; float lo, hi; } cm_triple;
  * context/value-level; cum is monotonic within a group and resets between). */
 typedef struct cm_cdf_group { int start, n; uint32_t total; } cm_cdf_group;
 
+/* CONTEXT GRID (recovered; see research/RESOLVER_CONTEXT_GRID.md): block0 is not
+ * padding — it is the record's lookup axis table. An axis is a sorted list of
+ * breakpoints; value v falls in bin i where breaks[i-1] <= v < breaks[i], giving
+ * n_breaks+1 bins. The triples are a FLATTENED row-major n-D moment grid:
+ * n_triples == prod(dims) + 1, and the final triple is the grand-total/overall
+ * cell (its cum == the sum of every grid cell's cum). VERIFIED 134/134 records. */
+typedef struct cm_axis { float *breaks; int n_breaks; } cm_axis;
+
 typedef struct cm_dist_record {
     char name[48];
     cm_triple *triples;
@@ -42,6 +50,9 @@ typedef struct cm_dist_record {
     uint32_t total;     /* terminator cum = population for this metric/section */
     cm_cdf_group *groups;
     int n_groups;
+    cm_axis *axes;      /* context lookup axes parsed from block0 */
+    int n_axes;
+    int *dims;          /* per-axis bin count (= n_breaks+1); len == n_axes */
 } cm_dist_record;
 
 typedef struct cm_dist_section {
@@ -81,5 +92,36 @@ float cm_resolver_sample(const cm_dist_record *rec, uint32_t *lcg_state);
  * noise. Reproduces the real distribution shape (preferred over the Gaussian group
  * sampler, which is the labeled baseline). */
 float cm_resolver_sample_empirical(const cm_dist_record *rec, uint32_t *lcg_state);
+
+/* ---- Context grid API (recovered; see research/RESOLVER_CONTEXT_GRID.md) ---------- */
+
+/* Number of grid cells (= prod(dims)); the extra final triple is the overall cell. */
+int cm_resolver_grid_cells(const cm_dist_record *rec);
+/* 1 if this record is a real n-D context grid (n_triples == grid_cells+1), else 0. */
+int cm_resolver_has_grid(const cm_dist_record *rec);
+/* Grand-total/overall cell moments (context-free league average). */
+void cm_resolver_overall(const cm_dist_record *rec, double *mean, double *var, uint32_t *n);
+/* Bin index (0..dims[axis]-1) for value v on a context axis. */
+int cm_resolver_bin(const cm_dist_record *rec, int axis, double v);
+/* Flat row-major cell index for bin coordinates (one per axis), or -1 if invalid. */
+int cm_resolver_cell_index(const cm_dist_record *rec, const int *coords, int n_coords);
+/* Index of the universal +-20.9 draw/quantile axis, or -1 if this record has none.
+ * NOTE: the 6 files are alternative re-binnings; the draw axis is slot 0 in files
+ * 1 and 5 but not all. */
+int cm_resolver_draw_axis_index(const cm_dist_record *rec);
+/* Number of CONTEXT axes (all axes except the draw axis). */
+int cm_resolver_n_context(const cm_dist_record *rec);
+/* Context-conditioned moments: bin the context values (len == n_context; axes in
+ * file order excluding the draw axis) and aggregate the draw-axis column. Falls back
+ * to the overall cell when there is no grid / wrong length / empty column. */
+void cm_resolver_conditional_moments(const cm_dist_record *rec,
+                                     const double *context_values, int n_values,
+                                     double *mean, double *var, uint32_t *n);
+/* Draw one value for the given context (bins context -> aggregates draw column ->
+ * Gaussian-from-moments via the recovered LCG). APPROXIMATE draw shape; the moments
+ * and binning are VERIFIED, the Gaussian is the labeled modelling choice. */
+float cm_resolver_sample_conditional(const cm_dist_record *rec,
+                                     const double *context_values, int n_values,
+                                     uint32_t *lcg_state);
 
 #endif /* CM2008_MATCH_RESOLVER_DAT_H */

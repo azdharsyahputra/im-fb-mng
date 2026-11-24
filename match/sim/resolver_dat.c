@@ -24,11 +24,21 @@ static int looks_name(const rd *r, size_t p){
     for(uint32_t i=0;i<n;i++){ uint8_t c=q[4+i]; if(!((c>='A'&&c<='Z')||(c>='a'&&c<='z'))) return 0; }
     return 1;
 }
-/* skip block0: u32 nBuckets; each bucket u32 count,u32 nQ,f32[nQ] */
-static int skip_block0(rd *r){
+/* read block0 into the record's context axes: u32 nAxes; each axis u32 binCount,
+ * u32 nBreaks, f32[nBreaks]. (Earlier this was skipped as padding; it is actually
+ * the context lookup table.) */
+static int read_block0(rd *r, cm_dist_record *rec){
     uint32_t nb; if(!ru32(r,&nb)) return 0; if(nb>4096) return 0;
+    if(nb>0){ rec->axes=calloc(nb,sizeof(cm_axis)); rec->dims=calloc(nb,sizeof(int)); }
+    rec->n_axes=(int)nb;
     for(uint32_t i=0;i<nb;i++){ uint32_t c,nq; if(!ru32(r,&c)||!ru32(r,&nq)) return 0;
-        if(nq>65536) return 0; if(r->p+(size_t)nq*4>r->n) return 0; r->p+=(size_t)nq*4; }
+        (void)c;
+        if(nq>65536) return 0; if(r->p+(size_t)nq*4>r->n) return 0;
+        cm_axis *ax=&rec->axes[i]; ax->n_breaks=(int)nq;
+        ax->breaks = nq? malloc(sizeof(float)*nq) : NULL;
+        for(uint32_t q=0;q<nq;q++){ float v; if(!rf32(r,&v)) return 0; ax->breaks[q]=v; }
+        rec->dims[i]=(int)nq+1;
+    }
     return 1;
 }
 /* read triples into rec; stop rule depends on know_total */
@@ -83,7 +93,7 @@ int cm_resolver_load(cm_resolver_db *db, const char *path){
             cm_dist_record *rec=&sec->records[i];
             uint32_t nl; if(!ru32(&r,&nl)||nl>=sizeof(rec->name)||r.p+nl>r.n){ free(buf); return 0; }
             memcpy(rec->name,r.b+r.p,nl); rec->name[nl]=0; r.p+=nl;
-            if(!skip_block0(&r)){ free(buf); return 0; }
+            if(!read_block0(&r,rec)){ free(buf); return 0; }
             if(i==0){ read_triples(&r,rec,0,0); sec_total=rec->total; }
             else    { read_triples(&r,rec,1,sec_total); }
             build_groups(rec);
@@ -96,7 +106,12 @@ int cm_resolver_load(cm_resolver_db *db, const char *path){
 
 void cm_resolver_free(cm_resolver_db *db){
     for(int s=0;s<3;s++){
-        for(int i=0;i<db->section[s].n_records;i++){ free(db->section[s].records[i].triples); free(db->section[s].records[i].groups); }
+        for(int i=0;i<db->section[s].n_records;i++){
+            cm_dist_record *rec=&db->section[s].records[i];
+            free(rec->triples); free(rec->groups);
+            for(int a=0;a<rec->n_axes;a++) free(rec->axes[a].breaks);
+            free(rec->axes); free(rec->dims);
+        }
         free(db->section[s].records);
     }
     memset(db,0,sizeof *db);
@@ -170,5 +185,99 @@ float cm_resolver_sample_empirical(const cm_dist_record *rec, uint32_t *lcg){
         val += sqrt(-2.0*log(u1))*cos(6.28318530718*u2)*sqrt(var);
     }
     if(val<0) val=0;
+    return (float)val;
+}
+
+/* ---- Context grid API (recovered; see research/RESOLVER_CONTEXT_GRID.md) ---------- */
+
+static const float k_draw_breaks[8] = {
+    -20.904322f,-10.911437f,-5.036873f,-1.8810841f,1.8810754f,5.036864f,10.911417f,20.904284f
+};
+
+int cm_resolver_grid_cells(const cm_dist_record *rec){
+    if(!rec||rec->n_axes<=0) return 0;
+    int n=1; for(int a=0;a<rec->n_axes;a++) n*=rec->dims[a];
+    return n;
+}
+int cm_resolver_has_grid(const cm_dist_record *rec){
+    return rec && rec->n_axes>0 && rec->n_triples==cm_resolver_grid_cells(rec)+1;
+}
+static void moments_of(cm_triple t,double *mean,double *var,uint32_t *n){
+    *mean=0;*var=0;*n=0;
+    if(t.cum==0) return;
+    double m=(double)t.lo/(double)t.cum, v=(double)t.hi/(double)t.cum-m*m;
+    if(v<0)v=0; *mean=m;*var=v;*n=t.cum;
+}
+void cm_resolver_overall(const cm_dist_record *rec,double *mean,double *var,uint32_t *n){
+    *mean=0;*var=0;*n=0;
+    if(!rec||rec->n_triples<=0) return;
+    moments_of(rec->triples[rec->n_triples-1],mean,var,n);
+}
+int cm_resolver_bin(const cm_dist_record *rec,int axis,double v){
+    if(!rec||axis<0||axis>=rec->n_axes) return 0;
+    const cm_axis *ax=&rec->axes[axis]; int i=0;
+    while(i<ax->n_breaks && v>=(double)ax->breaks[i]) i++;
+    return i;
+}
+int cm_resolver_cell_index(const cm_dist_record *rec,const int *coords,int n_coords){
+    if(!rec||n_coords!=rec->n_axes) return -1;
+    int idx=0;
+    for(int a=0;a<rec->n_axes;a++){
+        int c=coords[a]; if(c<0||c>=rec->dims[a]) return -1;
+        idx=idx*rec->dims[a]+c;
+    }
+    if(idx<0||idx>=cm_resolver_grid_cells(rec)) return -1;
+    return idx;
+}
+int cm_resolver_draw_axis_index(const cm_dist_record *rec){
+    if(!rec) return -1;
+    for(int a=0;a<rec->n_axes;a++){
+        if(rec->axes[a].n_breaks!=8) continue;
+        int match=1;
+        for(int i=0;i<8;i++) if(rec->axes[a].breaks[i]!=k_draw_breaks[i]){match=0;break;}
+        if(match) return a;
+    }
+    return -1;
+}
+int cm_resolver_n_context(const cm_dist_record *rec){
+    if(!rec||rec->n_axes<=0) return 0;
+    return rec->n_axes - (cm_resolver_draw_axis_index(rec)>=0 ? 1 : 0);
+}
+void cm_resolver_conditional_moments(const cm_dist_record *rec,
+                                     const double *context_values,int n_values,
+                                     double *mean,double *var,uint32_t *n){
+    *mean=0;*var=0;*n=0;
+    if(!cm_resolver_has_grid(rec)){ cm_resolver_overall(rec,mean,var,n); return; }
+    int draw=cm_resolver_draw_axis_index(rec);
+    if(draw<0 || n_values!=cm_resolver_n_context(rec)){ cm_resolver_overall(rec,mean,var,n); return; }
+    int *coords=calloc(rec->n_axes,sizeof(int));
+    /* map context values onto non-draw axes in order */
+    int ci=0;
+    for(int a=0;a<rec->n_axes;a++){ if(a==draw) continue; coords[a]=cm_resolver_bin(rec,a,context_values[ci++]); }
+    uint64_t N=0; double sx=0,sx2=0;
+    for(int b=0;b<rec->dims[draw];b++){
+        coords[draw]=b;
+        int idx=cm_resolver_cell_index(rec,coords,rec->n_axes);
+        if(idx<0) continue;
+        cm_triple t=rec->triples[idx];
+        N+=t.cum; sx+=t.lo; sx2+=t.hi;
+    }
+    free(coords);
+    if(N==0){ cm_resolver_overall(rec,mean,var,n); return; }
+    double m=sx/(double)N, v=sx2/(double)N-m*m; if(v<0)v=0;
+    *mean=m;*var=v;*n=(uint32_t)N;
+}
+float cm_resolver_sample_conditional(const cm_dist_record *rec,
+                                     const double *context_values,int n_values,
+                                     uint32_t *lcg){
+    double mean,var; uint32_t n;
+    cm_resolver_conditional_moments(rec,context_values,n_values,&mean,&var,&n);
+    if(n==0) return 0.0f;
+    double val=mean;
+    if(var>0){
+        float u1=cm_lcg_unit(lcg),u2=cm_lcg_unit(lcg); if(u1<1e-7f)u1=1e-7f;
+        val += sqrt(-2.0*log(u1))*cos(6.28318530718*u2)*sqrt(var);
+    }
+    if(val<0)val=0;
     return (float)val;
 }

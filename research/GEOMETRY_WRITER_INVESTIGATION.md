@@ -138,3 +138,18 @@ pool-creation site — NOT_INVESTIGATED further.
 - item 1 per-frame integrator: **candidate 0x9f5398 (undefined region)** — LOCATED_NOT_UNDERSTOOD.
 - Hand to Lab: geometry fields are FLOAT @+0xc0/+0xc4/+0xc8/+0xcc/+0xd0/+0xd4, seeded from
   attributes (FUN_005d6d20 normalizer). The per-frame update formula still needs 0x9f5398 analyzed.
+
+---
+
+## CORRECTION (multi-agent pass — supersedes §2 above)
+Agent 3 (research/PHYSICS_AND_WAYPOINT_ANALYSIS.md) REFUTED the §2 claim that FUN_00a1fdf0 is the
+movement target-picker emitting pitch coords:
+- FUN_00a1fdf0 = roster attribute-NAME serializer (registers the attr dictionary). The 0x14/0x44-
+  stride "candidate list" is a DIFFERENT function, FUN_007fa450 (GCTransferModule schema registrar);
+  its "coords" are serialization field hashes (FUN_00a0d5b0), NOT world coordinates.
+- Real match waypoints: 4 u16 target refs at +0xb4/+0xb6/+0xb8/+0xba -> FUN_009f0c40 -> FUN_009fd690
+  (consume-chain VERIFIED); the ref-filler/selector is INFERRED/UNKNOWN.
+Also: the +0xc0..+0xd4 physics-block fields are ATTRIBUTE-DERIVED SCALARS (not pitch coords); the
+raw-float vectors are at +0x94..+0xB8; the projection's fild [obj+0xc0/0xd0] reads a DIFFERENT view
+object (model/view duality). And 0x9f5398 (§UPDATE above) is a run-once config-singleton init,
+RULED OUT as the integrator (Agent 1). See MULTI_AGENT_PROGRESS.md.

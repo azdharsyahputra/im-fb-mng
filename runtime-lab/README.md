@@ -44,12 +44,22 @@ Traces go to `traces/<id>.jsonl`; reproducibility manifests to `experiments/<id>
 
 - **VERIFIED**: the .dat envelope + the context-grid structure; the LCG; the six files
   re-bin ONE population (bit-identical grand-total N/sumX/sumX2); the ±20.9 draw axis.
-- **INFERRED**: each context axis's *role* (effect size + breakpoint symmetry).
-- **APPROXIMATE**: the Gaussian-from-moments draw SHAPE; the projection of a hypothesised
-  runtime quantity onto an axis range.
-- **UNKNOWN**: the literal engine quantity behind each context axis (read internally by the
-  obfuscated iterators — not caller-supplied, see `PICKER_CALLER_CONTEXT.md`); the engine's
-  model-selection logic; the exact picker reduction. The lab never fabricates these.
+- **INFERRED (strong)**: the categorical context axis = the game's **7-bin player-position
+  spine** (b0 Central Defender … b6 Striker; GK absent; b2 = the rare ~3% Sweeper). The lab
+  identifies it as the one context axis with a non-uniform population marginal and maps a
+  player's position onto its literal bin (see `../research/RESOLVER_AXIS_MAPPING.md`). Use the
+  `position` or `combined` hypothesis.
+- **INFERRED**: each remaining context axis's *role* (effect size + breakpoint symmetry).
+- **APPROXIMATE**: the Gaussian-from-moments draw SHAPE; the `involvement` and `quality`
+  projections of a hypothesised runtime quantity onto an axis range.
+- **UNKNOWN**: the literal engine quantity behind the *continuous* (equal-frequency) context
+  axes (read internally by the obfuscated iterators — not caller-supplied, see
+  `PICKER_CALLER_CONTEXT.md`); the engine's model-selection logic; the exact picker reduction.
+  The lab never fabricates these.
+
+Hypotheses for `simulate`/experiments: `neutral` (all mid), `position` (literal spine bin from
+the player's position), `involvement` (APPROXIMATE position+duty proxy onto the position axis),
+`quality` (skill onto the differential axis), `combined` (position + quality).
 
 ## Status by phase
 All four phases **done**: (1) models load/inspect/compare; (2) runtime state + context

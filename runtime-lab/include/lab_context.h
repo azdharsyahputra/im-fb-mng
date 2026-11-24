@@ -101,6 +101,21 @@ int lab_build_context(const lab_runtime_state *s, const cm_dist_record *rec,
 /* 0..1 attacking-involvement proxy from position+duty (HYPOTHESIS, APPROXIMATE). */
 double lab_involvement_proxy(lab_position pos, lab_duty duty);
 
+/* ---- recovered categorical axis = the 7-bin player-position spine ------------------- */
+/* research/RESOLVER_AXIS_MAPPING.md (other session): exactly one context axis is categorical
+ * (non-uniform fixed marginal); its defence->attack gradient maps onto the game's 7-value
+ * vertical position spine (bin0 Central Defender .. bin6 Striker; GK absent from outfield
+ * metrics; bin2 = the rare ~3% Sweeper). INFERRED-strong, not byte-proven. */
+
+/* Return the actual axis index of the categorical/position axis (the context axis whose
+ * population marginal is non-uniform), or -1 if none is clearly categorical. */
+int lab_identify_position_axis(const cm_dist_record *rec);
+
+/* Map a lab position to its 0..6 bin on the 7-value spine, or -1 for GK (absent here).
+ * DC->0, DL/DR->1, (Sweeper 2 has no lab enum), DM->3, MC/ML/MR->4, AMC/AML/AMR->5, ST->6. */
+int lab_position_spine_bin(lab_position p);
+const char *lab_spine_bin_name(int bin);   /* "Central Defender" .. "Striker" */
+
 int lab_cmd_player(int argc, char **argv);
 
 #endif /* CM2008_LAB_CONTEXT_H */

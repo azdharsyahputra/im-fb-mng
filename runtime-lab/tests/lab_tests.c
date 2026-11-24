@@ -197,6 +197,46 @@ static void test_phase4(const char *dir) {
     lab_model_free(&m1); lab_model_free(&m2);
 }
 
+/* Consumed taxonomy: the recovered 7-bin player-position spine (other session). */
+static void test_taxonomy(const char *dir) {
+    /* spine mapping: DC defence-end, ST attack-end, GK absent */
+    CHECK(lab_position_spine_bin(POS_DC) == 0, "DC -> spine bin 0");
+    CHECK(lab_position_spine_bin(POS_ST) == 6, "ST -> spine bin 6");
+    CHECK(lab_position_spine_bin(POS_GK) == -1, "GK absent from the outfield spine");
+    CHECK(lab_position_spine_bin(POS_AMC) > lab_position_spine_bin(POS_DM),
+          "attacking mid is further up the spine than defensive mid");
+
+    LabModel m; CHECK(lab_model_load(&m, 1, dir), "taxonomy load model 1"); if (!m.loaded) return;
+    const cm_dist_record *rec = cm_resolver_find(&m.db, 0, "GoalsScored");
+    if (!rec) { lab_model_free(&m); return; }
+
+    /* the position axis is the 7-bin categorical axis (non-uniform marginal) */
+    int pax = lab_identify_position_axis(rec);
+    CHECK(pax >= 0, "position axis identified");
+    CHECK(pax >= 0 && rec->dims[pax] == 7, "position axis has 7 bins (got %d)", pax >= 0 ? rec->dims[pax] : -1);
+    CHECK(pax != cm_resolver_draw_axis_index(rec), "position axis is not the draw axis");
+
+    /* literal mapping drives output: ST (b6) conditional mean > DC (b0) under 'position' */
+    lab_runtime_state dc, st; lab_state_default(&dc); lab_state_default(&st);
+    dc.player.position = POS_DC; st.player.position = POS_ST;
+    lab_context cdc, cst; lab_build_context(&dc, rec, "position", &cdc); lab_build_context(&st, rec, "position", &cst);
+    double mdc, vdc, mst, vst; uint32_t ndc, nst;
+    cm_resolver_conditional_moments(rec, cdc.values, cdc.n, &mdc, &vdc, &ndc);
+    cm_resolver_conditional_moments(rec, cst.values, cst.n, &mst, &vst, &nst);
+    CHECK(mst > mdc, "GoalsScored: Striker (%.4f) > Central Defender (%.4f) via literal spine", mst, mdc);
+
+    /* and Clearances should reverse (defence-end higher) — cross-metric consistency */
+    const cm_dist_record *cl = cm_resolver_find(&m.db, 0, "Clearances");
+    if (cl && lab_identify_position_axis(cl) >= 0) {
+        lab_context q0, q6; lab_build_context(&dc, cl, "position", &q0); lab_build_context(&st, cl, "position", &q6);
+        double a, b; uint32_t na, nb; double va, vb;
+        cm_resolver_conditional_moments(cl, q0.values, q0.n, &a, &va, &na);
+        cm_resolver_conditional_moments(cl, q6.values, q6.n, &b, &vb, &nb);
+        CHECK(a > b, "Clearances: Central Defender (%.2f) > Striker (%.2f) — gradient reverses", a, b);
+    }
+    lab_model_free(&m);
+}
+
 int main(void) {
     const char *dir = lab_model_default_dir();
     if (!files_present(dir)) {
@@ -208,6 +248,7 @@ int main(void) {
     test_phase2(dir);
     test_phase3(dir);
     test_phase4(dir);
+    test_taxonomy(dir);
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

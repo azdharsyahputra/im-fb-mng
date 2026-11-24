@@ -73,7 +73,14 @@ int lab_cmd_simulate(int argc, char **argv) {
 
     lab_context ctx;
     if (!lab_build_context(&s, rec, hyp, &ctx)) { fprintf(stderr, "cannot build context (metric may be scalar)\n"); lab_model_free(&m); return 3; }
-    printf("\ncontext vector [%s, APPROXIMATE projection]:", ctx.hypothesis);
+    int pax = lab_identify_position_axis(rec);
+    if (pax >= 0) {
+        int spine = lab_position_spine_bin(s.player.position);
+        printf("\nposition axis = slot %d (7-bin spine, INFERRED-strong): %s -> spine bin %d (%s)\n",
+               pax, lab_position_str(s.player.position), spine,
+               spine >= 0 ? lab_spine_bin_name(spine) : "GK (absent from outfield axis)");
+    }
+    printf("context vector [%s]:", ctx.hypothesis);
     for (int i = 0; i < ctx.n; i++) printf(" %.3f", ctx.values[i]);
     printf("\n");
 

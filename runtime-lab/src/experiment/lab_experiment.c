@@ -118,13 +118,13 @@ static int exp_position(int model, const char *metric, size_t samples, uint32_t 
     lab_position ps[] = { POS_DC, POS_DL, POS_MC, POS_AMC, POS_ST };
     const char *labels[] = { "DC", "DL", "MC", "AMC", "ST" };
     lab_runtime_state v[5]; for (int i = 0; i < 5; i++) { base_state(&v[i]); v[i].player.position = ps[i]; v[i].player.duty = DUTY_ATTACK; }
-    return run_perturb("position-perturbation", "position", model, metric, v, labels, 5, 2, "volume", samples, seed, td);
+    return run_perturb("position-perturbation", "position", model, metric, v, labels, 5, 2, "position", samples, seed, td);
 }
 static int exp_duty(int model, const char *metric, size_t samples, uint32_t seed, const char *td) {
     lab_duty ds[] = { DUTY_DEFEND, DUTY_SUPPORT, DUTY_ATTACK };
     const char *labels[] = { "Defend", "Support", "Attack" };
     lab_runtime_state v[3]; for (int i = 0; i < 3; i++) { base_state(&v[i]); v[i].player.position = POS_MC; v[i].player.duty = ds[i]; }
-    return run_perturb("duty-perturbation", "duty", model, metric, v, labels, 3, 1, "volume", samples, seed, td);
+    return run_perturb("duty-perturbation", "duty", model, metric, v, labels, 3, 1, "involvement", samples, seed, td);
 }
 static int exp_stamina(int model, const char *metric, size_t samples, uint32_t seed, const char *td) {
     int ss[] = { 20, 40, 60, 80, 100 };
@@ -189,6 +189,23 @@ static int exp_axis_correlation(int model, const char *metric, const char *td) {
         char ob[200]; snprintf(ob, sizeof ob, "\"axis\":%d,\"effect\":%.3f,\"symmetric\":%d",
                                c.items[i].axis_index, c.items[i].effect_ratio, c.items[i].symmetric);
         lab_trace_step(&t, "axis", model, 0, lab_conf_str(c.items[i].confidence)[0] ? "INFERRED" : "UNKNOWN", "", ob);
+    }
+    /* if a categorical position axis is present, print its recovered 7-bin spine + marginal */
+    int pax = lab_identify_position_axis(rec);
+    if (pax >= 0) {
+        printf("\nposition axis = slot %d [INFERRED-strong, RESOLVER_AXIS_MAPPING.md]: 7-bin spine\n", pax);
+        int cells = cm_resolver_grid_cells(rec), dim = rec->dims[pax];
+        int stride = 1; for (int b = pax + 1; b < rec->n_axes; b++) stride *= rec->dims[b];
+        double marg[32] = {0}, tot = 0, mm[32] = {0};
+        for (int k = 0; k < cells; k++) { int cc = (k / stride) % dim; marg[cc] += rec->triples[k].cum; }
+        /* per-bin metric mean via aggregating the draw column per position bin is overkill here;
+         * show the population marginal (the categorical fingerprint) + the spine label */
+        for (int k = 0; k < cells; k++) tot += rec->triples[k].cum;
+        (void)mm;
+        printf("  %-4s %-9s %-s\n", "bin", "pop%", "position (INFERRED)");
+        for (int b = 0; b < dim && b < 7; b++)
+            printf("  b%-3d %-9.1f %s\n", b, tot > 0 ? 100.0 * marg[b] / tot : 0.0, lab_spine_bin_name(b));
+        printf("  (GoalKeeper absent from outfield metrics; bin2 ~3%% = Sweeper = strongest corroboration)\n");
     }
     printf("\nInterpretation: INFERRED. Trace: %s/axis-correlation.jsonl\n", td);
     lab_trace_close(&t);

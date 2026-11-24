@@ -53,6 +53,51 @@ double lab_involvement_proxy(lab_position pos, lab_duty duty) {
     return v;
 }
 
+/* ---- recovered 7-bin position spine (see RESOLVER_AXIS_MAPPING.md) ------------------ */
+static const char *SPINE[7] = {
+    "Central Defender", "Full-back", "Sweeper", "Defensive Mid", "Midfielder",
+    "Attacking Mid", "Striker"
+};
+const char *lab_spine_bin_name(int bin) { return (bin >= 0 && bin < 7) ? SPINE[bin] : "?"; }
+
+int lab_position_spine_bin(lab_position p) {
+    switch (p) {
+        case POS_GK: return -1;                 /* absent from outfield-metric axes */
+        case POS_DC: return 0;
+        case POS_DL: case POS_DR: return 1;     /* full-back/stopper */
+        case POS_DM: return 3;                  /* bin2 = Sweeper (no lab enum) */
+        case POS_MC: case POS_ML: case POS_MR: return 4;
+        case POS_AMC: case POS_AML: case POS_AMR: return 5;
+        case POS_ST: return 6;
+        default: return -1;
+    }
+}
+
+/* marginal maxDev from uniform for one axis (how categorical it is) */
+static double axis_marginal_maxdev(const cm_dist_record *rec, int a) {
+    if (!cm_resolver_has_grid(rec) || a < 0 || a >= rec->n_axes) return 0;
+    int cells = cm_resolver_grid_cells(rec), dim = rec->dims[a];
+    int stride = 1; for (int b = a + 1; b < rec->n_axes; b++) stride *= rec->dims[b];
+    double *marg = calloc(dim, sizeof(double)); double tot = 0;
+    for (int k = 0; k < cells; k++) { int c = (k / stride) % dim; marg[c] += rec->triples[k].cum; tot += rec->triples[k].cum; }
+    double uni = 1.0 / dim, maxdev = 0;
+    if (tot > 0) for (int b = 0; b < dim; b++) { double d = marg[b] / tot - uni; if (d < 0) d = -d; if (d > maxdev) maxdev = d; }
+    free(marg);
+    return maxdev;
+}
+
+int lab_identify_position_axis(const cm_dist_record *rec) {
+    if (!cm_resolver_has_grid(rec)) return -1;
+    int draw = cm_resolver_draw_axis_index(rec);
+    int best = -1; double bestdev = 0.05; /* threshold: uniform axes sit at ~0 */
+    for (int a = 0; a < rec->n_axes; a++) {
+        if (a == draw) continue;
+        double dev = axis_marginal_maxdev(rec, a);
+        if (dev > bestdev) { bestdev = dev; best = a; }
+    }
+    return best;
+}
+
 /* actual axis index for context-order index ci (file order, excluding draw axis) */
 static int ctx_actual(const cm_dist_record *rec, int draw, int ci) {
     int k = 0;
@@ -105,22 +150,30 @@ int lab_resolve_axis_candidates(const cm_dist_record *rec, lab_axis_candidates *
         if (c->effect_ratio > maxratio) { maxratio = c->effect_ratio; maxi = ci; }
     }
 
+    /* the categorical axis = the recovered player-position spine (non-uniform marginal) */
+    int pos_axis = lab_identify_position_axis(rec);
+
     /* assign roles from the evidence (data-derived, NOT game variable names) */
     for (int ci = 0; ci < nctx; ci++) {
         lab_axis_candidate *c = &out->items[ci];
-        if (ci == maxi && c->effect_ratio > 2.0) {
-            c->role = "dominant/involvement-volume (INFERRED)";
-            c->candidate_source = "position+duty involvement (HYPOTHESIS)";
-            c->confidence = (c->effect_ratio > 4.0) ? CONF_INFERRED : CONF_APPROXIMATE;
-            c->alternatives = "could be role/minutes/opportunity; literal name UNKNOWN";
+        if (c->axis_index == pos_axis) {
+            c->role = "player-position spine b0 CDef..b6 Striker (INFERRED-strong)";
+            c->candidate_source = "position on the 7-value *Value spine (RESOLVER_AXIS_MAPPING.md)";
+            c->confidence = CONF_INFERRED;
+            c->alternatives = "role/duty grouping vs raw position; either way def<->att categorical";
         } else if (c->symmetric && c->effect_ratio > 1.5) {
             c->role = "differential/quality-matchup (INFERRED)";
             c->candidate_source = "skill/ability vs opponent (HYPOTHESIS)";
             c->confidence = CONF_APPROXIMATE;
             c->alternatives = "could be score/strength differential; literal name UNKNOWN";
+        } else if (ci == maxi && c->effect_ratio > 2.0) {
+            c->role = "dominant continuous booster (INFERRED)";
+            c->candidate_source = "quantile-binned player/match quantity (HYPOTHESIS)";
+            c->confidence = CONF_APPROXIMATE;
+            c->alternatives = "uniform marginal => continuous; literal name UNKNOWN";
         } else {
-            c->role = "secondary modifier (INFERRED-weak)";
-            c->candidate_source = "unknown runtime quantity (HYPOTHESIS)";
+            c->role = "secondary continuous modifier (INFERRED-weak)";
+            c->candidate_source = "quantile-binned quantity (HYPOTHESIS)";
             c->confidence = CONF_UNKNOWN;
             c->alternatives = "insufficient effect to characterise";
         }
@@ -158,19 +211,37 @@ int lab_build_context(const lab_runtime_state *s, const cm_dist_record *rec,
     }
     if (!hypothesis || strcmp(hypothesis, "neutral") == 0) return 1;
 
-    int vol_ci = find_role_axis(&cand, 0);       /* dominant/volume candidate */
+    /* context-order index of the recovered position axis (if any) */
+    int pos_axis = lab_identify_position_axis(rec);
+    int pos_ci = -1;
+    for (int ci = 0; ci < nctx; ci++) if (ctx_actual(rec, draw, ci) == pos_axis) { pos_ci = ci; break; }
     int qual_ci = find_role_axis(&cand, 1);      /* symmetric/quality candidate */
-    double involvement = lab_involvement_proxy(s->player.position, s->player.duty);
+
     double quality = (s->player.skill - 1) / 19.0; if (quality < 0) quality = 0; if (quality > 1) quality = 1;
 
-    int do_vol = (strcmp(hypothesis, "volume") == 0 || strcmp(hypothesis, "combined") == 0);
+    /* "position"/"volume"/"combined" drive the position axis via the LITERAL spine mapping;
+     * "involvement" drives the same axis via the older APPROXIMATE position+duty proxy (so duty
+     * sensitivity is visible); "quality"/"combined" drive the differential axis via skill. */
+    int do_pos  = (strcmp(hypothesis, "position") == 0 || strcmp(hypothesis, "volume") == 0 || strcmp(hypothesis, "combined") == 0);
+    int do_invol = (strcmp(hypothesis, "involvement") == 0);
     int do_qual = (strcmp(hypothesis, "quality") == 0 || strcmp(hypothesis, "combined") == 0);
 
-    if (do_vol && vol_ci >= 0) {
-        double lo = cand.items[vol_ci].lo, hi = cand.items[vol_ci].hi, e = (hi - lo) * 0.02 + 0.01;
-        out->values[vol_ci] = (lo - e) + involvement * ((hi + e) - (lo - e));
+    if (do_invol && pos_ci >= 0) {
+        double involvement = lab_involvement_proxy(s->player.position, s->player.duty);
+        double lo = cand.items[pos_ci].lo, hi = cand.items[pos_ci].hi, e = (hi - lo) * 0.02 + 0.01;
+        out->values[pos_ci] = (lo - e) + involvement * ((hi + e) - (lo - e));
     }
-    if (do_qual && qual_ci >= 0 && qual_ci != vol_ci) {
+    if (do_pos && pos_ci >= 0) {
+        int spine = lab_position_spine_bin(s->player.position);   /* 0..6 or -1 (GK) */
+        int a = pos_axis, dim = rec->dims[a];
+        int bin;
+        if (spine < 0) bin = 0;                                   /* GK -> defence-most proxy */
+        else if (dim == 7) bin = spine;                           /* literal 7-bin spine */
+        else bin = (int)((double)spine / 6.0 * (dim - 1) + 0.5);  /* scale if collapsed */
+        if (bin < 0) bin = 0; if (bin >= dim) bin = dim - 1;
+        out->values[pos_ci] = value_for_bin(rec, a, bin);
+    }
+    if (do_qual && qual_ci >= 0 && qual_ci != pos_ci) {
         double lo = cand.items[qual_ci].lo, hi = cand.items[qual_ci].hi, e = (hi - lo) * 0.02 + 0.01;
         out->values[qual_ci] = (lo - e) + quality * ((hi + e) - (lo - e));
     }

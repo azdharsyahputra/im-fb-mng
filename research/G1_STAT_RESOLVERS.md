@@ -28,6 +28,16 @@ Decompiled from the crack.
   probabilities) is the next port target, and the event GENERATOR (which atom fires when, between
   whom) remains the open G1 core.
 
+## a029c0 mechanism — DECODED (3-stage sequential probability gate)
+Each of its 3 sub-outcomes is: `FUN_005ce3e0` (get the target stat dword) → `imul 0x19660d` (LCG draw)
+→ `mul [esp+0x38]` (scale the draw by a probability value held at [esp+0x38]) → compare → `FUN_005cd020`
+(bump counter 0 or 1). So a029c0 = the duel's `draw×prob>>32` gate, chained for 3 sequential outcomes.
+The probability `[esp+0x38]` is computed earlier from the participants' attributes (same A/(A+B)
+family). Portable shape: a sequence of probability gates over real attrs — not distribution sampling.
+
 ## Status
-3 stat-resolvers identified + their draw/counter/helper structure — VERIFIED. a029c0's exact outcome
-arithmetic — LOCATED, not yet fully decoded. Event generator — still open.
+All 3 stat-resolvers' MECHANISMS are now understood (VERIFIED): duel = 2-outcome gate; a029c0 =
+3-stage sequential gate; shootout = kick gates. Each is `draw×prob>>32` over real participant attrs.
+The per-gate probability sources ([esp+0x38] etc.) are attribute-derived (exact formula per gate not
+all traced). Event GENERATOR (which atom fires when/between whom) remains the large open core (~190-fn
+subsystem, see G1_MODEL.md).

@@ -362,3 +362,5 @@ the pending bit on the clear mask.
 8. **Formula eval `00818120` / picker `005b5100`** named in the task brief were **not
    reached** on this resolve path in the dumped closure (no call sites found in the chain
    bodies read). Whether they are invoked indirectly (vtable/`FUN_009e5160`) is UNKNOWN.
+   (NB: the picker BODY is now recovered — key→index lookup, NO RNG, RESOLVER_PICKER_CLUSTER_RECOVERY.md;
+   only its reachability on THIS path is the open item here.)

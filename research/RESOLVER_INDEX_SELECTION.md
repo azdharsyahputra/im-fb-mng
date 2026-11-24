@@ -1,5 +1,7 @@
 # Resolver index/bucket picker — FUN_005b5100 (reverse-engineering)
 
+> **⚠️ SUPERSEDED (2026-11-24).** The "anti-disassembly / runtime-decrypted / randomness-hidden-in-the-cluster" verdict in this document is REFUTED. FUN_005b5100 and the whole 0x5b3xxx–0x5b5xxx cluster disassemble cleanly from the crack image: they are an ordinary C++ collection (linear find-by-key + accessors), contain **NO RNG**, and the "obfuscation" was a Ghidra false-alarm (int3 padding + tail-calls). See **PICKER_RECOVERY.md** and **RESOLVER_PICKER_CLUSTER_RECOVERY.md**. The interface/caller analysis below stays valid; the §6/§7 obfuscation + "randomness encapsulated here" claims do not.
+
 **Target:** `FUN_005b5100` (the obfuscated "picker" at the bottom of the
 MatchResolver sampling tree) and the selector leaf that drives it, `FUN_00817f20`.
 

@@ -16,7 +16,8 @@ No arbitrary percentages. Counts are of concrete, enumerable items.
 | Draw/quantile axis | Go `resolver` | **VERIFIED** | universal ±20.9 grid, slot0 in files 1&5, never collapses |
 | Position/categorical axis | Go `resolver`+`cmd/axisid` | **INFERRED (strong)** | 7-bin spine b0 CDef..b6 Striker; non-uniform marginal + def→att gradient; literal bin→pos profile-matched |
 | Booster/continuous axes | Go `cmd/axisid`, lab Solver A | **INFERRED (narrowed)** | equal-frequency quantile axes; ranked property-column candidates, NON-UNIQUE; column→name UNKNOWN |
-| Picker reduction FUN_005b5100 | lab `picker_ref` (4 candidates) | **HYPOTHESIS** / **UNKNOWN** | SecuROM-protected; Solver C ranks (ARGMAX rejected); Solver B correlator ready for the user's capture |
+| Picker FUN_005b5100 + cluster 0x5b3xxx–0x5b5xxx | `match/sim/picker_real.h` | **VERIFIED** (RECOVERED) | NOT SecuROM-protected (Ghidra false-alarm). Disassembled from crack: deterministic linear key→index lookup + plain C++ accessors, **NO RNG**. The 4 picker_ref sampler candidates are all REFUTED. See PICKER_RECOVERY.md + RESOLVER_PICKER_CLUSTER_RECOVERY.md |
+| resolver stochastic draw (where the RNG actually is) | — | **UNKNOWN** (re-opened) | NOT in the picker cluster (proven RNG-free); likely upstream in the match engine (dozens of inline LCG sites) |
 | Picker RNG/seed lifecycle | — | **UNKNOWN** | needs runtime capture |
 | Formula engine | Go `formula`+`parse` | **RECONSTRUCTED** | parses decrypted formula.xml (1191 formulas, key `deliverance`); runtime semantics **validation pending** |
 | Predicate engine | Go `predicate`, C `predicate_eval` | **RECONSTRUCTED** | 84 weights recovered; usage validation partial |

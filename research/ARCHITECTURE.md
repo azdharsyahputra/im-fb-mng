@@ -31,7 +31,7 @@ Leaf drivers of the command tree (vtable-dispatched, 1 static caller each):
 
 ## Open (pending agents / outer loop)
 - `.dat` → node-tree parse (format agent) to feed the loader into the evaluator.
-- Attribute/context → table index (indexing agent; picker `FUN_005b5100` obfuscated).
+- Attribute/context → table index (indexing agent; picker `FUN_005b5100` RECOVERED = key→index lookup, NO RNG; not obfuscated — RESOLVER_PICKER_CLUSTER_RECOVERY.md).
 - The match **clock/outer loop** that submits node trees to `FUN_008f90f0` — UNKNOWN.
 
 ## Fidelity implication

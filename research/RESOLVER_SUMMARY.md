@@ -25,7 +25,7 @@ cell (`cum == Σ of all cells`). **VERIFIED** 134/134 records, all 6 files.
 - **Context is read internally, not caller-supplied (VERIFIED).** The ~191 clean sampler callers
   all build a zeroed eval struct and read the result at `ctx+0x14`; no per-sample context is
   pushed. The within-record binning lives in the anti-disassembled picker cluster
-  (`FUN_005b5100` et al.) → its exact reduction is **UNKNOWN** (protector boundary).
+  (`FUN_005b5100` et al.) → RECOVERED: a deterministic key→index lookup with **NO RNG** (not a protector boundary; Ghidra false-alarm). See RESOLVER_PICKER_CLUSTER_RECOVERY.md. The resolver's stochastic draw is NOT in this cluster — location now UNKNOWN (likely upstream match engine).
 
 ## The axes (file-1 canonical model)
 

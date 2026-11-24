@@ -58,4 +58,4 @@ unchanged; only the field meaning is corrected.
   encode the exact distribution shape — using only group totals is the current
   approximation; the full shape is recoverable from them next.
 - Which group/context a given player maps to (attribute→index) — still the
-  obfuscated picker (FUN_005b5100).
+  picker (FUN_005b5100) — RECOVERED, key→index lookup, NO RNG (not obfuscated; RESOLVER_PICKER_CLUSTER_RECOVERY.md).

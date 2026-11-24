@@ -139,9 +139,11 @@ Sampling walks the tree.
 - Node-header clone: copies `*(ushort*)(node+0x10)` dwords (working copy before sampling).
 
 ### Obfuscated leaf helpers (bodies UNKNOWN; roles from call context)
-- FUN_005b5100 @ 005b5100 (68 b) — **the index picker** behind FUN_00817f20's bucket select;
-  obfuscated. Most likely consumes an RNG draw to choose a weighted bucket. Role STRONGLY
-  INFERRED, body UNKNOWN. **This is the point where sampling should meet the PRNG.**
+- FUN_005b5100 @ 005b5100 (68 b) — **the index picker** behind FUN_00817f20's bucket select.
+  RECOVERED (RESOLVER_PICKER_CLUSTER_RECOVERY.md): a deterministic linear key→index lookup that
+  consumes **NO RNG** and does no weighting. The prior "obfuscated / consumes an RNG draw / weighted
+  bucket" reading is REFUTED. **Sampling does NOT meet the PRNG here** — the resolver's draw is not
+  in this cluster (likely upstream in the match engine).
 - FUN_005b3ba0 (8 b, 13 callers) — node type-tag getter.
 - FUN_005b3760 (8 b) — node float-value getter (case-2 random node value).
 - FUN_005b52f0 (3 b, 3 callers), FUN_005b5150 (23 b) — case-2 helpers (obfuscated).
@@ -229,11 +231,11 @@ HomePossession, KeptPossession, LostPossession, GainedPossession, PossessionBarM
 | (b) lookup by name | FUN_00662cf0 | role STRONGLY INFERRED, body UNKNOWN (obfuscated) |
 | (c) sampler entry | FUN_00818120 | VERIFIED (structure) |
 | (c) node dispatch | FUN_00817fe0 | STRONGLY INFERRED |
-| (c) bucket select | FUN_00817f20 (+ FUN_005b5100 picker) | STRONGLY INFERRED (picker body UNKNOWN) |
+| (c) bucket select | FUN_00817f20 (+ FUN_005b5100 picker) | VERIFIED (picker body RECOVERED = key→index lookup, NO RNG — RESOLVER_PICKER_CLUSTER_RECOVERY.md) |
 | (c) named-ref node | FUN_008181b0 | VERIFIED |
 | (c) binary op / aggregate | FUN_00818080 / FUN_00817df0 | VERIFIED |
 | (d) PRNG algorithm | inline LCG 0x19660d / 0x3c6ef35f (match engine) | VERIFIED |
-| (d) PRNG used by resolver sampler | FUN_005b5100 path | HYPOTHESIS (obfuscated) |
+| (d) PRNG used by resolver sampler | NOT in the picker cluster (proven RNG-free) | REFUTED here; location UNKNOWN (likely upstream match-engine LCG) |
 | (d) seeding | MatchSeed; FUN_00a2c3d0, FUN_007f4fa0, FUN_007f3130 | STRONGLY INFERRED |
 | (e) metric getters / resolver cluster | FUN_0082f290–FUN_00832170 (~54), e.g. FUN_0083b860 | VERIFIED (pattern) |
 | (e) scoreline/event orchestrator | — | HYPOTHESIS (not isolated) |

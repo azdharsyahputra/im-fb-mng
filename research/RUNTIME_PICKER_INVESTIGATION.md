@@ -1,5 +1,7 @@
 # Runtime Picker Investigation — FUN_005b5100 (resolver index/bucket/distribution selector)
 
+> **⚠️ SUPERSEDED (2026-11-24).** The premise of this document — that FUN_005b5100 is obfuscated / runtime-decrypted and that the resolver's randomness is encapsulated in the cluster — is REFUTED. The cluster disassembles cleanly from the crack as plain C++ accessors with **NO RNG** (full 9KB region scan: no LCG/MOD/float-uniform). The "obfuscation" was a Ghidra false-alarm. See **PICKER_RECOVERY.md** + **RESOLVER_PICKER_CLUSTER_RECOVERY.md**. The resolver's stochastic draw is therefore NOT here (likely upstream in the match engine). The runtime-observation plan below is no longer needed to recover the picker.
+
 **Mission:** recover the exact behavior of the obfuscated resolver picker
 `FUN_005b5100` (the weighted bucket / index / distribution selector at the leaf of
 the MatchResolver sampling tree).

@@ -137,7 +137,7 @@ and 5 but not the others (so the draw mechanism itself is re-expressed per model
 The **literal engine input** behind each context axis (is axis1 `EPositionValue`? a role
 weight? expected touches? is axis2 `PerformanceLevel` minus opponent, or a rating
 differential?) is computed in the resolver consumer code immediately before binning, inside
-the **obfuscated picker-adjacent cluster** (`FUN_005b5100` et al.). Both prior picker
+the **picker-adjacent cluster** (`FUN_005b5100` et al.) — now RECOVERED (plain C++ accessors, NO RNG; NOT obfuscated — see RESOLVER_PICKER_CLUSTER_RECOVERY.md; only the semantic field NAMES the accessors read stay UNKNOWN). Both prior picker
 investigations concluded this context->index decomposition is **UNKNOWN** statically and
 needs runtime capture (breakpoint at `0x00817f3c`, log the pool/weights/RNG tuples). The
 match-level inputs that select the *file/record* are named in the `GCMatchInputs` schema

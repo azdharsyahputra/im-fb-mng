@@ -15,7 +15,7 @@
 
 ## OPEN (honest, named dependencies)
 - U: GCFormulaModule writer of *Performance (attribute->performance float).
-- U: the index/bucket picker FUN_005b5100 (obfuscated) -> exact context/value-level selection.
+- V: the index/bucket picker FUN_005b5100 RECOVERED = linear key→index lookup, NO RNG (not obfuscated; Ghidra false-alarm — RESOLVER_PICKER_CLUSTER_RECOVERY.md). U: where the resolver's stochastic draw lives (not in this cluster; likely upstream match engine).
 - U: section-total source (hard-coded vs derived) — needs loader FUN_00a098a0 body.
 - U: outer match clock/tick loop that submits node trees.
 - H: the 6 files == 6 position/tier contexts.

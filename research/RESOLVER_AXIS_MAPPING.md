@@ -18,11 +18,11 @@ and the committed Ghidra dumps.
 |---|---|---|---|
 | **Output statistic** | one `.dat` metric record (GoalsScored, ShotsOnTarget, TacklesWon, …), 64 per section | parsed 134/134 to EOF; names read directly | **VERIFIED** |
 | **Distribution axis** | the record's grid axes: axis0 = draw/quantile; axes 1..4 = context (file 1 shape [9,7,7,6,5]) | block0 parse + product/overall identities (`RESOLVER_CONTEXT_GRID.md`) | **VERIFIED** (structure) |
-| **Picker input** | the obfuscated picker `FUN_005b5100` turns RNG + the selected distribution into a sampled value | interface recovered (`RESOLVER_INDEX_SELECTION.md`); body is anti-disassembly | **VERIFIED** (interface) / **UNKNOWN** (reduction) |
+| **Picker input** | `FUN_005b5100` is a deterministic key→index lookup (NO RNG, NOT a sampler) — CORRECTED; it does not "turn RNG into a value" | body RECOVERED (`PICKER_RECOVERY.md`, `RESOLVER_PICKER_CLUSTER_RECOVERY.md`) — not anti-disassembly | **VERIFIED** (interface + body) |
 | **Context field** (within-record axes) | the quantities the picker bins to pick a cell | **not passed by any caller** (WS2); read internally | **UNKNOWN** |
 | **Context field** (file/record selectors) | which `.dat` file + which record is handed to the sampler | GCMatchInputs schema + group/name resolver | **VERIFIED** (names) |
 | **Producer** (selectors) | `FUN_00662cf0`(group,name) record resolver; `FUN_009d5c20` player selection; `FUN_00a72db0` GCMatchInputs schema | read from dumps (WS2) | **VERIFIED** |
-| **Producer** (within-record axes) | obfuscated iterators `FUN_005b3770/4870/4880/4db0/4900` | bodies absent (anti-disasm) | **UNKNOWN** |
+| **Producer** (within-record axes) | iterators `FUN_005b3770/4870/4880/4db0/4900` | bodies RECOVERED (plain C++ accessors: begin/end, operator[], size, getters — RESOLVER_PICKER_CLUSTER_RECOVERY.md; NOT anti-disasm). Only the SEMANTIC field each reads is unnamed | **VERIFIED** (code) / **UNKNOWN** (field name) |
 | **Parameter** | the metric's `*Performance` formula value | decrypted `formula.xml`, group PlayerData | **VERIFIED** |
 | **Formula** | e.g. `TacklesWonPerformance` | `formula.xml` | **VERIFIED** |
 

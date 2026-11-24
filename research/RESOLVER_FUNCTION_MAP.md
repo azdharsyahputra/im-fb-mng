@@ -8,7 +8,7 @@ Confidence: V=VERIFIED, SI=STRONGLY INFERRED, H=HYPOTHESIS, U=UNKNOWN.
 | FUN_00662cf0 | named-field lookup (category,name)->object; obfuscated body | SI | consumers |
 | FUN_00818120 | sampler entry; iterates child vec [+0x38,+0x3c), aggregates | V | consumers |
 | FUN_00817fe0 | node dispatch by type tag (table/random/named-ref/const) | SI | consumers |
-| FUN_00817f20 | table/bucket selector (via picker FUN_005b5100, obfuscated) | SI/H | consumers |
+| FUN_00817f20 | table/bucket selector (via picker FUN_005b5100, RECOVERED — not obfuscated) | V | consumers |
 | FUN_00818080 | binary op node (+,-,*,/ by node+0x24) | V | consumers |
 | FUN_00817df0 | aggregate node (sum/mean/product by node+0x20) | V | consumers |
 | FUN_008181b0 | named-ref node (resolves sub-dist via FUN_00662cf0) | V | consumers |
@@ -25,7 +25,7 @@ Confidence: V=VERIFIED, SI=STRONGLY INFERRED, H=HYPOTHESIS, U=UNKNOWN.
 | 0093c7f0->008a7770 | axiom registry (Tackles/Fouls/Cards) leaf | V/SI | pipeline |
 | FUN_009e9570->009e8f60/92b0/9200 | predicate DAG (build/walk) | V | pipeline |
 | GCFormulaModule writer of *Performance | U (not located) | U | indexing |
-| FUN_005b5100 | resolver index/bucket picker (obfuscated) | U | consumers/indexing |
+| FUN_005b5100 | resolver index/bucket picker = linear key→index lookup, NO RNG (RECOVERED from crack; prior "obfuscated" was a Ghidra false-alarm) | V | consumers/indexing |
 | outer match clock/tick loop | U (not located) | U | pipeline |
 
 ## RNG (VERIFIED)

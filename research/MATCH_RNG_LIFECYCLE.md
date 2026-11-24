@@ -85,7 +85,7 @@ Two distinct storage shapes coexist:
 
 | state | location | accessor | used by | conf |
 |---|---|---|---|---|
-| per-object stream | `object + 0x1c` | inline | detailed engine (`FUN_009e8ca0 @0x009e8d…`, `+0x1c *= …`), resolver pool object (picker) | VERIFIED (engine); INFERRED (picker) |
+| per-object stream | `object + 0x1c` | inline | detailed engine (`FUN_009e8ca0 @0x009e8d…`, `+0x1c *= …`) only. The picker does NOT touch +0x1c (REFUTED — RESOLVER_PICKER_CLUSTER_RECOVERY.md) | VERIFIED (engine); picker use REFUTED |
 | global stream base | `singleton + 0x2c` | `FUN_007e7c10` → `return this+0x2c` | match kickoff `FUN_0077cd40`, global draws | VERIFIED |
 | global stream array | `*(DAT_00c800a0 + 0x2c) + index*0x40` | `FUN_009fdd60` | per-stream draws in detailed engine (`FUN_0077c710`) | VERIFIED |
 
@@ -118,7 +118,7 @@ event. So this object's stream advances **once per qualifying node**. (VERIFIED.
 
 ### 3c. Quick resolver (INFERRED/HYPOTHESIS)
 The resolver (`resolver/`, `match_player/` dumps) has **0 inline LCG**. All draws
-happen inside the obfuscated picker `FUN_005b5100` (one draw per selector-leaf
+NOT happen inside `FUN_005b5100` — it is a deterministic key→index lookup with NO RNG (REFUTED, RESOLVER_PICKER_CLUSTER_RECOVERY.md). The resolver draw (if any) is upstream. [stale text kept:] ~~happen inside the obfuscated picker `FUN_005b5100`~~ (one draw per selector-leaf
 evaluation) — see RESOLVER_INDEX_SELECTION.md. Order = tree-evaluation order of
 the formula nodes (`FUN_00818120` iterates children `[+0x38,+0x3c)` in address
 order; `FUN_00817df0` aggregates in iterator order). So draw order is **the
@@ -222,7 +222,7 @@ confirming separate live state despite shared seed (§4).
 ---
 
 ## 8. Open / UNKNOWN
-- Exact reduction inside `FUN_005b5100` (obfuscated) — needs T3.
+- ~~Exact reduction inside `FUN_005b5100` (obfuscated) — needs T3.~~ RESOLVED: no reduction exists — `FUN_005b5100` is a key→index lookup, NO RNG (RESOLVER_PICKER_CLUSTER_RECOVERY.md). T3 is moot for the picker; the open item is WHERE the resolver draw lives (upstream match engine, not here).
 - Exact assignment of `m_uGameSeed` → global state register (bodies of
   `FUN_00a2c3d0`/`007f4fa0`/`007f3130` are large/stack-obfuscated).
 - Resolver pool lifetime / whether `+0x1c` re-seeds per formula within a match.

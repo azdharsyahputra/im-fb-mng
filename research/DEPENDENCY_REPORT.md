@@ -35,7 +35,7 @@ dump or game asset is committed.
 - **Resolve body**: `detailed_engine` reproduces the *order*, not the internal
   per-event arithmetic of FUN_0077cf20/c540 (the body plugs in via callback).
 - **Context/index selection** for the resolver stays explicitly approximate
-  (`cm_quick_sample_ctx`, ctx_hint 0..5) until FUN_005b5100 is recovered.
+  (`cm_quick_sample_ctx`, ctx_hint 0..5). NOTE: FUN_005b5100 IS recovered (key→index lookup, NO RNG — RESOLVER_PICKER_CLUSTER_RECOVERY.md); it is not the sampler, so this dependency is on the resolver's actual draw (location UNKNOWN, likely upstream).
 - **Empirical sampler** is grounded in the recovered buckets but intra-bucket
   shape is modelled, not byte-recovered.
 - **Gaussian-from-moments** sampler is kept ONLY as a labelled experimental
@@ -48,7 +48,8 @@ dump or game asset is committed.
 | boundary | why static fails | what would resolve it |
 |---|---|---|
 | **SetGameState writer** | method of the +0xe4 sub-object, indirect/virtual; not in dumps | runtime capture of writes to matchCtx+0xe4+0x30 |
-| **FUN_005b5100 picker** exact reduction | anti-disassembly / obfuscated body | runtime capture at FUN_00817f20 call site |
+| ~~**FUN_005b5100 picker** exact reduction~~ RESOLVED | ~~anti-disassembly~~ Ghidra false-alarm; body recovered from crack (key→index lookup, NO RNG) | none — static (RESOLVER_PICKER_CLUSTER_RECOVERY.md) |
+| resolver stochastic DRAW (the real RNG) | not in the picker cluster (proven RNG-free) | trace upstream match-engine LCG that seeds the key/pool |
 | **Formula coefficients** | encrypted `formula.xml.blowfish` — will not decrypt | legitimate key/runtime observation only |
 | **Module-manager indirect dispatch** to FUN_0077ee80 | indirect call through vtable 0x00ba2904+0xa8 | runtime capture of the dispatch |
 | **end-counter accumulation** vs wall clock | the ~3600 counter is separate from elapsed; semantics unclear from static | runtime trace of clock+0x4c |

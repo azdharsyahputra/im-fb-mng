@@ -4,8 +4,11 @@
 - KNOWN: interface (thiscall, pool ptr + node+0x0c weights → 1-based 16-bit index;
   consumed as *(pool+idx*4-4)); role = weighted inverse-CDF bucket select; LCG + .dat
   cumulative-count structure VERIFIED.
-- UNKNOWN: the exact index reduction math.
-- WHY STATIC INSUFFICIENT: the function's 68 bytes are anti-disassembly/protector-
+- RESOLVED (2026-11-24): there is no "index reduction math" — FUN_005b5100 is a deterministic
+  linear key→index lookup with NO RNG, disassembled cleanly from the crack. The boundary below is
+  withdrawn; see RESOLVER_PICKER_CLUSTER_RECOVERY.md. (Remaining UNKNOWN moved to: where the
+  resolver's stochastic draw actually lives — likely upstream in the match engine.)
+- ~~WHY STATIC INSUFFICIENT: the function's 68 bytes are anti-disassembly/protector-~~
   transformed (no valid prologue; halt_baddata). Shipped bytes aren't the executed
   instructions.
 - ADDITIONAL EVIDENCE: runtime capture at FUN_00817f20 (RUNTIME_OBSERVATION_PLAN A).

@@ -117,7 +117,7 @@ runtime (which would require the game executable — out of scope and not run he
   UNKNOWN. Test 1 validates the *main-line* progression this clean-room driver models;
   the spotted/activated set-piece transitions and stoppage time are **not** driven by the
   original writer, so that seam is modelled, not diffed.
-- **Context/index picker** (`FUN_005b5100`, obfuscated): which `.dat` file/group a given
+- **Context/index picker** (`FUN_005b5100`, RECOVERED = key→index lookup, NO RNG — not obfuscated): which `.dat` file/group a given
   player maps to is APPROXIMATED. Test 2 validates the sampling *mechanism* on controlled
   buckets; the real attribute/tactic -> group selection is **not** validated.
 - **Real `.dat` distribution shape at the per-value level:** only the recovered moments

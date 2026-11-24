@@ -1,5 +1,7 @@
 # Runtime Picker Algorithm — FUN_005b5100 (candidate hypotheses)
 
+> **⚠️ SUPERSEDED (2026-11-24).** The candidate hypotheses here (FLOAT_CDF / MOD_CDF / UNIFORM_N / ARGMAX weighted samplers) are ALL wrong. FUN_005b5100 is a deterministic linear find-by-key (1-based index of the first entry whose `*(entry+0xc)==*target`), consumes **NO RNG**, and was disassembled cleanly from the crack. See **PICKER_RECOVERY.md** + **RESOLVER_PICKER_CLUSTER_RECOVERY.md**.
+
 **This document presents CANDIDATE algorithms, not a recovered one.** The picker's
 real reduction is **UNKNOWN** (anti-disassembly, see
 `RUNTIME_PICKER_INVESTIGATION.md §1.6`). Each candidate is implemented and

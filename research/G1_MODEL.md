@@ -34,10 +34,13 @@ counter `FUN_005cd020` (packed 2×5-bit) has **only 3 callers**: the duel `FUN_0
 shootout `FUN_00a023f0`, and `FUN_00a029c0`. So **all match STATS come from the duel (+ shootout +
 a029c0)**; classes 0/1/3 are the 2D viewer.
 
-## The duel = the gameplay atom — VERIFIED
-`FUN_0077c710`: reads the two contestants' 7-bit attrs (person+0x3c), draws the global match RNG
-(0xc8d5d4), computes p=A/(A+B) (scalars 0.5/0.5/1.0), and bumps the event's stat dword — counter 0
-(bits21-25) for side A, counter 1 (bits26-30) for side B. Already ported in the Go `contest` pkg.
+## The stat-tally atom FUN_0077c710 — VERIFIED (mechanism CORRECTED)
+Reads the two contestants' 7-bit attrs (person+0x3c), and in its stochastic mode (FUN_005ccf30 < 2)
+runs a **repeated GEOMETRIC tally**: draw u=lcg.Unit(); while u<shareA bump counter 0 (side A), then
+while u<shareB bump counter 1 (side B), with shareA=0.5·A/(A+B), shareB=0.5·B/(A+B). It also has an
+aggregation mode (FUN_005ccf30 ≥ 2) that sums existing 5-bit counter fields. It is **NOT** a single
+p=A/(A+B) winner — the Go `contest.Resolve` binary port is NOT 1:1. See
+DUEL_RESOLVER_GEOMETRIC_TALLY.md (supersedes DUEL_THREE_OUTCOME_FINDING.md).
 
 ## OPEN CORE (what's NOT yet recovered)
 1. **Event GENERATION / selection**: who creates descriptors in the pool and sets the event TYPE

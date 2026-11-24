@@ -1,3 +1,9 @@
+> ⚠️ **SUPERSEDED by `DUEL_RESOLVER_GEOMETRIC_TALLY.md`.** A full instruction-level trace of the whole
+> function showed the "3-outcome (A/NEUTRAL/B)" reading below is WRONG: the apparent "neutral middle
+> band" is actually the STOP condition of a repeat loop, and the second compare is that loop's
+> continue-test. The real mechanism is a **repeated geometric tally into two 5-bit counters** (plus an
+> aggregation mode). Kept for the audit trail only; read the corrected doc instead.
+
 # Finding: the real duel FUN_0077c710 is a 3-OUTCOME resolver (not binary) — contest.Resolve likely not 1:1
 
 ## What the crack shows (FUN_0077c710 @0x77c88a–0x77c9a0, VERIFIED disasm; semantics INFERRED)

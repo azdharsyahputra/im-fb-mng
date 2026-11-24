@@ -6,7 +6,7 @@ Decompiled from the crack.
 
 | resolver | size | 005cd020 bumps | LCG draws | role |
 |---|---|---|---|---|
-| FUN_0077c710 | 890 B | 2 (bits21-25 side A, 26-30 side B) | 4 | the DUEL — p=A/(A+B) between two contestants' 7-bit attrs (ported in Go `contest`) |
+| FUN_0077c710 | 890 B | 2 (bits21-25 side A, 26-30 side B) | 4+ | the stat TALLY — repeated GEOMETRIC bumps to counters A/B with shares 0.5·A/(A+B), 0.5·B/(A+B); plus an aggregation mode. NOT a 1-winner duel — see DUEL_RESOLVER_GEOMETRIC_TALLY.md (Go `contest.Resolve` binary port is NOT 1:1) |
 | FUN_00a029c0 | 2044 B | 3 | 9 | a complex multi-outcome EVENT resolver (3 sub-outcomes, 9 draws) — e.g. a goal-mouth/shot sequence |
 | FUN_00a023f0 | 1360 B | 3 | 6 | the PENALTY SHOOTOUT resolver (ported shape in Go `contest.Shootout`) |
 

@@ -137,10 +137,10 @@ state sub-object (byte-scan: 0 writes to `+0x30`, 0 reads of `+0xe4`) — MATCH_
 match-init (not per-tick, seed the inputs):
   FUN_005d6dd0  harvest 101 PlayerConstant attrs → 0–100 array  [B] ── DEC input
   FUN_009f4bd0  harvest ResolverSettings (gait speeds/accel, MarkingDistanceScale=0.02, pos scales) [B] ── MOV input
-  FUN_009f0090  seed per-entity 1012-byte float block (pos +0xc0/+0xd0, pace/accel +0xd8..+0xe8) [B]
+  FUN_009f0090  seed per-entity physics block (+0xc0..+0xd4 = ATTRIBUTE SCALARS norm(attr), NOT pos — Agent B/3; SCALE=1/255; named fields start +0xf8) [B]
 
-per-tick positioning / decision (movement_ai dump; reached via FUN_00724790 trampoline):
-  FUN_00a1fdf0  player movement / positioning evaluator  [V structure]
+~~per-tick positioning / decision (movement_ai dump; reached via FUN_00724790 trampoline):~~ REFUTED (Agent D — see WAYPOINT_PROVIDER_RECOVERY.md):
+  FUN_00a1fdf0  ~~player movement / positioning evaluator~~ attribute-NAME serializer; FUN_00724790 = dumpplayerstats debug cmd  [structure V; movement role refuted]
   │   iterate roster *(DAT_00c78384+0x24) stride 0x3c ; active gate *(rec+0x3a)>>0x14&1
   │   read attrs by name: Acceleration, Agility, Anticipation, DecisionMaking, Marking, Passing, …
   ├── FUN_005a0e90 / 005aa1f0 / 005af010 / 005a5010 / 00584b30  teammate/opponent target lists [I]

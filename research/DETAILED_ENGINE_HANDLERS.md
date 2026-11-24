@@ -296,7 +296,7 @@ Count/sentinel from `*(DAT_00c78384+0x1c)` and `+0x1e`.
   `+0x3c`-stride record, not as visible inline field stores. [INFERRED — the loop,
   roster layout, attribute inputs and active gate are VERIFIED; the exact target-position
   field offset is UNKNOWN from this body (held in the player record, written via helper).]
-- Entry `FUN_00724790` (the stated caller) is the movement-tick trampoline. [per context]
+- Entry `FUN_00724790` (the stated caller) ~~is the movement-tick trampoline~~ is REFUTED: Agent D decompiled it as the `dumpplayerstats` DEBUG command handler (reached only via dispatch-table @0xb9b32c, zero direct callers); it reaches 00a1fdf0 as an attribute-NAME SERIALIZER, not movement. The "target-position field" above is therefore a serialization field, not a pitch coord. [see WAYPOINT_PROVIDER_RECOVERY.md]
 
 ---
 
@@ -418,8 +418,8 @@ event struct.]
 - **Movement target-position write** inside `FUN_005af010`/`FUN_005a5010` — the exact
   record offset written is UNKNOWN (indirect through helpers).
 - **Per-outcome RNG draw** inside `FUN_009e5160`/`FUN_00476350` — not expanded. INFERRED.
-- **`FUN_00724790`** (movement entry) / **`FUN_009b2600`** (tactics-menu entry) — bodies
-  not dumped (CSV-only). INFERRED roles.
+- **`FUN_00724790`** (~~movement entry~~ REFUTED → `dumpplayerstats` debug command, now DECOMPILED by Agent D) / **`FUN_009b2600`** (tactics-menu entry) — the 009b2600 body
+  not dumped (CSV-only, INFERRED); 00724790 role corrected, see WAYPOINT_PROVIDER_RECOVERY.md.
 
 ---
 

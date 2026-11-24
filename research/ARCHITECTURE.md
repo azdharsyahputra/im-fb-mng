@@ -16,7 +16,7 @@ children vector → recursive dispatch → leaf/aggregate):
 | Distribution tree | `FUN_00818120`→`00817fe0`/`00817f20`/`00818080`/`00817df0` | statistical sampler (quick resolver) | VERIFIED |
 
 Leaf drivers of the command tree (vtable-dispatched, 1 static caller each):
-`00724790→00a1fdf0` movement · `009b2600→009aecc0` offside/duties ·
+`00724790→00a1fdf0` ~~movement~~ (REFUTED: `dumpplayerstats` debug dump — see WAYPOINT_PROVIDER_RECOVERY.md) · `009b2600→009aecc0` offside/duties ·
 `0093c7f0→008a7770` axiom registry.
 
 ## Two independent match engines

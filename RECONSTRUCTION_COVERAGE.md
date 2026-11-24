@@ -44,11 +44,20 @@ round-trip. These are the regression floor for all further work.
 
 | item | status | note |
 |---|---|---|
-| world coords +0xC0/+0xD0 (integer fixed-point) | **VERIFIED** | engine.Entity; projection 1/112.5 x56.25 |
-| double-buffer set-to-target motion | **VERIFIED** | geometry.SetToTargetIntegrator (integer waypoints, no velocity field) |
+| projection scaler 1/112.5 ×56.25 (0xb5e8c8) | **VERIFIED** | geometry.ProjectToScreen; FLOAT (not integer fixed-point — corrected M1) |
+| physics-block seeder FUN_009f0090 (+0xc0..+0xd4) | **VERIFIED** | geometry.SeedBlock; FLOAT record written ONCE from attrs; the six floats are ATTRIBUTE SCALARS, NOT pitch coords (M1/M2) |
+| attribute normalizer SCALE @0xb73954 | **VERIFIED** (M2) | = **1/255** — byte read `81 80 80 3b` from intact .rdata (Agent B); `(b==0xff)?1.0:b/255`; geometry.RecoveredScale |
+| named physics fields (+0xf8..+0x1b0, e.g. MaxSprintingSpeed@+0x128) | **VERIFIED** (structure) | cross-ref: FUN_009f0090 seeds, FUN_009f4bd0 is the named getter; same struct (Agent B, method #2) |
+| set-to-target motion model (no continuous integrator) | **INFERRED** (M2) | geometry.SetToTargetIntegrator; supported by image-wide no-RMW negative (Agent C, 18,958 fns); the old +0xC0/+0xC4 position double-buffer claim WITHDRAWN (UI-widget citation) |
+| per-tick TIME/phase integrator FUN_009d52e0 | **VERIFIED** (M2) | `entity[+0x154]+=10.0f` (const 0xc5d43c); the one genuine in-place RMW — advances sim TIME, not geometry (Agent C) |
+| waypoint consume-chain cf20→009f0c40→009fd690→0065fe90 | **VERIFIED** (M2) | 4 signed u16 refs @+0xb4..+0xba (0xffff=empty); fully DECOMPILED (Agent D) |
 | geometry snapshot export -> obs/1 | **RECONSTRUCTED** | geometry.ToObs (confidence INFERRED) |
-| target-picker 0x00a1fdf0 output field | **UNKNOWN** | waypoint source offset not pinned (TargetProvider gap) |
-| continuous per-frame integrator + x/y/vx indices | **UNKNOWN** | un-dumped threaded sim (UnknownIntegrator no-op) |
+| geometry ↔ match runtime wiring | **RECONSTRUCTED** (M2) | matchrun.SimulateWithGeometry + GeometryHook seam; seeding gated on a finite SCALE; integration tests green (Agent A) |
+| FUN_00a1fdf0 "target-picker / movement" | **REFUTED** (M1/M2) | it is an attribute-NAME serializer; caller FUN_00724790 = `dumpplayerstats` debug cmd; produces no coords (Agents 3/D) |
+| 0x009f5398 "integrator candidate" | **REFUTED** (M1) | run-once config-singleton init, zero RMW (Agent 1) |
+| waypoint ref-FILLER / selector (+0xb4..+0xba writer) | **LOCATED_NOT_UNDERSTOOD** (M2) | only two 0xffff reset writers statically; real selector thread-private (Agent D verified negative) |
+| per-frame POSITION integrator (velocity/accel) | **UNKNOWN** | thread-private per-fixture VTABLE run(); static RMW surface EXHAUSTED (Agent C); needs runtime write-watchpoint |
+| per-field attr→slot NAMES for +0xc0..+0xd4 | **UNKNOWN** | indices VERIFIED, index→name GENUINELY_UNAVAILABLE (arg1 order unanchored, Agent B) |
 | runtime geometry/movement observations | **UNAVAILABLE** | capture lacks geometry; obs x/y fields ready |
 
-See super-manager-engine/geometry + docs/match/{GEOMETRY_ARCHITECTURE,GEOMETRY_EVIDENCE,MOVEMENT_RECONSTRUCTION}.md (commit 8bbc81c).
+See super-manager-engine/geometry + docs/match/{GEOMETRY_ARCHITECTURE,GEOMETRY_EVIDENCE,MOVEMENT_RECONSTRUCTION,MATCH_GEOMETRY_INTEGRATION}.md and research/{INTEGRATOR_RECOVERY,THREADED_SIMULATION_RECOVERY,PHYSICS_AND_WAYPOINT_ANALYSIS,PHYSICS_SEEDER_COMPLETION,CONTINUOUS_INTEGRATOR_RECOVERY,WAYPOINT_PROVIDER_RECOVERY}.md (Milestones 1 & 2).

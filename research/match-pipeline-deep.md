@@ -116,7 +116,7 @@ inferred, **H**=hypothesis, **U**=unknown.
 | 4 | dispatcher → sub-update | `008f90f0 → 008f7f10` | body L1928, case `DAT_00c94d48` | V |
 | 5 | dispatcher → self (recurse) | `008f90f0 → 008f90f0` (×36) | composite-node cases recurse on children | V |
 | 6 | dispatcher → virtual leaf | `008f90f0 → (vtable+0x40/+0x44/+0x11c/+0x130)` | indirect `(**(code**)(*p+off))()` | V (mechanism) |
-| 7 | movement wrapper → movement driver | `00724790 → 00a1fdf0` | `DumpCallers` depth1: 00a1fdf0 has exactly 1 caller = 00724790 | V |
+| 7 | ~~movement wrapper → movement driver~~ REFUTED: `dumpplayerstats` debug cmd → attr-NAME serializer (Agent D) | `00724790 → 00a1fdf0` | `DumpCallers` depth1: 00a1fdf0 has exactly 1 caller = 00724790 (edge real; role = debug dump, not movement) | V(edge) |
 | 8 | offside wrapper → offside driver | `009b2600 → 009aecc0` | `DumpCallers` depth1: 009aecc0 has exactly 1 caller = 009b2600 | V |
 | 9 | axiom wrapper → axiom registry | `0093c7f0 → 008a7770` | `DumpCallers` depth1: 008a7770 has exactly 1 caller = 0093c7f0 | V |
 | 10 | dispatcher ⇒ wrappers (indirect) | `008f90f0 ⇒ {00724790, 009b2600, 0093c7f0}` | the 3 wrappers have **0 static callers** (indirect/vtable only); dispatcher's only indirect-call mechanism is the leaf virtual call | SI |
@@ -165,7 +165,7 @@ inferred, **H**=hypothesis, **U**=unknown.
      │                                                                          │
    VIRTUAL-handler leaf  (**(code**)(*obj + 0x40 / 0x44 / 0x11c / 0x130))()     │
      │   indirectly resolves to registered subsystem handlers:                  │
-     ├─▶ FUN_00724790 ─▶ FUN_00a1fdf0   POSITIONING / MOVEMENT  (81 callees)     │
+     ├─▶ FUN_00724790 ─▶ FUN_00a1fdf0   dumpplayerstats DEBUG DUMP (NOT movement; REFUTED, Agent D) │
      ├─▶ FUN_009b2600 ─▶ FUN_009aecc0   OFFSIDE / DEFENDING-DUTIES (40 callees)  │
      └─▶ FUN_0093c7f0 ─▶ FUN_008a7770   AXIOM/EVENT REGISTRY (Tackles/Fouls/Cards)│
      └──────────────────────────────────────────────────────────────────────────┘
@@ -187,7 +187,7 @@ inferred, **H**=hypothesis, **U**=unknown.
 Relationship chain requested (dispatcher → movement/positioning → predicates →
 axioms → event generation → resolver → reporting):
 
-- dispatcher → movement/positioning: **indirect** `008f90f0 ⇒(vtbl+0x40) 00724790 → 00a1fdf0` [V edge, SI indirect binding]
+- dispatcher → ~~movement/positioning~~ debug stats-dump: **indirect** `008f90f0 ⇒(vtbl+0x40) 00724790 → 00a1fdf0` [V edge, SI indirect binding]. NOTE: 00724790 is the `dumpplayerstats` debug command and 00a1fdf0 an attribute-NAME serializer (REFUTED as movement, Agent D, WAYPOINT_PROVIDER_RECOVERY.md); real waypoints are the +0xb4..+0xba consume-chain.
 - movement → predicates: the predicate tree is a **sibling judgment subsystem**
   (`009e9570 → 009e8f60…`) invoked from leaf handlers, not a linear successor of
   movement. [SI]

@@ -59,7 +59,7 @@ Recursive typed-node-tree interpreters are the shared shape:
 | FUN_0077ddc0 | eGameState::ToString (name table → recovered the 31 state VALUES: InPlay=0, HalfOver=0x0b, GameOver=0x0c, ApresGoal=0x0d, KickoffWaiting=0x0e, HalfActivated=0x18, Nums=0x1f) — NOT the writer | VERIFIED(values) |
 | SetGameState (eGameState writer) | method of the +0xe4 clock/state sub-object; sets matchCtx+0xe4+0x30 | UNKNOWN (indirect; needs runtime capture) |
 | FUN_0077e850 | GameOver trigger: fires when end-counter (clock+0x4c) ≥ ~3600 (DAT_00c84c7c) AND matchCtx+0xd8+0x4b4 < 500000 | VERIFIED |
-| 00724790→00a1fdf0 / 0093c7f0→008a7770 | movement / axiom leaves | VERIFIED(edge) |
+| 00724790→00a1fdf0 / 0093c7f0→008a7770 | ~~movement~~ (00724790→00a1fdf0 REFUTED: `dumpplayerstats` debug dump, Agent D) / axiom leaves | VERIFIED(edge, role corrected) |
 | 009b2600→009aecc0 | tactics/duties UI leaf (NOT offside logic — reclassified) | V/SI (UI path) |
 | GCFormulaModule *Performance | NO writer — live formula-tree eval (FUN_00818120); coefficients in encrypted formula.xml.blowfish | VERIFIED(mechanism)/BOUNDARY(data) |
 | module-manager update loop | indirect-calls GCMatchModule::Update (FUN_0077ee80); clock=continuous float | VERIFIED(target)/UNKNOWN(indirect dispatch) |

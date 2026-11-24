@@ -41,8 +41,27 @@ candidates, by likelihood:
    chosen — in which case cd40 routes by entity TYPE and the "event selection" is the pump iteration +
    the handlers' internal RNG, not a separate spotter.
 
-## Status
-Tick orchestration + pump loop — VERIFIED. Spotting phase — **NOT YET FOUND** (0077d800 ruled out).
-Next: decompile cf20 (FUN_0077cf20) and check whether it writes rec+4/5/6; and clarify whether +4/5/6
-are per-tick event classes or static role bits (fingerprint-scan byte stores to the 0x2768-stride
-record's +4/+5/+6). This is honest slow going — a multi-function trace with one lead already ruled out.
+## cf20 (FUN_0077cf20, 413B) — the event ACTIVATE phase — DECOMPILED (not the flag-setter)
+cf20 ACTIVATES/resolves an already-classified event and clears the pending bit:
+- optional report if the event type `(5a61c0→5a06c0)` matches `[0xc31b34]` → `FUN_00a2eb00` (reporting).
+- `ebx = 5a6330(esi)` (the event's stat/actor block); `5d0460(ebx,3)`; handlers `9efa70 / 9efa40 /
+  9efc30`.
+- resolves the TWO contestants: `5a6170(esi,0/1) → 593cc0` (each one's attribute) → `661270` (test);
+  gated by `69a610([0xc784a8],esi)` (the detailed-match-active gate) → detailed sub-handlers
+  `77c540 / 77c5e0`.
+- **`and [ebp+0x18], 0xfef7ffff`** — CLEARS the pending-event bit (0x1000000) and bit 0x80000. Matches
+  the Go pump ("pending cleared at cf20"). ✓
+- final report `5a6320→40adf0(id 0x414)`.
+So cf20 consumes + clears events; it does NOT set the class flags rec+4/5/6 either.
+
+## HONEST G1 ASSESSMENT (after 4 passes)
+Recovered (the tick SKELETON, VERIFIED): orchestration order, the pump loop (0x2768-stride per-entity
+records, 9-bit id), the dispatch router cd40 (routes by rec+4/5/6; sets pending), the activate phase
+cf20 (resolves contestants + clears pending), the duel FUN_0077c710 (p=A/(A+B), already ported), the
+clock (seconds→H:MM) and the +10s cadence.
+STILL NOT recovered — the EVENT-SELECTION CORE: which function writes rec+4/5/6 (the event class per
+entity per tick) and how it chooses from game state/tactics. It is NOT 0077d800 (map find), NOT cf20
+(activate), NOT in ProcessData directly. It lives behind the heavy indirection (vtable handlers
+9efa10/20/40/70, accessors 5a6170/5a6320/5a6330/5a61c0, the scheduler) — a large distributed subsystem.
+Pinning + porting it is a deep multi-week effort (the full match AI), not a few more passes. The honest
+status: G1 SKELETON done; G1 event-selection CORE is a large open subsystem.

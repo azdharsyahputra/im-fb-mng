@@ -16,3 +16,10 @@ Each row = a Go component checked byte-for-byte against the crack. ✅ matches /
 The DUEL (contest.Resolve) — the core gameplay atom — appears not 1:1 (3-outcome symmetric vs binary
 asymmetric). This is the highest-impact correctness item; needs careful emulation of FUN_0077c710's
 x87 compare idiom before fixing (many callers). See DUEL_THREE_OUTCOME_FINDING.md.
+
+## Macro data-layout verification (G4) vs real .dat records
+| Go decoder | real file | result |
+|---|---|---|
+| `club.VerifiedClub` Finance[6]float64 @14,22,38,62,74,110; recsize 169; YearFounded@120 | Club.dat (6571×169) | ✅ VERIFIED: recsize 169 exact; all 6 offsets are finite IEEE doubles; @14 bank-balance-like (−2.75M..1e8, median 12.4k, can be negative), @38/62/74/110 budget-like (median 0.8k–11k, max to 8e7); @22 is ALWAYS −1.0 (Go correctly labels it the sentinel). No change. |
+| `staff.StaffProperties` u32 id + 22 u16 (0..100, 0xffff) | StaffProperties.dat (10879×48) | ✅ VERIFIED (prior, da7395b) |
+| `staff.AttrVec` u32 id + 77 u16 | PlayerProperties.dat (76051×158) | ✅ VERIFIED (prior) |

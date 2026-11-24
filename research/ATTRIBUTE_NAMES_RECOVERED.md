@@ -133,3 +133,24 @@ column-index binding is proposed it can be checked against these distributions i
 
 Everything above is read from the owner's own files; no game data is committed and no names are
 reproduced outside this research note.
+
+## Related — 64 match-stat metric names (recovered by the lab session, for cross-reference)
+
+A different layer from the player attributes above: these are the per-match **outcome metrics**
+(resolver section-0, n=4,121,340 samples), not `.dat` player columns. Recovered by the lab session
+(`cmd/native resolver stats`) and recorded here so the name vocabulary is not lost. They are stored
+**alphabetically** in section-0, which (like the attribute UI lists above) means this order is NOT the
+match stat-block struct order — the struct field order is a separate, still-open join (lab P3,
+`FUN_005a6330`).
+
+```
+Assists ChallengesAvoided ChallengesMade Clearances CompletedPasses Condition Confidence Crosses
+CrossesCompleted CrossesFumbled CrossesPunches CrossesTaken CynicalFouls DirtyFouls FailedToControl
+Fouls FoulsCommited FoulsReceived FreeKickDirect FreeKickIndirect GoalsConceded GoalsScored
+GroundCovered Headers HeadersKey HeadersWon Injured InjuryLevel Interceptions KeptPossession
+KeyActions LostPossession MajorInjuries MinorFouls MinorInjuries MissControlled Morale NumberRedCards
+NumberYellowCards Offsides OwnGoalsScored PassesCompleted PassesFailed PassesKey PassesReceived
+PenGoalsScored Performance PoorCrosses RunsMade RunsMadeKey ScaledPerformance ShotsFumbled ShotsHeld
+ShotsOffTarget ShotsOnGoal ShotsOnTarget ShotsParried ShotsTipped TacklesKey TacklesLost TacklesWon
+Touches Tricks Warnings
+```

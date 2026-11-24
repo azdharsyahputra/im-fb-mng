@@ -75,15 +75,59 @@ Implemented in `super-manager-engine/resolver`: `Record.Axes/Dims`, `HasGrid`, `
 Locked by `TestContextGrid` (verifies the overall-cell identity, the cell-count identity,
 and that at least one axis swings the mean ≥50%).
 
+## Axis roles — what the trace established
+
+The 5 axes split into **1 draw axis + 4 context axes**, which reconciles this grid finding
+with the prior picker investigations (`RUNTIME_PICKER_INVESTIGATION.md §1.4`, which read
+`block0[0]` as a shared standard-normal quantile grid and `block0[1..]` as per-metric
+breakpoints):
+
+- **axis0 = the shared DRAW / quantile dimension.** Its breakpoints `+-[1.88, 5.04, 10.91,
+  20.90]` are **byte-identical across all 63 grid metrics** (verified: 62 same + the
+  reference = 63/63). Within a fixed context its per-bin population count is bell-shaped and
+  its per-bin mean is ~flat — the signature of the latent/normal draw axis, not a context
+  input. A caller does **not** supply axis0; the sampler draws across the whole axis0 column.
+- **axes 1..4 = CONTEXT dimensions** (per-metric breakpoints). Their effect sizes across
+  metrics (max/min conditional mean along each axis, others held mid, N>=100) give
+  **data-derived roles** (not recovered variable names):
+
+  | metric          | axis1 | axis2 | axis3 | axis4 |
+  |-----------------|------:|------:|------:|------:|
+  | GoalsScored     | 4.1x  | 5.5x  | 1.4x  | 1.3x  |
+  | Assists         | 6.3x  | 2.6x  | 2.7x  | 1.7x  |
+  | ShotsOnTarget   | 16.5x | 1.7x  | 1.5x  | 1.1x  |
+  | Crosses         | 28.4x | 1.1x  | 1.0x  | 2.0x  |
+  | TacklesWon      | 3.2x  | 2.7x  | 1.9x  | 1.7x  |
+  | PassesCompleted | 1.9x  | 1.1x  | 1.2x  | 1.3x  |
+
+  - **axis1 = primary involvement / volume** — dominates counting stats (Crosses 28x,
+    ShotsOnTarget 16x). Breakpoints are positive mid-range (GoalsScored `[4,5,7,8,9,13]`).
+  - **axis2 = quality / matchup differential** — drives success-given-involvement
+    (GoalsScored 5.5x) but barely moves raw volume (Crosses 1.1x). Breakpoints symmetric
+    (`[-10.1..9.25]`), consistent with a relative quantity.
+  - **axes 3, 4 = secondary modifiers** (mostly <=2x).
+
+End-to-end, binning all 4 context axes to their extremes swings the conditional mean hugely
+(GoalsScored: low-context 0.0026 -> high-context 1.2025, ~460x), so the mechanism is real and
+usable.
+
 ## What is still open
 
-The **meaning and source of the 5 axes** (which real quantity feeds each: player rating,
-position, opponent strength, score/strength differential, minute, …) is computed in the
-resolver consumer code before binning and is not named in the data file. The breakpoints
-hint (axis0/axis2 symmetric ⇒ differentials; axis1 rising ⇒ attacking quality), but a
-definitive label needs a binary trace of the code that computes the pre-bin values and calls
-the lookup. Until then the mechanism is fully usable when the caller supplies the 5 ordered
-values; only the human-readable axis names are pending.
+The **literal engine input** behind each context axis (is axis1 `EPositionValue`? a role
+weight? expected touches? is axis2 `PerformanceLevel` minus opponent, or a rating
+differential?) is computed in the resolver consumer code immediately before binning, inside
+the **obfuscated picker-adjacent cluster** (`FUN_005b5100` et al.). Both prior picker
+investigations concluded this context->index decomposition is **UNKNOWN** statically and
+needs runtime capture (breakpoint at `0x00817f3c`, log the pool/weights/RNG tuples). The
+match-level inputs that select the *file/record* are named in the `GCMatchInputs` schema
+`FUN_00a72db0` (MatchSeed, Home/AwayPersonality, HomePossession, TeamDutiesID, PassingStyle,
+PressingStyle, OffsideTrap, PlayingMentality, LikelyResult, PerformanceLevel), but those are
+the record selectors, not the 4 per-sample context axes.
+
+So the trace **recovered the grid's shape, the draw/context split, and evidence-based axis
+roles**; the exact variable names for axes 1-4 remain behind the same anti-disassembly wall.
+The mechanism is fully usable now via `SampleConditional(rec, contextValues, lcg)` once the
+caller supplies the 4 ordered context values.
 
 No distribution data is reproduced here or embedded in code — all figures are aggregate
 structure derived from the owner's local file at runtime.

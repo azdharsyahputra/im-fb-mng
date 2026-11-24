@@ -109,8 +109,28 @@ distribution. In file 1:
 - **Potentially refuting:** none found; the gradient is monotone and consistent across metrics.
 - **Alternative:** a role/duty grouping rather than raw position — but either way it is the
   categorical defence↔attack role axis.
-- **Confidence / status:** **INFERRED (strong)** — position/role axis. Literal CM field (e.g.
-  `EPositionValue`) unproven from bytes, but the semantic is now evidence-backed, not a guess.
+- **Confidence / status:** **INFERRED (strong)** — position/role axis.
+
+#### Literal position taxonomy recovered (new)
+
+The game's position enum is readable in the committed dumps
+(`docs/ghidra_dumps/match_player/decompiled.c`), printed as an ordered list and mirrored by a
+per-position `*Value` getter family (candidate `ESquadValue`/`EPositionValue`):
+
+- **Vertical spine (7, defence→attack):** `eGoalKeeper, eSweeper, eCentralDefender,
+  eDefensiveMidfielder, eMidfielder, eAttackingMidfielder, eStriker`.
+- **Wide/special (4):** `eWingBack, eFullBack, eWinger, eRoaming`.
+- `*Value` strings present: GoalKeeper/Sweeper/CentralDefender/DefensiveMidfielder/Midfielder/
+  AttackingMidfielder/Striker/WingBack/FullBack/Winger/Roaming Value (+ matching `*Offset`).
+
+The categorical context axis has **exactly 7 bins**, and its per-bin gradient (goals peak at one
+end, clearances at the other, passes in the middle) maps cleanly onto the **7-value vertical
+spine `eGoalKeeper … eStriker`** (bin 0 = defensive end, bin 6 = attacking end). So the axis is
+**the player's position on the recovered 7-position vertical spine**, computed by the `*Value`
+("PositionValue") family. This is a literal-level identification of the axis's meaning; the exact
+binning value and which `*Value` accessor the obfuscated iterator reads are still not seen in
+bytes, so it stays **INFERRED (strong)**, not VERIFIED. (The 4 wide roles are off-spine and not
+resolved onto this 7-bin axis.)
 
 ### The equal-frequency context axes — continuous player/match quantities (booster vs suppressor)
 - **Supporting:** uniform marginals ⇒ quantile-binned continuous values. Per metric they split
@@ -126,8 +146,14 @@ distribution. In file 1:
   form/condition vs performance level) maps to which booster/suppressor axis is not pinned; the
   booster/suppressor SIGN is clear, the exact field is not.
 - **Alternative:** some may be match-context (tempo, possession) rather than player attributes.
-- **Confidence / status:** **INFERRED** (booster = own ability, suppressor = opposition/difficulty
-  by sign) / **UNKNOWN** (exact field per axis).
+- **Candidate literal names (INFERRED):** the boosters are CENTERED (symmetric breakpoints, e.g.
+  GoalsScored's booster ≈ ±[0.85..10]) ⇒ a *relative* quantity (ability minus population mean),
+  which fits the named GCMatchInputs field `Home/AwayPerformanceLevel` (own performance level) or
+  a per-position `*Value` suitability; the suppressors fit the OPPONENT side of the same pair
+  (opponent `PerformanceLevel` / `LikelyResult` / team strength). These are named, VERIFIED-exist
+  match inputs; tying a specific one to a specific axis is INFERRED, not proven.
+- **Confidence / status:** **INFERRED** (booster = own relative ability, suppressor = opposition/
+  difficulty by sign) / **UNKNOWN** (exact field per axis; candidates named above).
 
 ## 4. Conclusion
 
@@ -148,11 +174,13 @@ distribution. In file 1:
   lawful unmodified install + read-only debugger) — out of scope here (no DRM bypass, no running
   the cracked exe).
 
-**Net progress this pass:** two previously-vague roles were upgraded — axis "volume" → **position/
-role** (INFERRED-strong, decisive gradient evidence), and the remaining context axes were split
-into evidence-backed **booster vs suppressor** continuous quantities. The only piece still fully
-UNKNOWN is the literal field name per axis, which the obfuscation + no-runtime rule genuinely
-block.
+**Net progress this pass:** the position axis is now tied to a **recovered literal taxonomy** —
+the game's own `eGoalKeeper … eStriker` 7-value vertical spine + `*Value` getters, matched by bin
+count and the def→att gradient; and the booster/suppressor axes have **named candidate fields**
+(own vs opponent `PerformanceLevel`/`LikelyResult`/`*Value`). What is still genuinely UNKNOWN is
+only the exact byte-level wiring of which accessor the obfuscated iterator reads for each axis —
+the obfuscation + no-runtime rule block confirming it to VERIFIED; the semantics and the candidate
+literal names are now evidence-backed, not guesses.
 
 No distribution data or bulk copyrighted code is reproduced; figures are aggregate structure
 from the owner's local files and addresses/field offsets from the committed dumps.

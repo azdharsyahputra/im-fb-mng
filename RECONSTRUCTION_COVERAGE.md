@@ -39,3 +39,16 @@ No arbitrary percentages. Counts are of concrete, enumerable items.
 Go `go test ./...` (20 ok); C `make test`/`make integration` (262); runtime-lab `make test`
 (158, incl. Solver A/B/C + exact-schema ingest); resolver cross-model invariants; database-fields
 round-trip. These are the regression floor for all further work.
+
+## Geometry & movement subsystem (native, Go — added)
+
+| item | status | note |
+|---|---|---|
+| world coords +0xC0/+0xD0 (integer fixed-point) | **VERIFIED** | engine.Entity; projection 1/112.5 x56.25 |
+| double-buffer set-to-target motion | **VERIFIED** | geometry.SetToTargetIntegrator (integer waypoints, no velocity field) |
+| geometry snapshot export -> obs/1 | **RECONSTRUCTED** | geometry.ToObs (confidence INFERRED) |
+| target-picker 0x00a1fdf0 output field | **UNKNOWN** | waypoint source offset not pinned (TargetProvider gap) |
+| continuous per-frame integrator + x/y/vx indices | **UNKNOWN** | un-dumped threaded sim (UnknownIntegrator no-op) |
+| runtime geometry/movement observations | **UNAVAILABLE** | capture lacks geometry; obs x/y fields ready |
+
+See super-manager-engine/geometry + docs/match/{GEOMETRY_ARCHITECTURE,GEOMETRY_EVIDENCE,MOVEMENT_RECONSTRUCTION}.md (commit 8bbc81c).

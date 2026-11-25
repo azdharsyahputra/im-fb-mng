@@ -276,3 +276,23 @@ Consistency, Professionalism, Pressure, Loyalty, Sportsmanship, Ambition, Adapta
 Confidence, Leadership, TeamWork, Fitness, InjuryResistance/Recovery) and rare slots (GoalKeeper
 familiarity, Roaming, LeftSide, RightSide, Central, PreferredFoot). Splitting these reliably needs a
 single-trait capture per attribute or the live-deserialisation trace — not archetype value-matching.
+
+## Seventh pass — TWO real captures: validate + correct (high confidence)
+
+The owner supplied two genuine CM2008 profile screenshots with full 1..20 attribute values:
+Bojan Krkic (Barcelona, id 143410) and "Jorda" (= Javier Martina, PSV, id 120728). Scale confirmed
+**display*5 ≈ raw (±~5)**. Using both as ground truth:
+
+- **Validated** ~20 archetype bindings to within a few points (Finishing, Dribbling, Heading, Marking,
+  Pace, Acceleration, Agility, Balance, Stamina, Passing, Positioning, Anticipation, DecisionMaking,
+  Flair, Bravery, Aggression, Jumping, LongShots, WorkRate). The archetype method is sound.
+- **Corrected** six that the captures refuted (archetype value-match had them wrong):
+  old c22 Tackling, c35 Determination, c37 Movement, c38 Strength, c60 DeadBalls, c61 PenaltyTaking.
+- **Reassigned** where BOTH captures and archetypes agree: c19 Consistency, c29 Determination,
+  c51 Crossing, c57 Movement, c58 Tackling, c62 PenaltyTaking.
+
+Key lesson: two captures alone match some columns by coincidence (a raw pair 75/60 fits several
+attributes), so a binding is only committed when the captures AND the 38-player archetype signal
+agree. Columns where they conflict (Creativity/Vision/FirstTouch/TeamWork/Leadership overlap) stay
+unbound — each needs another capture with a distinctive value to triangulate. More single-attribute
+captures would keep closing the gap; the method now has a validated scale and two anchors.

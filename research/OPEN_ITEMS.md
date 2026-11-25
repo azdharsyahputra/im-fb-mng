@@ -20,9 +20,9 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 - INFERRED: Column→zone cut-offs (depth split into Def/Mid/Att); named-variant effects
   (_Attacking/_Defensive/_Diamond/_Sweeper); TeamTacticFormation (a,b) menu-group semantics;
   TeamTactics/PositionTactics per-field byte offsets (declaration order known, each byte not verified).
-- UNKNOWN: the `.tac` field-hash→name map; the 11 formation-slot → FieldPosition-id binding inside a
-  `.tac`; the exact tactical-substitution formula algebra (beyond the fitness<=0.5 gate); the
-  "which players are the contestants per zone" selection step.
+- RESOLVED (ISO_GAME_DATA.md): the 25 shipped .tac are byte-identical except a 4-byte NameID — they do
+  NOT store distinct grids, so formation shape is name-keyed (tactics.ZoneCounts). Still UNKNOWN: the
+  runtime NameID→FieldPosition-cell assignment; the tactical-sub formula; the zone-contestant selection.
 
 ## Commentary (MATCH_COMMENTARY.md)
 - INFERRED: the token vocabulary ([%…] / %team / %surname) lives in the external .str; the single

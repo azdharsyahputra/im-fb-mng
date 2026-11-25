@@ -1,8 +1,21 @@
 # Match "replay" / Report path — reverse-engineered (static + decompiler)
 
+> **CORRECTION (re-verified against the FSM discovery).** An earlier version of this doc reasoned
+> "replay = stat playback *because there is no positional sim to record*". That premise is WRONG and is
+> retracted: CM2008 DOES have a full positional sim (the ~255-state player FSM + integrator FUN_004a0440,
+> see MATCH_VTABLE_DISPATCH_MATRIX.md / MATCH_PLAYER_FSM_STATES.md). Re-checking the mode switch
+> FUN_009d52e0 (ctx+0x150) CONFIRMS the conclusion still holds for a DIFFERENT reason: the stats/report
+> engine (0x9d region) and the movement FSM (0x4a/0x4d region) are **independent subsystems**. In BOTH
+> ctx+0x150 modes FUN_009d52e0 only walks STAT records (compute via FUN_009d0fb0 in live mode, re-read
+> `rec+0x2c`/`rec+0x10..11` in report mode) — it never touches positions. So the match RESULT that is
+> persisted/replayed is the per-record STAT report, NOT recorded positions; the FSM regenerates positions
+> live for the 2D view and they are not stored. "Replay = stored stat/result playback" is therefore
+> VERIFIED; only the old rationale about "no sim" is corrected.
+
 Investigated the match's "from Report" vs "from Resolver" split (the suspected replay subsystem).
 Finding: there is **no frame-by-frame video/event replay engine**; "replay" = re-displaying a match's
-**stored RESULT records** through the same stat/report pipeline. VERIFIED unless noted.
+**stored RESULT records** (per-record STATS, not positions) through the same stat/report pipeline. The
+positional FSM is a separate live-view subsystem (not persisted). VERIFIED unless noted.
 
 ## The live/replay mode flag — `ctx+0x150` (VERIFIED)
 The match-module context field `ctx+0x150` selects the data source, seen in FUN_009d52e0, FUN_009d4090
@@ -31,8 +44,9 @@ IS the set of per-record stat results; replay just re-reads them instead of reco
 
 ## Honest conclusion + what's NOT traced
 "Replay" in CM2008's match module is **result/stat playback from stored per-record state**, driven by
-`ctx+0x150`, through the shared export + commentary pipeline — not a per-second event/video replay
-(consistent with MATCH_MOVEMENT_POSITIONING: no positional sim to record). NOT traced: where the Report
+`ctx+0x150`, through the shared export + commentary pipeline — not a per-second event/video replay. (The positional
+FSM exists but is a separate live-view subsystem whose positions are NOT persisted; the stat/report engine
+here never touches them — re-verified via FUN_009d52e0, see the correction banner at the top.) NOT traced: where the Report
 record store is persisted/loaded from disk and whether a saved-match file format exists on media (the
 `ReplayMatchFormat.dat` / `RoundMatchFormat.dat` data files look like COMPETITION round/replay-fixture
 formats, i.e. rescheduled-match scheduling, not match-event capture — unconfirmed). Those are bounded

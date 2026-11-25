@@ -117,3 +117,48 @@ FUN_009d41f0 (+ FUN_0048c790 / FUN_0048c7c0 result computers) — these consume 
 WRITE the actual event descriptors (desc+8 type, desc+4/5/6 class) into the pool, i.e. decide which
 event fires between whom. Decompiling these four is the next pass. With the decompiler working this is
 now tractable (no longer a capstone needle-hunt), though still a multi-pass port.
+
+---
+
+# Pass 3 — CORRECTION: the "builders" are the STATS-EXPORT layer, not the generator
+
+Decompiling FUN_009d45d0 / 9d4930 / 9d4090 / 9d41f0 shows they do NOT create events. They **copy
+resolved per-player match stats into the front-end (FE) match interface** for display. Proof — the
+literal strings in FUN_009d4090:
+> "Storing (from Resolver, squadnum %i) player output data in FE match interface for PersonNameID %u"
+> "Storing (from Report, squadnum %i) player output data in FE match interface for PersonNameID %u"
+
+What they actually do (VERIFIED):
+- **FUN_009d45d0**: reads ~33 per-player stat getters (FUN_004954xx–004956xx) and stores each into an
+  FE field slot via FUN_0061fa70(&DAT_00c99bXX). These DAT_00c99bXX are the named match-stat fields.
+- **FUN_009d4930**: computes percentage stats and registers field NAMES via FUN_00405530 —
+  "PassesFailedAsPercentage", "TacklesLostAsPercentage" (ratio = made/attempts*100, with the 2^32
+  unsigned→float fixup). Same schema-registration idiom as PlayerProperties.
+- **FUN_009d4090**: iterates the squad's player handles (PersonNameIDs) and stores each player's output
+  block into the FE interface ("squadnum", "PersonNameID"). Mode 1 = "from Report" (saved), mode 0 =
+  "from Resolver" (live).
+- **FUN_009d41f0**: per-player, picks a value (0x16 = default, else an attribute via the ctx+0xd8
+  pointer table) into the FE field.
+
+## Correction to pass 2
+FUN_009d52e0 is the **per-squad / per-player STATS-REPORTING scheduler** (publishes resolver output to
+the UI), NOT the event generator. Consequently:
+- `ctx+0x98 + squad*0xc` is a **squad's vector of player handles** (PersonNameIDs), not an "action
+  vector"; the ≤23 slots are **squad players** (11 + subs), not event slots.
+- `param_1` is a **squad number** (the 3 callers are reporting contexts), not a pitch "zone"; the
+  "3×3 zone" reading in pass 2 is withdrawn for this function.
+- FUN_009d0fb0 / 48c8c0 / 4956e0 / 48c470 test whether a player **has resolver output to export**
+  (eligibility for reporting), not event eligibility.
+- The event pool 0xc77df8 is NOT touched here — confirming this is the OUTPUT/reporting side.
+
+## Still-useful artifact from pass 3 (VERIFIED)
+The **844-byte (0x34c) per-player match-stat record** (indexed squad*23+player) and the FE stat-field
+vocabulary (percentage stats like PassesFailedAsPercentage/TacklesLostAsPercentage, plus the ~33
+getters) — i.e. the per-player match-stats model the UI consumes.
+
+## Redirect (where the real generator is)
+The export pulls "from Resolver" → the per-tick event generation lives UPSTREAM in the match tick we
+mapped in pass 1: ProcessData FUN_0077ee80 → dispatcher FUN_0077cd40 (RNG draw @0x77cd84, routes by
+desc+4/5/6 to the duel/presentation) → the resolver atoms. The honest next target is the code that
+FILLS the descriptor pool before cd40 runs — i.e. who sets desc+8 (event type) / desc+4/5/6 — reached
+from the ProcessData pump and the event-object pool 0xc77df8, NOT from this reporting scheduler.

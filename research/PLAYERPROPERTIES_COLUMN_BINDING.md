@@ -398,3 +398,50 @@ an f64@16 are named) and Person DOB is not pinned, so the join would be speculat
 close the remaining ~15 columns are (a) a few single-attribute captures off the game UI (the owner's
 route — fastest), or (b) a live-process deserialiser trace on Windows. No static artifact in the exe or
 shipped data contains the disk permutation.
+
+## Tenth pass — real capture (Aaron Ramsey) via DOB join; detailed/non-detailed split proven
+
+Owner supplied a CM2008 profile + information capture: **Aaron Ramsey, Cardiff, age 16, DOB 26-12-1990**,
+Midfielder (Centre), Preferred Foot Right, with full 1..20 visible attributes.
+
+### Record located by DOB, not by value-match
+Value-matching his visible skills failed (his values are mostly 10-13 → raw ~50-65, i.e. the population
+mean — thousands of records fit). Instead joined on the hard DOB: the byte pattern `1a 0c c6 07`
+(day=26, month=12, u16 year=1990) occurs **exactly once** in Person.dat (102,990 persons, 34-byte
+records, DOB at record offset 16) → **person id 154675**. That id's PlayerProperties record has a
+central-midfielder, right-footed positional profile — confirmed Ramsey.
+
+### KEY FINDING — non-detailed players store NO skill values (runtime-generated)
+Ramsey's PlayerProperties record has **cols 18..76 entirely SENTINEL (0xffff)**; only the intrinsic
+position/foot cols are populated:
+
+| col | raw | reading | check |
+|---|---|---|---|
+| 0 | 79 | AttackingMidfielder familiarity | box-to-box mid ✓ |
+| 1 | 100 | Central | centre player ✓ |
+| 2 | SENT | CentralDefender | a midfielder lacks it ✓ |
+| 4 | 79 | DefensiveMidfielder | box-to-box mid ✓ |
+| 8 | 60 | LeftFoot ability | weaker foot |
+| 10 | 100 | Midfielder | natural CM ✓ |
+| 11 | 100 | RightFoot ability | **preferred foot Right = col11>col8 ✓** |
+
+So the UI skills (Finishing 13, Passing 16, …) for a lower-league/young player are **generated at
+runtime, not stored** — this IS the ~83% sentinel skill block. Consequence for the engine: non-detailed
+players need attribute GENERATION (from CA/PA + position), not a disk read. And the **capture-solve
+method only works on DETAILED (top-club) players** whose skill block is populated (e.g. the earlier
+Bojan/Martina captures). A lower-league capture cannot pin skill columns.
+
+### What the capture DID confirm / correct
+- **Positional + foot block holds against a real central midfielder**: col0 AttMid / col1 Central /
+  col4 DefMid / col10 Midfielder set; col2 CentralDefender + the wide/side slots (6,12) + Striker/
+  Winger/etc. sentinel — exactly a centre-mid. col11 RightFoot (100) > col8 LeftFoot (60) reproduces
+  the UI "Preferred Foot: Right".
+- **col13 is NOT PreferredFoot** (now Unknown13/X): it is SENTINEL for Ramsey although his preferred
+  foot is defined — an intrinsic property would be stored like col8/col11. Preferred foot is derived
+  (argmax of the two foot abilities); the schema's "PreferredFoot" field maps to an unidentified column
+  or is computed. This agrees with the 8th-pass ~0 foot-correlation for col13.
+
+### Net
+fullmap.go: col13 PreferredFoot(L) → Unknown13(X). Positional/foot bindings (col0/1/2/4/8/10/11)
+reinforced by a real capture. Skill/mental columns still need a **top-club player capture** (fastest) —
+a lower-league player's skills are not on disk.

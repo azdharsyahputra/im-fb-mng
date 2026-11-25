@@ -65,9 +65,18 @@ Dive matrix: DiveLeft/Right, DiveLowLeft/Right, DiveHighLeft/Right, DiveCloseLef
 DiveLowCloseLeft/Right, DiveHighCloseLeft/Right. Push matrix: PushLeft/Right (+Low/High/Close/LowClose/
 HighClose ×Left/Right). Save matrix: SaveLeft/Right (+Low/High/Close/LowClose/HighClose ×Left/Right).
 
-## Official/referee states (GCOfficialState*, 0x498 region; handler FUN_00498ac0)
-RefereeHalfMilling (FUN_00498d40), RefereeAfterShootout, RefereePlayerArguement,
-OfficialSignallingSubstitution, AwaitingCornerKick (+ more by the same table walk).
+## Official/referee + linesman states (GCOfficialState*, 35 states @0xb5e9f0–0xb5f008; 0x498 region)
+NoExtra, RefereeOnPatrol, RefereeAwaitingKickOff, Linesman1OnPatrol, Linesman2OnPatrol, OfficialLeaving,
+LinesmanLeaving, RefereeLeaving, RefereeWhistling, RefereeTickOff, RefereeYellowCard, RefereeRedCard,
+Linesman1/2FlaggingOffside, Linesman1/2FlaggingThrow, Linesman1/2FlaggingGoalKick,
+Linesman1/2FlaggingCornerKick, Linesman1FlaggingSubstitution, OfficialNeedsBath, RefereeNeedsBath,
+RefereeAwaitingPenalty, RefereeAwaitingSetPieceFreeKick, RefereeAwaitingFreeKick, RefereeAwaitingGoalKick,
+RefereeAwaitingGoal, RefereeAwaitingHandsKick, RefereeAwaitingThrowIn, RefereeAwaitingCornerKick,
+RefereeAfterShootout, RefereeHalfMilling (handler FUN_00498d40), RefereePlayerArguement,
+OfficialSignallingSubstitution. Shared handler FUN_00498ac0 (set-piece/side-swap).
+
+No `GCBallState*`/`GCMatchState*` families exist; ball visuals are `FEBallModelComponent` (2D view). The
+two FSMs are the player FSM (~255 states) and the official FSM (35 states).
 
 ---
 This inventory makes the dispatch structure and per-handler semantics explicit without decompiling any

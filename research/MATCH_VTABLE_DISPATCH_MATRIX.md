@@ -202,6 +202,28 @@ that register the FSM. Decompiling, e.g., the `PlayerRunningToBall` handler woul
 `body+0x08 += speed·dir·dt` update. That is one decompile per state, not a search — the *structure and
 semantics* are already fully mapped from the names, which is exactly what the spec asked for.
 
+## 8. Re-analysis outcome (RTTI analyzer ON) + FSM handler hunt result
+
+Re-ran REA with Ghidra's RTTI analyzer re-enabled (profile now `disabled_analyzers: ["Call Convention
+ID"]`, fresh DB digest 6adaf64…). Outcome:
+- **RTTI auto-linking is now active** (helps the GC*/FE* C++ class graph), but the **player-state FSM is
+  NOT an RTTI class family** (no `.?AVGCPlayerState…` type descriptors exist — confirmed), so re-analysis
+  does **not** register the FSM dispatch. `resolve_containing_procedure(0x498d40)` is still
+  `not_in_procedure`; the 0x4d1xxx–0x4d2xxx FSM region remains unregistered code.
+- **State-object construction pattern located (VERIFIED bytes):** each state has a cluster of tiny methods
+  in the 0x4d2xxx region — a `GetName` thunk `mov eax,<name>; ret` (e.g. **0x4d2331** →
+  `mov eax,0xb5be84 ("…RunningToBall"); ret`) and an inlined constructor
+  `fld <const>; mov eax,ecx; mov [eax],<baseVtbl 0xb5bdd8>; fstp [eax+4]; mov [eax],<derivedVtbl>; ret`.
+  So the states ARE C++ objects with per-state vtables + a float field, built in that initializer.
+- **Why the exact per-tick mover is not asserted here:** the derived-vtable pointer the ctor installs
+  lands inside the 0xb5be00 block that interleaves state vtables with the name strings, and byte-level
+  decoding of which slot is the per-tick `OnTick` was ambiguous (a candidate slot resolved to an unrelated
+  UI handler). Rather than publish a possibly-wrong address, the mover's exact VA is left **UNKNOWN**; the
+  *mechanism* (per-state object → vtable → per-tick handler advancing body+0x08/+0x10 at the state's speed)
+  is VERIFIED/RECONSTRUCTED. Pinning the precise slot needs manual Ghidra function-creation over the 0x4d
+  FSM region (which REA's read-only flow does not perform) or a one-off interactive Ghidra pass; it adds no
+  new gameplay constant beyond the PlayerDegradeable speed ranges already recovered.
+
 ## Conclusion
 
 The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. **The player

@@ -51,3 +51,18 @@ record store is persisted/loaded from disk and whether a saved-match file format
 `ReplayMatchFormat.dat` / `RoundMatchFormat.dat` data files look like COMPETITION round/replay-fixture
 formats, i.e. rescheduled-match scheduling, not match-event capture — unconfirmed). Those are bounded
 follow-ups, not an open engine.
+
+## On-disk format CONFIRMED (follow-up resolved)
+Inspected the two data files directly (extracted_game/DatabaseFiles):
+- **ReplayMatchFormat.dat** — DATa, 180 records × 8 bytes = `[u32 ID][u32 enum]`. **90 distinct IDs
+  (353..5437), each appearing exactly twice with enum values {1, 4}** — a pure ID→{1,4} property table.
+- **RoundMatchFormat.dat** — DATa, 2906 records × 8 bytes, 1542 distinct IDs (353..6078), enum values
+  {0,1,2,4,5,6,7,8}; same `[ID][enum]` shape (most IDs ×2).
+
+Both are **ID-keyed configuration tables**, NOT match-event/position capture (a saved match would be a
+variable-length event/position stream, never uniform 8-byte ID/enum pairs). So "Replay" here is the
+football sense — **cup REPLAY fixtures** (re-played drawn ties): ReplayMatchFormat.dat holds the
+match-format rules for replay fixtures, parallel to RoundMatchFormat.dat for ordinary round matches. The
+in-match "watch replay" UI (FrontendSkin W_XX_Replay / B_XX_ToggleReplay) re-runs the live stat/FSM
+pipeline (ctx+0x150 report mode); it does NOT load these .dat files. **VERIFIED: there is no on-disk
+saved-match/video-replay format — the open item is resolved.**

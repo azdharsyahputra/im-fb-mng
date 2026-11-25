@@ -95,8 +95,11 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   near-target snap at ε≈1e-7, strafe heading +90/180/270°. The FULL movement chain is pinned end-to-end
   (GCPlayerState → OnTick 0x4de470 → move-order 0x4a0ea0 → integrator FUN_004a0440). REMAINING (unrelated):
   the 37 resolver slot roles; FUN_004b0aa0 local-duel kernel; tier→event mapping.
-- Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
-  looks like competition fixture formatting, unconfirmed).
+- Replay: RESOLVED (MATCH_REPLAY.md). ReplayMatchFormat.dat + RoundMatchFormat.dat inspected = DATa
+  ID-keyed config tables (8-byte [u32 ID][u32 enum]; Replay=180 recs, 90 IDs ×{1,4}; Round=2906 recs,
+  enums {0,1,2,4,5,6,7,8}) — competition fixture/format rules for cup REPLAY fixtures (re-played drawn
+  ties), NOT match-event capture. CONFIRMED: no on-disk saved-match/video-replay format exists; in-match
+  "watch replay" re-runs the live stat/FSM pipeline (ctx+0x150), not a loaded file.
 
 ## The common root of most UNKNOWNs
 Two buckets dominate: (1) RUNTIME-only magnitudes (morale weights, live ratings, board confidence) that

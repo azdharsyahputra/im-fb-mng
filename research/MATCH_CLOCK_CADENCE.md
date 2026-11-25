@@ -36,3 +36,24 @@ it is written elsewhere (follow-up). The lifecycle itself is already modelled VE
 The native match tick can mirror the original by giving each entity a 10-s action cadence (dt-derived),
 which turns the clean-room EventRatePerMin into a recovered interval. Left as a documented wiring step
 (no engine numbers changed here, per the "real numbers only" rule).
+
+---
+
+## Clock pack + end-of-period boundary (decompiler, VERIFIED)
+
+### FUN_0077c660 — seconds → H:MM display pack
+`total = ctx[+0xe4][+0x48] + ctx[+0xe4][+0x44]` (elapsed seconds, two float components summed).
+hours = int(total/3600) (const 0.00027777778 = 1/3600), minutes = int((total − hours*3600)/60)
+(const 0.016666668 = 1/60). Packed `((hours & 0x1f) << 6 | minutes & 0x3f) << 3` into the display
+field at `[DAT_00c809d4+0x30]` preserving other bits (mask 0xffffc007). The 8388864.0 bias is the
+standard float→int truncation trick (2^23 + 256). Confirms the recovered seconds→H:MM clock.
+
+### FUN_0077e850 — period boundary / match finalize
+Gate: if `ctx[+0xe4][+0x4c] < 3600.0` (DAT_00c84c7c = 0x45610000 = 3600.0f) AND
+`ctx[+0xd8][+0x4b4] < 500000` → keep running (flag 1). Otherwise the period ENDS and it finalizes:
+builds the scoreline string via `sprintf("%d-%d-%d", …)`, CRC32-hashes it (FUN_00405530 — the same
+commentary/text GID hasher), logs/reports (FUN_00411c10, FUN_0077ddc0 clears a byte), then — gated on
+match state `ctx+0x1061c == 1 || == 3` and FUN_0048b480 — runs the end-of-match transition
+(FUN_004918c0 / FUN_009efb40). So the "GameOver"/boundary step is a clock-threshold finalize that emits
+the scoreline as a text key and advances the match lifecycle state. (The 3600.0 threshold is a period
+unit; exact half/full-time mapping not pinned here.)

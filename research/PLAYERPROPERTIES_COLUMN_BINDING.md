@@ -482,3 +482,26 @@ name). Limitation: all 3 captures are attack-minded, so the technical cluster (P
 Creativity/FirstTouch) and the hidden-personality cluster are not fully separable — a defender or a
 physically-contrasting capture would tighten them. KEEPER captures (Ventura/Grohe) remain available to
 map GoalkeeperProperties.dat (separate file / gknames.go) in a future pass.
+
+## Twelfth pass — GoalkeeperProperties.dat structure (keeper captures non-detailed)
+
+Owner's batch included two keeper captures (Ventura/Porto, Grohe/Gremio). Checked them against
+**GoalkeeperProperties.dat** (8984 recs x 134B = u32 id + **65 u16 cols**). Both are NON-DETAILED
+(record nset = 1..2 of 65 — GK skills runtime-generated, like Ramsey), so they cannot bind GK columns.
+Confirmed the other session's note.
+
+Measured on-disk structure (useful groundwork):
+- **cols 0..17** coarse positional familiarities + feet (ndist<=9). **col7 = 100 for EVERY keeper** =
+  the GoalKeeper position familiarity (=20), VERIFIED. col11 = RightFoot ability (mean ~91).
+- **cols 18..62** the 45 FINE graded attributes (GK-technical + shared mental/physical).
+- **cols 63..64** the 2 keeper instruction sliders (only <=15 cols) = {StayOnLineOrRushOut,
+  PunchCrossesOrCatch}, VERIFIED as the pair.
+
+**Shared-layout evidence (strong):** the fine block appears to reuse PlayerProperties' disk-column order
+for shared attributes — the outfield-skill columns keepers are poor at are low-mean at the SAME indices:
+col20 (FirstTouch) 28, col23 (Finishing) 42, col51 (Crossing) 38, col52 (Dribbling) 33, col53
+(Creativity) 39. So ONE detailed keeper capture would transfer the ~37 shared columns from the
+(capture-corrected) PlayerProperties map and leave only the 8 GK-technical columns (ShotStopping/
+Handling/CoordinatingDefense/Crosses/Kicking/Throwing/OneOnOnes/Eccentricity) to pin. 1586/8984 keepers
+are detailed, so a top-club keeper (Casillas/Buffon/Van der Sar/Cech) would complete it. Groundwork
+recorded in playerdb/gknames.go.

@@ -22,8 +22,12 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   (_Attacking/_Defensive/_Diamond/_Sweeper); TeamTacticFormation (a,b) menu-group semantics;
   TeamTactics/PositionTactics per-field byte offsets (declaration order known, each byte not verified).
 - RESOLVED (ISO_GAME_DATA.md): the 25 shipped .tac are byte-identical except a 4-byte NameID — they do
-  NOT store distinct grids, so formation shape is name-keyed (tactics.ZoneCounts). Still UNKNOWN: the
-  runtime NameID→FieldPosition-cell assignment; the tactical-sub formula; the zone-contestant selection.
+  NOT store distinct grids, so formation shape is name-keyed (tactics.ZoneCounts).
+  RESOLVED (FORMATION_COORDINATES.md): the runtime NameID→FieldPosition-cell assignment IS in shipped data
+  — FieldPosition.dat (268×32B: id, namehash, 3 (Column,Row) base/attack/defend cells; Column depth 0..15,
+  Row width 1..13) + PositionTeamTactics.dat (25 formations × 11: FormationID→FieldPositionID FK). Ported to
+  formation/grid.go (VERIFIED coords). Still UNKNOWN: FormationID(1..25)→NAME binding (shape-matched, needs
+  the name-hash fn); the tactical-sub formula; the zone-contestant selection.
 
 ## Commentary (MATCH_COMMENTARY.md)
 - INFERRED: the token vocabulary ([%…] / %team / %surname) lives in the external .str; the single

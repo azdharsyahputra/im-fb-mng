@@ -1,6 +1,25 @@
 # CM2008 Formula Consumer Map — All 810 Formulas → Consumers + Inputs
 
-Clean-room, **static / bytes-only** (no Ghidra, no execution, no payload decryption). This is the consolidated per-name table joining three VERIFIED byte-level sources with a name-based match-family classification. **No coefficient or formula body is invented** — every default is a byte-bound `DAT_` float read from `cm2008.exe`; `compute-only` means the getter has `DAT_None` (no fallback constant) and is meaningful only when the encrypted `formula.xml.blowfish` tree is present.
+> **⚠️ SUPERSEDED on the "blocked / UNKNOWN payload" claims — READ FIRST.** This doc was written from a
+> **byte-only** pass of `cm2008.exe` BEFORE `formula.xml` was decrypted. Since then the payload HAS been
+> decrypted and ported: the owner's `extracted_game/DataXML/formula.xml` (482 KB, **1349 formulas, 55
+> groups, full bodies** with `calc=mean/sum/prod` + inputs + constants) is present and complete. It is
+> ported to Go: **`cm2008-formulas/params/global_params.go`** holds **943 pure-constant formulas across
+> 55 groups** (`Get(group,name)`/`MustGet`), and the computed groups have their own packages
+> (`movephysics`, `ballphysics`, `happiness`, `managerai`, `transfervalue`, `wagefinance`, `official`,
+> `playerability`, `playerstate`, `postmatch`). So **"compute-only / blocked / fully payload-dependent /
+> formula body UNKNOWN" below is NO LONGER TRUE** — every such value is in the decrypted `formula.xml` and
+> coded. Example: the "26 blocked `ResolverConstants`" and "5 base-gait multipliers" are exact values
+> (BaseBallSpeedMaximum 50.96, Walking 1.45–2.45, Sprinting 7.1–9.25, RunningFatigueModifier 0.000005, …)
+> in `params`/`movephysics`. The byte-level consumer/getter/offset mapping below (which getter FUN feeds
+> which consumer) stays VERIFIED and useful; only the "needs-payload" framing is retracted.
+
+Clean-room, **static / bytes-only** for the byte-level columns (no Ghidra, no execution). This is the
+consolidated per-name table joining three VERIFIED byte-level sources with a name-based match-family
+classification. **No coefficient or formula body is invented** — every default is a byte-bound `DAT_`
+float read from `cm2008.exe`; `compute-only` here means only that the getter has `DAT_None` (no fallback
+constant baked in the exe) — its ACTUAL value is in the decrypted `formula.xml` (see the banner above),
+not missing.
 
 ## Provenance & classification
 
@@ -10,7 +29,7 @@ Clean-room, **static / bytes-only** (no Ghidra, no execution, no payload decrypt
 | consumer FUN | `scratchpad/consumers.json` (E8 rel32 call scan, 810/810 resolved) | **VERIFIED** |
 | ResolverSettings offset | `scratchpad/harvester_9f4bd0_offsets.txt` (300 `fstp [esi+disp]` stores) | **VERIFIED** |
 | match family | name-keyword classifier over match groups | **INFERRED** (names + `FORMULA_BODY_RECOVERY.md` family map) |
-| formula body / tree / weights | — | **UNKNOWN** (encrypted payload; not recovered, not invented) |
+| formula body / tree / weights | `extracted_game/DataXML/formula.xml` (decrypted) → `params`/group packages | **RECOVERED & PORTED** (was "UNKNOWN encrypted payload" when this doc was written; now decrypted — 1349 formulas, full bodies) |
 
 ### The two centralizers (from `FORMULA_BODY_RECOVERY.md`, VERIFIED)
 
@@ -31,8 +50,8 @@ Clean-room, **static / bytes-only** (no Ghidra, no execution, no payload decrypt
 | 7 | Other (career/AI/finance/non-match) | 346 | 157 | 189 | 0 | 0 | 346 |
 | | **TOTAL** | **810** | **514** | **296** | 359 | 105 | 346 |
 
-- **Usable now = 514 / 810** have a byte-bound default and so can seed the engine immediately (the fail-open value the shipped engine uses when a formula is absent from the registry). **Blocked = 296 / 810** are `compute-only` (`DAT_None`): no default exists, so their value is fully payload-dependent.
-- For the **6 match families: 464 formulas** (357 usable now / 107 blocked). The match-critical blocked pockets are **all 26 `ResolverConstants` ball/shot physics**, the **5 base-gait accel/decel multipliers**, and the slide/hook/trip/elbow/smother **deflection/effect/time** defensive sub-formulas plus the `OfficialState` foul-rating set.
+- ~~**Usable now = 514 / 810** … **Blocked = 296 / 810** are `compute-only` (`DAT_None`): … fully payload-dependent.~~ **RETRACTED:** this split only measured which getters had a baked-in exe DEFAULT. The 296 without a default are NOT blocked — their real values are in the decrypted `formula.xml` and are ported to `params`/the group packages. Treat the whole 810 as value-resolved.
+- ~~For the **6 match families: 464 formulas** (357 usable / 107 blocked). The match-critical blocked pockets are the 26 `ResolverConstants`, the 5 base-gait multipliers, … `OfficialState` foul-rating set.~~ **RESOLVED:** those "blocked pockets" are exact decrypted values now in Go — e.g. `ResolverConstants` (BaseBallSpeed* 1.0…50.96, BaseBallKickHeight* 0…20, BaseKickReactionTime* 0.2…1.0, BallElasticity 0.5, shot variances 0.005/0.05), the gait multipliers (`movephysics`), and `OfficialState` (`official`).
 
 ## 1. Movement/Acceleration — 103 formulas (87 usable / 16 compute-only)
 

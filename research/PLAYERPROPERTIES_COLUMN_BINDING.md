@@ -214,3 +214,26 @@ Conclusion: recovering the disk permutation statically would require tracing the
 loop (read 77 u16 → setter calls) rather than reading a table — it is not a clean one-shot extract.
 The archetype value-matching remains the practical route and is the source of the 34/77 bindings.
 Full runtime accessor layout saved alongside (acc_layout_full).
+
+## Fourth pass — coarse/fine split corrected; positional block bound (42/77)
+
+Distinct-count classification revealed the on-disk block structure:
+- cols 0..17 = COARSE (~11–19 distinct levels) = **positional familiarities + footedness**
+- cols 18..62 = FINE (52–94 distinct) = graded 0..100 **skills**
+- cols 63..76 = the <=20 instruction sliders (VERIFIED)
+
+This corrects two earlier mis-reads that conflated a coarse positional with a fine skill:
+- **col 2 = CentralDefender** (positional; CB group 100, others ~1) — was wrongly "Marking".
+- **col 9 = WingBack** (positional; FB 87 + Wing 80) — was wrongly "Crossing".
+- The real fine **Marking** skill is **col 55** (Nesta/Maldini/Cannavaro/Terry top, attackers ~20) —
+  previously mislabelled CentralDefender.
+
+Positional familiarities bound by position-group averages (CB/FB/Wing/Strik/DM/AM/CM archetypes):
+col 0 AttackingMidfielder · col 2 CentralDefender · col 4 DefensiveMidfielder · col 5 Forward ·
+col 9 WingBack · col 10 Midfielder · col 14 Striker · col 15 Sweeper · col 16 FullBack · col 17 Winger.
+
+Bound total: 42/77 (15 VERIFIED: sliders + col7 ThrowIns; 27 INFERRED in
+playerdb.PlayerPropertyInferredColumn). Remaining coarse cols (c1/c3/c7/c8/c11/c12) include foot
+ratings (RightFoot is near-universally high) + a few positions (GoalKeeper/Roaming/LeftSide/
+RightSide/Central); remaining fine cols are the correlated mental cluster + Crossing/FirstTouch/
+Stamina/Concentration.

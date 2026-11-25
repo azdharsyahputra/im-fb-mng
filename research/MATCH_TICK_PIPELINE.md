@@ -307,6 +307,27 @@ the cracked binary. So the movement writer is, for now, the documented static-an
 that CONSUMES the positions (the entire match-logic module) is mapped, and the positions' nature
 (normalized 0..1, 11 active starters, quantized ×100) is VERIFIED.
 
+## 4f. vtable archaeology attempt — virtual dispatch CONFIRMED
+
+Pursued the vtable directly. `procedure_callers(FUN_00498ac0)` returns **no resolved callers** (2
+unresolved), i.e. even the top match-tick/phase handler is invoked **indirectly**. `xrefs(0x498ac0)`
+points at `0x498d8f` and `0x498e39`; both `resolve_containing_procedure` to **not_in_procedure**, and a
+raw byte read (read_bytes @0x498d00) decodes them as `e8 2c fd ff ff` / `e8 82 fc ff ff` = **`call
+FUN_00498ac0`** sitting inside two tiny functions near 0x498d80 / 0x498e00 that Ghidra never registered
+(a disassembly gap). Those are vtable thunks of the match-state object.
+
+This upgrades the mover finding from inference to **confirmation**: the CM2008 match engine is a
+**vtable-driven virtual state machine** — handlers (and the per-player body mover) are reached through
+indirect calls that the static resolved call graph does not connect, and some of the dispatch thunks are
+not even registered as functions. The movement WRITER therefore cannot be reached by call-graph walking
+by construction. Recovering it would require manually reconstructing the body object's vtable from its
+constructor (itself reached only through the equally virtual match-setup path) or a fragile x87/SSE
+float-store byte-signature search for the `[body+0x08]`/`[body+0x10]` write — both high-cost,
+low-certainty, and neither adds a VERIFIED gameplay constant beyond what is already recovered. Runtime
+dispatch resolution is excluded (no exe execution). This is the honest terminus of the static integrator
+hunt; the consumer side, the position semantics, and the balance-tier atom are the solid, shippable
+results.
+
 ## 5. Codeable atom
 
 The balance-tier classifier (§3d) is fully constant-verified and can be ported 1:1 as a resolver atom

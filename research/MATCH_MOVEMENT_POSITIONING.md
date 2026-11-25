@@ -1,3 +1,8 @@
+> ⚠️ RETRACTED IN PART by MATCH_MOVEMENT_PHYSICS.md: the "no per-second movement sim / view-only"
+> conclusion is WRONG. CM2008 HAS a physics movement model for 22 players (speeds/acceleration/turning/
+> diving/sliding), configured by the MatchResolver group in the decrypted formula.xml. Keep this doc for
+> the stat-atom / FieldPosition findings, but read the physics doc for the movement truth.
+
 # Movement / positioning — is CM2008 a per-second 22-player positional sim? (NO — VERIFIED)
 
 Question: does the match engine simulate 22 players moving each second (positions driving outcomes),

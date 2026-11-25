@@ -66,9 +66,12 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 ## Match engine leftovers
 - a029c0: the per-bit meaning of the event-condition bitfield (+0x40/+0x44) — INFERRED (event-type
   definition).
-- Movement/view: the sprite interpolation (whether the view stores continuous x/y and how it tweens) —
-  NOT traced (cosmetic); the exact pump ACTIVATION cadence — not pinned (unnecessary: engine anchors
-  to real distributions).
+- Movement/positions: RESOLVED (MATCH_TICK_PIPELINE.md) that CM2008 keeps CONTINUOUS per-player float
+  positions (body+0x08 X / +0x10 Y, quantized ×100), and the per-player→per-side→balance-tier resolution
+  chain (FUN_004b8ef0 / FUN_004eff60 / FUN_004efef0 / FUN_004f1570) with all its constants (pivot 55,
+  slope 0.5, tiers 0.30/0.65/1.30/3.00) is VERIFIED. STILL UNKNOWN: the position INTEGRATION function that
+  WRITES body+0x08/+0x10 from velocity/heading each tick (consumes the 0x9f accel/speed-tier config); the
+  FUN_004b0aa0 local-duel kernel; the tier→event mapping; the phase scheduler above FUN_004f1570.
 - Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
   looks like competition fixture formatting, unconfirmed).
 

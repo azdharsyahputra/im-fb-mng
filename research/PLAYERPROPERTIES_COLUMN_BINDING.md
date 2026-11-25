@@ -532,3 +532,33 @@ startup). Reading it statically needs a full trace of that init / the deserializ
 position writes (deep, not a one-shot extract — matches the 8th-pass loader-disasm negative result). A
 **live debugger on Windows** would dump it directly; in clean-room static, **valid start-dated captures**
 remain the practical bridge (already pinning ~62/77 columns).
+
+## Fourteenth pass — AUTHORITATIVE 77/77 map recovered from the loader (supersedes all capture work)
+
+The disk→name map IS statically recoverable after all — from the loader's ASSEMBLY (Ghidra's pseudocode
+of it is misleading). **FUN_0072cb40 @0x72cb40** reads the 158-byte record (u32 id + 77 u16) via
+GCRawTableReadEntry (FUN_00665610 → flat 0x9e-byte read) and, in its body 0x72cdf9–0x72d79d, unpacks each
+column positionally: **disk col i = word [ESP+0x88+2*i]**, bit-packed into runtime dword k shift s with
+`dst ^= ((col<<s) ^ dst) & (0x7f<<s)`; (dword,shift)→name via the GCPropertyPlayer dumper @0x609ff0. The
+recovered map **validates 35/35 against Bojan** (id 143410, raw ≈ display×5). This is the game's own
+binding — authoritative, no runtime, no captures needed. Ported verbatim to playerdb/fullmap.go (all V).
+
+FULL MAP (disk col → name): 0 AttackingMidfielder, 1 Central, 2 CentralDefender, **3 = youth-regen CONTROL
+field (not an attribute)**, 4 DefensiveMidfielder, 5 Forward, 6 FullBack, **7 GoalKeeper**, 8 LeftFoot,
+9 LeftSide, 10 Midfielder, 11 RightFoot, 12 RightSide, 13 Roaming, 14 Striker, 15 Sweeper, 16 WingBack,
+17 Winger, 18 Anticipation, 19 Concentration, 20 Creativity, 21 DecisionMaking, 22 Positioning,
+23 Movement, 24 TeamWork, 25 Vision, 26 WorkRate, 27 Acceleration, 28 Agility, 29 Balance, 30 Fitness,
+31 InjuryRecoveryRate, 32 InjuryResistance, 33 Jumping, 34 Pace, 35 Stamina, 36 Strength, 37 Adaptability,
+38 Aggression, 39 Ambition, 40 Bravery, 41 Confidence, 42 Consistency, 43 Determination, 44 Flair,
+45 Leadership, 46 Loyalty, 47 Pressure, 48 Professionalism, 49 Sportsmanship, 50 Versatility, 51 Crossing,
+52 Dribbling, 53 FirstTouch, 54 Heading, 55 Marking, 56 Passing, 57 Finishing, 58 Tackling, 59 ThrowIns,
+60 LongShots, 61 DeadBalls, 62 PenaltyTaking, 63..76 the 14 instruction sliders (4-bit nibbles in dwords
+21..23). There is NO PreferredFoot column (preferred foot = argmax(LeftFoot col8, RightFoot col11)).
+
+Corrections vs the prior capture map (loader is authoritative; captures swapped value-indistinguishable
+pairs): **col7 = GoalKeeper, not ThrowIns** (ThrowIns=col59; GK familiarity ≈1 in an outfield file =
+same "rare" shape that fooled the signature guess); **col3 = control field, not Roaming** (Roaming=col13);
+col23=Movement (Finishing=col57); col29=Balance (Determination=col43); col6=FullBack (LeftSide=col9); and
+the whole technical/mental cluster (cols 19-25, 31-32, 37, 39, 42, 46-49, 53, 56, 60) which captures could
+not separate. The capture pass was right only on distinctive-spread attrs (Positioning, Jumping, Strength,
+Aggression, Leadership, Versatility, Heading, DeadBalls). **All 77 are now VERIFIED by the loader + Bojan.**

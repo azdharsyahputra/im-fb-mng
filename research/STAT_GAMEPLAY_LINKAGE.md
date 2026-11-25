@@ -194,3 +194,26 @@ different property. VERIFIED.
 | a029c0 contestant index getter | 0x005ce3e0 | best-of-6 attr indexing (sym., &0x7f) |
 | person table base | 0xc77778 | 0x14c stride | 
 | contestant table base | 0xc779ac | 0x2c stride |
+
+## B2 RESOLVED — person+0x3c IS the stored CurrentAbility column; CA→attributes, not attributes→CA
+
+The one untraced upstream piece (DB → contest rating) is resolved. person+0x3c bits12-18 is NOT a
+mean/aggregate of the 77 attributes — it is the **stored 7-bit CurrentAbility DB column, copied verbatim**
+(domain 0..100, 127=unknown→clamped to 1). Proofs:
+- **FUN_005f0540 @0x5f0540** registers the person projection column list verbatim: "Nationality",
+  "HomeReputation","WorldReputation",**"CurrentAbility","PotentialAbility"** — CA/PA are stored DB columns.
+- **FUN_00667b80 @0x667b80** (per-person pass in PostImport FUN_006687c0): reads `CA=(person+0x3c>>0xc)&0x7f`,
+  clamps to 100, then for each UNSET attribute field DERIVES it as **`attr = min + (max−min)·CA/100`**
+  (applied to person+8,+0x14,+0x28,+0x30,+0x48,+0x4c,+0x50,+0xd4). So the data flow is **CA → attributes**,
+  refuting "CA = mean(attributes)". (This is also the non-detailed-player attribute GENERATION formula —
+  the mechanism behind the ~83% sentinel skill blocks: a non-detailed player's shown attributes are
+  generated from CA via min+(max−min)·CA/100.)
+- The only computed transforms ever applied to +0x3c are two runtime post-load adjusters (setter
+  FUN_00581ce0 @0x581ce0 has exactly two callers): (1) FUN_0071ee40 @0x71eeb2 hard-codes CA=10 for ~46
+  synthetic/placeholder persons; (2) FUN_007471f0/FUN_00747050 @0x7472dd/0x747050 raises a squad member's
+  CA to the peer-group lower quartile: `CA = max(own, sorted_peer_CA[floor(0.25·n)])`.
+- The verbatim column→+0x3c load itself is a reflective/indirect DB-field write (computed destination
+  offset) that the resolved call graph doesn't capture (46 omitted person-table refs); last concrete
+  masked instructions are the FUN_00581ce0 merge and the FUN_0058c970 @0x58c9ee 127→1 clamp.
+Port note: the match contest rating per player = the stored CurrentAbility (0..100), NOT derived from the
+77 attributes; and non-detailed players' attributes = `min+(max−min)·CA/100` per attribute's [min,max].

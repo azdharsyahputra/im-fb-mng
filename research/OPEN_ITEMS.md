@@ -15,13 +15,14 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 - RESOLVED (most columns): ~55/77 disk columns bound by signature/archetype/capture + the 8th-pass
   correlation pass (Central/LeftSide/RightSide pinned by footedness; col61=DeadBalls, outfield-only
   file has 0 keeper overlap). Ported to super-manager-engine/playerdb/fullmap.go with per-column conf.
-- BLOCKED / UNKNOWN (9th pass, exhaustive): the disk-column PERMUTATION is not statically recoverable —
-  PlayerProperties.inc ships nowhere (not in exe [the path is only an assert label], not in
-  extracted_game, not in the installer cabs = 2511 files, 0 .inc), the exe holds only declaration-order
-  descriptors, and the Windows PE can't be run in this clean-room/macOS context. Irreducible leftovers:
-  col60 identity, GoalKeeper familiarity (schema 48; col13 low-mean fits it OR PreferredFoot — ambiguous),
-  and the hidden-mental intra-cluster order. These need a per-attribute UI capture or a live Windows
-  deserialiser trace — not more disassembly.
+- RESOLVED 77/77 (14th pass — AUTHORITATIVE): the disk→name map IS statically recoverable from the
+  loader FUN_0072cb40's ASSEMBLY (pseudocode misled earlier passes). disk col i = word [ESP+0x88+2*i],
+  bit-packed into runtime dword k shift s (`dst ^= ((col<<s)^dst)&(0x7f<<s)`), named via the dumper
+  @0x609ff0; validates 35/35 on Bojan. Full map ported to playerdb/fullmap.go (all V). Key fixes over the
+  capture map: col7=GoalKeeper (not ThrowIns; ThrowIns=col59), col3=youth-regen CONTROL field (not an
+  attribute; Roaming=col13), col23=Movement/col57=Finishing, col29=Balance/col43=Determination,
+  col6=FullBack/col9=LeftSide, and the full technical/mental cluster. No PreferredFoot column (derived).
+  The ".inc not shipped / needs runtime" conclusion of the 9th pass is RETRACTED.
 
 ## Stat → gameplay linkage (STAT_GAMEPLAY_LINKAGE.md)
 - INFERRED: person+0x3c is a single derived "current ability" rating, one of a 7-bit rating family

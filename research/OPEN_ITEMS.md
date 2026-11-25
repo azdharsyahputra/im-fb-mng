@@ -84,7 +84,12 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   WageBudget are NOT in Club.dat (idx43/44 beyond the 42-field prefix — runtime); @38/@62/@74/@110 are
   GroundCost/Merchandising/OutstandingLoan/SponsorAmount, not budgets. NAME TEXT RESOLVED: real names ship
   in the Text*/*.str STR1 tables; ClubStringID@4 -> Club.str, player NameIDs -> Person.str (ported:
-  super-manager-engine/names). STILL OPEN: ContractDetail tail + loan-flag bit encodings; Board.dat packing.
+  super-manager-engine/names). RESOLVED (DB_BYTE_OFFSETS_RESOLVED.md): ContractDetail tail (link0..3/clauseType/pct% u16@44/flag@50) +
+  ContractLoan.dat (recall/flagB/flagC u8, fee f64@7=-1 none, wageSharePct u16@15) layouts VERIFIED (some
+  flag-bit MEANINGS still INFERRED); Board.dat 32B packing VERIFIED (4 u8 personality + 11 u16 expectation
+  + flag). CLUB BUDGETS are RUNTIME-DERIVED by GCFinanceModule (TransferBudget=f(balance,income)), NOT a
+  file slot — @110 is the transfer seed, @14 Balance. DISCIPLINE ban thresholds remain UNKNOWN (inline
+  code literals; ClearDisciplineCards/DisciplineGroupID keys confirmed; need a dynamic probe).
 
 ## Misc features (MISC_FEATURES.md)
 - INFERRED: on-disk column→field bindings for several tables (byte-range + declaration order, not
@@ -102,17 +107,21 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   region-scoped (Data/IDConversion/DisciplineID.csv). The "N yellows = M-match ban" thresholds are inline
   CODE CONSTANTS in the round-end processor (no named field/string/fn) — still need a targeted deep trace
   of the GCRoundPosition discipline path to pin the exact integers.
-- UNKNOWN: the exact injury roll / award ranking criteria (injury/ageing/reputation FORMULAS are in
-  formula.xml — PhysioInjuries/PlayerAgeingFactors/PlayerReputation); Award.dat @4/@8 columns; the
-  PersonInjury @4 anomaly (max observed type id 47 > the 42 Injury.dat rows).
+- RESOLVED (DB_BYTE_OFFSETS_RESOLVED.md): Award.dat = WinnerID u32@0, targetType u8@4, scope u8@8,
+  AwardDefID u32@12 (6 defs), date u32@16 (@4/@8 are denormalised AwardDef attrs, not IsDeleted/ClubID).
+  PersonInjury @4 "anomaly" DISSOLVED: Injury.dat ids are sparse {1..49, 42 rows}; @4 is a plain
+  TypeInjuryID FK (0 orphans). Injury/ageing/reputation FORMULAS are in formula.xml.
 
 ## Season / competition (SEASON_COMPETITION_SIM.md)
 - INFERRED: CompetitionTeam @4 meaning; Group/Fixture packed sub-bytes; the double-round-robin
   leg/venue swap (shape known, not line-traced); the RoundType numeric enum order; the tiebreak
   comparator ordering constant.
-- UNKNOWN: the exact VA of the GCRoundPosition table accumulator + placing sort (no profiler name);
-  the MatchFormatRuleID / GamePointsID numeric→meaning maps (external Data/IDConversion CSVs); the
-  runtime GCRoundPosition byte offsets (names/order known, offsets not resolved).
+- RESOLVED (DB_BYTE_OFFSETS_RESOLVED.md): GCRoundPosition runtime struct = 44B (dumper @0x5af940) —
+  home/away W/D/L/F/A/cards u8, Points/AvgPoints/PointsOffset f32@0x20/24/28, Position=(dword@0x18>>20)
+  &0x3ff; overall = home+away (not stored). RoundType enum VERIFIED (name array @0xb689d4): 0 PlayoffGroup
+  ..7 Group. Tiebreak = DATA-DRIVEN: ~42 GCRoundOrder* comparators ordered by RoundOrder.dat (round@0,
+  RoundOrderTypeID@4, RuleOrder@8; league seq 4,0,2 = Points,GoalDiff,For). STILL: the accumulator/sort
+  fn VA (no profiler name); RoundOrderTypeID→class map (external IDConversion CSV).
 
 ## Match engine leftovers
 - a029c0 event-condition bitfield (+0x40/+0x44): RESOLVED (MATCH_RESOLVER_INTERNALS.md §4) — the event's

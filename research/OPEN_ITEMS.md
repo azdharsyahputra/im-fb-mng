@@ -28,10 +28,12 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   Row width 1..13) + PositionTeamTactics.dat (275=25×11: {PositionTacticsID, TeamTacticsID(1..25),
   FieldPositionID FK}). Each TeamTacticsID resolves to a real 11-man shape (8→442, 11→433, 14→4231, 4→532,
   6→4141) — COORDINATES VERIFIED, ported to formation/grid.go (SlotsByID, keyed by the numeric
-  TeamTacticsID). STILL UNKNOWN: the TeamTacticsID→formation-NAME binding — the key order ≠ the .tac
-  name-array order and coarse shapes collide; TeamTactic.dat is squad-tactic presets (not formations) and
-  zlib.crc32 does not reproduce its namehashes, so the name↔geometry link needs another table or the .tac
-  NameID field map (unreversed). Also still UNKNOWN: tactical-sub formula; zone-contestant selection.
+  TeamTacticsID). NAMES RESOLVED: the .tac NameID @0x525 == TeamTactic.dat namehash (24/25 exact, id24=541
+  by elimination) → TeamTactic.id→formation NAME VERIFIED (formation/names.go); TeamTactic.dat IS the
+  formation name index (earlier "squad-tactic presets" was wrong; zlib.crc32 failed only because it hashed
+  name strings, not how the stored columns relate). PARTIAL: coordinate key (TeamTacticsID)→name is a
+  different ordering — distinctive shapes bind VERIFIED by line-structure, but 442_*/532_* VARIANTS share a
+  base shape and can't be split by geometry. Also still UNKNOWN: tactical-sub formula; zone-contestant selection.
 
 ## Commentary (MATCH_COMMENTARY.md)
 - INFERRED: the token vocabulary ([%…] / %team / %surname) lives in the external .str; the single

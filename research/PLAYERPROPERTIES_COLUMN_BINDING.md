@@ -188,3 +188,29 @@ Bound total: 34/77 — 14 sliders + col 7 (VERIFIED) + 19 archetype-INFERRED
 (Composure/DecisionMaking/Concentration/Creativity/Flair/WorkRate/Determination), a few physicals
 (Stamina/Balance-variants), FirstTouch/Technique, and the rest of the positional-familiarity block —
 each needs a sharper single-trait archetype or the loader disasm for ground truth.
+
+## Loader disasm — machinery found, but NO static disk-order table (negative result)
+
+Chased the ground-truth column order in the crack. Found the full attribute machinery:
+- The 77-attribute schema is built at ~0xa7d1c0: for each attribute it allocates a 0xC-byte
+  descriptor {vtable, nameString, accessorFnPtr} and stores it into a declaration-order global
+  array at 0xc20c20[] (idx0=Heading … idx76=…).
+- Each attribute's **accessor** (0x602d50=Heading, 0x605410=Tackling, …) reads its field from the
+  runtime object. Disassembling all 77: the runtime object stores attributes in **declaration order**,
+  one dword each (attr N at dword N×4, value in the high bits, `shr …,0x1c`). Bit-packed runtime,
+  byte-aligned on disk.
+
+The blocker: **the on-disk `.dat` column order is a permutation of declaration order with no static
+table.** Evidence:
+- Every accessor-pointer array in the image (0xc1fc48, 0xc1fc94, 0xc20288, and a second schema at
+  0xa7eac0→0xc20b78) is in **declaration order** — none is disk order.
+- The runtime bit-position does not map to the disk column (Heading bit28→col33, Marking bit188→col2,
+  Tackling bit60→col22, Pace bit484→col34 — scrambled).
+- The `.dat` header is 8 bytes (magic+count), no per-file column manifest.
+- A second schema (0xa7eac0) binds the SAME accessor addresses to DIFFERENT names, so accessors are
+  generic field-position readers, not attribute identities.
+
+Conclusion: recovering the disk permutation statically would require tracing the live deserialisation
+loop (read 77 u16 → setter calls) rather than reading a table — it is not a clean one-shot extract.
+The archetype value-matching remains the practical route and is the source of the 34/77 bindings.
+Full runtime accessor layout saved alongside (acc_layout_full).

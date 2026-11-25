@@ -117,3 +117,32 @@ Within-category pairs can't be split by these 8 players: Marking vs Tackling (bo
 Pace vs Acceleration (cols 20/44), Finishing vs LongShots, Heading vs Jumping. A pure full-back and
 a target-man would separate crossing/pace and finishing/heading respectively. The full per-column
 role table is in the session work (contrast_table).
+
+## Refinement with single-attribute archetypes (corrects earlier inferences)
+
+Added extreme-profile players (van Nistelrooy poacher, Lampard/Pirlo long-shooters, Crouch aerial
+target, Cannavaro man-marker, Walcott pace, Drogba) to split within-category pairs. This sharpened
+some bindings and REFUTED one earlier guess — recorded honestly:
+
+Strengthened (strong archetype evidence):
+- **col 2 = Marking** — Cannavaro 100, Vidić 100 (textbook markers), all others ≤20.
+- **col 33 = Heading** — Crouch 93, Drogba 89, Ronaldo 93, CBs ~90; Pirlo 40, Scholes 48.
+- **col 56 = LongShots** — Pirlo 96, Lampard 91, Scholes 89; van Nistelrooy 64, defenders low.
+
+Corrected:
+- **col 5 is NOT Finishing** (earlier INFERRED). van Nistelrooy (elite finisher) is only 60 while
+  Walcott is 100 — inconsistent with Finishing. col 5 reads as a coarse forward/attacking field;
+  specific name unresolved. Finishing is more likely **col 52** (Ronaldo 98, Rooney 90,
+  van Nistelrooy 84; Vidić 30, Cannavaro 48) — tentative.
+- **Speed group {col 20, col 34, col 44} is unresolved** between Pace/Acceleration/Agility: Pirlo
+  (slow in reality) scores 87 at col 44, so col 44 = Pace is withdrawn. col 34 has Walcott 95 (max),
+  a better speed candidate, but the three correlate too tightly to separate with these anchors.
+
+Still holding from the first pass: col 9 = Crossing, col 12 = Dribbling, col 38 = Strength,
+col 54 = CentralDefender (positional), col 13 = Vision/Creativity. col 61 = PenaltyTaking gains
+support (Lampard/Pirlo high, sparse).
+
+Net confirmed-ish column names so far (VERIFIED signature OR strong archetype): 63..76 sliders
+(VERIFIED), col 2 Marking, col 33 Heading, col 56 LongShots, col 9 Crossing, col 12 Dribbling,
+col 38 Strength, col 54 CentralDefender, col 13 Vision. The remaining ~50 columns are category-known
+but not uniquely named — the method keeps converging as more distinctive archetypes are added.

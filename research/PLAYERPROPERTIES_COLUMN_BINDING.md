@@ -348,3 +348,53 @@ Net effect on `super-manager-engine/playerdb/fullmap.go`: +3 H (Central/LeftSide
 col61 L→DeadBalls(M), col60 M→X(unresolved), GoalKeeper dropped (unbound). Name vocabulary now cited
 to BOTH the schema-registration fn and the dumper. Confidence tier "X" (proven-wrong, not re-pinned)
 added.
+
+## Ninth pass — live/static deserialisation trace: EXHAUSTIVE NEGATIVE RESULT
+
+Goal: recover the full disk-column permutation by tracing the PlayerProperties deserialiser (read 77
+u16 -> setter calls), which would make all 77 columns VERIFIED at once. Result: the permutation is
+**not statically recoverable**, proven on every remaining front.
+
+### The schema (.inc) ships NOWHERE
+The disk order is defined by `data/pc/data/structure/PlayerProperties.inc`. Confirmed absent from all
+three possible sources:
+- **exe**: the `.inc` path string @0xb88958 is referenced only by FUN_00665610, which passes it to the
+  assert/error reporter FUN_0042dc90 together with `"GCRawTableReadEntry"` + line `0x16` — i.e. it is a
+  **source-location label for asserts, not a runtime file open**. The schema itself is compiled in.
+- **extracted game**: no `*.inc`, no `Structure/` dir anywhere under `extracted_game/` (and none in
+  DataXML/DataMisc/_Support_Build_Generated_Support_Files).
+- **installer**: `unshield l Setup/data1.cab` lists **2511 files, zero `.inc`** (only
+  `DatabaseFiles\PlayerProperties.dat`). The InstallShield cabs do not carry the schema sources.
+
+### The exe has declaration order, not disk order (re-confirmed)
+- Schema-registration (~0xa7d1c0) builds 0xC-byte descriptors in **declaration order** (Heading=0 …).
+  Disk order is a different permutation — e.g. Heading is declaration-field 0 but archetype-verified at
+  **disk col 33**; disk col 0 is AttackingMidfielder. So disk != declaration order (settled).
+- Every accessor-pointer array in the image (0xc1fc48/0xc1fc94/0xc20288/0xc20b78) is in declaration
+  order; none is disk order (prior 8th-"Loader disasm" pass). The `.dat` header is 8 bytes
+  (magic+count) with no per-column manifest. The generic `GCRawTable` reader maps columns by the
+  (runtime-built-from-.inc) descriptor list, so with the `.inc` compiled-in-but-not-emitted-as-a-table
+  there is no static array to read the permutation from.
+
+### Runtime trace not available
+The target is a Windows PE; this is a clean-room **static** reconstruction on macOS — the binary is not
+executed (and REA `open_binary` runs on the committed decompilation, not a live process). A Frida/gdb
+deserialiser trace would resolve it on Windows but is out of scope here.
+
+### External-fact lever also blocked
+Correlating hidden mentals (Loyalty/Ambition/Professionalism rise or fall with age) against player age
+needs a confirmed DOB/age field. Player.dat field names are UNKNOWN (DATABASE_SCHEMA_MAP: only id@0 and
+an f64@16 are named) and Person DOB is not pinned, so the join would be speculative — not pursued.
+
+### Honest leftovers (need a per-attribute capture OR a Windows runtime trace)
+- **col60** identity (DeadBalls moved to col61; col60 is a normal attacking-technique bell, name open).
+- **GoalKeeper familiarity** (schema field 48): UNBOUND. In the coarse positional block (cols 0..17)
+  only col3 and col13 remain LOW, and **col13's low mean (6) fits a "can deputise in goal" 0..100
+  rating as well as it fits PreferredFoot (weak-foot)** — genuinely ambiguous, left unchanged.
+- The hidden-mental intra-cluster order (TeamWork/Loyalty/Ambition/Pressure/Professionalism/
+  Sportsmanship/Adaptability/Confidence/Versatility): no distinctive on-pitch or external correlate.
+
+**Bottom line:** the attribute-value + correlation method has reached its ceiling. The only ways to
+close the remaining ~15 columns are (a) a few single-attribute captures off the game UI (the owner's
+route — fastest), or (b) a live-process deserialiser trace on Windows. No static artifact in the exe or
+shipped data contains the disk permutation.

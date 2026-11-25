@@ -9,6 +9,20 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 - **UNKNOWN** = not recoverable from the static image (lives in runtime state / external data) or simply
   not yet traced.
 
+## PlayerProperties 77-column disk binding (PLAYERPROPERTIES_COLUMN_BINDING.md)
+- RESOLVED (names): all 77 field names are the game's own schema vocabulary (schema-reg fn ~0xa7d1c0 +
+  GCPropertyPlayer dumper @0x609ff0). VERIFIED.
+- RESOLVED (most columns): ~55/77 disk columns bound by signature/archetype/capture + the 8th-pass
+  correlation pass (Central/LeftSide/RightSide pinned by footedness; col61=DeadBalls, outfield-only
+  file has 0 keeper overlap). Ported to super-manager-engine/playerdb/fullmap.go with per-column conf.
+- BLOCKED / UNKNOWN (9th pass, exhaustive): the disk-column PERMUTATION is not statically recoverable —
+  PlayerProperties.inc ships nowhere (not in exe [the path is only an assert label], not in
+  extracted_game, not in the installer cabs = 2511 files, 0 .inc), the exe holds only declaration-order
+  descriptors, and the Windows PE can't be run in this clean-room/macOS context. Irreducible leftovers:
+  col60 identity, GoalKeeper familiarity (schema 48; col13 low-mean fits it OR PreferredFoot — ambiguous),
+  and the hidden-mental intra-cluster order. These need a per-attribute UI capture or a live Windows
+  deserialiser trace — not more disassembly.
+
 ## Stat → gameplay linkage (STAT_GAMEPLAY_LINKAGE.md)
 - INFERRED: person+0x3c is a single derived "current ability" rating, one of a 7-bit rating family
   (+0x3c bits12-18, +0xb0 bits18-24, +0xb4 bits8-14).

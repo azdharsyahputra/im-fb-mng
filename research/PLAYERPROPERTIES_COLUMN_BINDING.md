@@ -259,3 +259,20 @@ Remaining ~26 columns are the genuinely-correlated cluster that archetypes canno
   (GoalKeeper familiarity, Roaming, LeftSide, RightSide, Central, PreferredFoot).
 These would need either a single-trait capture per attribute or the live-deserialisation trace; the
 main gameplay-relevant attributes (skills, physical, positions, foot, set-pieces) are all bound.
+
+## Sixth pass — creative cluster; col44 Flair bound, rest resists (52/77)
+
+Added Ronaldinho (flair), Xavi/Fàbregas (vision/creativity), Puyol, Lahm, Lennon. One clean new
+binding: **col44 = Flair** (Ronaldinho 100 maxes it, Messi 95, centre-backs 15-19). The remaining
+creative/technical cols could NOT be uniquely split — e.g. col53 (Pirlo/Robben/Ronaldinho/Riquelme)
+and col62 (Ronaldinho/Totti/Riquelme + van Nistelrooy) mix pure creators with poachers, so
+Creativity/Vision/FirstTouch/Technique overlap; col58 (Nesta/Maldini/Cannavaro/Puyol) is clearly a
+defensive-focus attribute (Concentration candidate) but not uniquely nameable. MED candidates noted,
+not committed.
+
+**Reliable ceiling via archetypes: 52/77.** The ~25 unbound are the correlated creative +
+personality attributes (Creativity, Vision, FirstTouch, Technique, Crossing, Concentration,
+Consistency, Professionalism, Pressure, Loyalty, Sportsmanship, Ambition, Adaptability, Versatility,
+Confidence, Leadership, TeamWork, Fitness, InjuryResistance/Recovery) and rare slots (GoalKeeper
+familiarity, Roaming, LeftSide, RightSide, Central, PreferredFoot). Splitting these reliably needs a
+single-trait capture per attribute or the live-deserialisation trace — not archetype value-matching.

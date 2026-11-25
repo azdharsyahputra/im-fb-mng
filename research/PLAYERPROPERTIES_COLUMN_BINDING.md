@@ -168,3 +168,23 @@ col 13 Vision/Creativity (Totti/Scholes) · col 26 Aggression-ish (Gattuso) · c
 Remaining ~50 columns: category-known but still correlated (e.g. Anticipation/OffTheBall/Composure
 cluster, the positional-familiarity block, hidden CA/PA). Ground-truth for all 77 at once stays the
 PlayerProperties loader disasm; the archetype method keeps converging but slows on correlated traits.
+
+## Third archetype pass — 34/77 bound
+
+Added deep passers (Xabi Alonso), playmakers (Riquelme, Seedorf), engines (Nedved, Kuyt, Gerrard),
+pure defenders (Nesta, Zambrotta), target men (Koller), a poacher (Villa). +7 HIGH bindings:
+
+- col 18 Anticipation (Inzaghi/van Nistelrooy + defenders; Riquelme/Robben low)
+- col 45 Positioning (Maldini/Cannavaro/Terry/Gerrard; pure forwards low)
+- col 46 Passing (Scholes/Giggs/Gerrard/Totti; Crouch/Walcott low)
+- col 54 Jumping (tall: Koller/van Nistelrooy/Vidić/Ferdinand; Walcott/Robben low) — **corrects** the
+  earlier tentative col54=CentralDefender
+- col 55 CentralDefender familiarity (Cannavaro/Nesta/Maldini/Terry; attackers ~20)
+- col 60 DeadBalls (Scholes/Gerrard/Pirlo/Rooney set-piece takers; Inzaghi 24)
+- col 61 PenaltyTaking (Totti/Villa/Riquelme/Alonso; sparse ~1%)
+
+Bound total: 34/77 — 14 sliders + col 7 (VERIFIED) + 19 archetype-INFERRED
+(playerdb.PlayerPropertyInferredColumn). Remaining ~43 are the tightly-correlated mental cluster
+(Composure/DecisionMaking/Concentration/Creativity/Flair/WorkRate/Determination), a few physicals
+(Stamina/Balance-variants), FirstTouch/Technique, and the rest of the positional-familiarity block —
+each needs a sharper single-trait archetype or the loader disasm for ground truth.

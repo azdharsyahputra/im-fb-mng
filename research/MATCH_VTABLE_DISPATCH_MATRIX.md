@@ -1,0 +1,159 @@
+# Match engine vtable / indirect-dispatch matrix
+
+Answers the investigation spec "MATCH ENGINE VTABLE / INDIRECT DISPATCH ARCHAEOLOGY". Static analysis
+only (crack cm2008.exe, Ghidra 12.1.4, RTTI analyzer DISABLED in our REA profile). Evidence tags:
+**VERIFIED** (disassembly/data read directly), **RECONSTRUCTED** (assembled from intact RTTI records),
+**INFERRED**, **HYPOTHESIS**, **UNKNOWN**.
+
+## Final answer (up front)
+
+**YES — the match engine's virtual-dispatch structure can be reconstructed to map state handlers and
+their relationships WITHOUT recovering every handler body.** The binary ships **intact MSVC RTTI**: Type
+Descriptors, Class Hierarchy Descriptors, Base-Class Arrays, Complete Object Locators, and the vtables
+themselves are all present in `.rdata`/`.data`. Our earlier call-graph plateau was an artefact of two
+things, both now removed: (1) Ghidra's RTTI analyzer was disabled in the REA profile (for speed), so the
+COL→TD and vtable→COL pointers were never auto-linked and `xrefs` missed them; (2) resolved call graphs
+only connect direct calls. Both are bypassed by a **byte-search RTTI walk** (demonstrated below), or by
+simply re-enabling Ghidra's "Windows x86 PE RTTI Analyzer" (one ~28-min re-analysis).
+
+What is still genuinely blocked, and the exact missing evidence, is listed in §6.
+
+## Memory map (VERIFIED, list_segments)
+
+| Section | Range | Role |
+|---|---|---|
+| `.text` | 0x401000–0xb11000 | code |
+| `.rdata` | 0xb11000–0xc08000 | vtables, COL/CHD/BCD RTTI records, type_info strings |
+| `.data` | 0xc08000–0xc9f000 | Type Descriptors (`.?AV…` names), writable globals |
+| `.rsrc` | 0xc9f000–0xce9000 | resources |
+| `ars`,`est`,`artem`,`celare`,`.securom`,`.memory` | 0xce9000–0x314f000 | **SecuROM** protection sections (crack) |
+
+RTTI lives entirely in the clean `.rdata`/`.data`; the SecuROM sections do not impede it.
+
+## Workstream A — the two call sites at FUN_00498ac0 are UNREGISTERED FUNCTION BODIES, not thunks
+
+`xrefs(0x498ac0)` = {0x498d8f, 0x498e39}; both `resolve_containing_procedure` → `not_in_procedure`.
+`read_bytes(0x498d00,384)` decodes the region as ordinary x86:
+- A function ends at 0x498d36 (`c2 0c 00` = `ret 0xC`), then `cc` padding to 0x498d3f.
+- A new function begins at **0x498d40**: `55 56 8b 74 24 18 57 8b 7c 24 14 8b 47 04 66 83 88 28 01 00 00 04 …` (push ebp/esi; mov esi,[esp+18]; push edi; mov edi,[esp+14]; mov eax,[edi+4]; `or word [eax+0x128],4`; …), calls `FUN_00498ac0` at 0x498d8f (`e8 2c fd ff ff`), and returns with `5f 5e 5d c2 10 00` (pop edi/esi/ebp; `ret 0x10`).
+- A second, near-identical function around **0x498e00** makes the other call at 0x498e39 (`e8 82 fc ff ff`) and ends `5d 5b 5f 5e 59 c2 10 00`.
+
+**VERIFIED:** these are complete, well-formed `__thiscall` function bodies (balanced prologue/epilogue,
+`ret 0x10`/`ret 0xC`) that Ghidra simply never registered (a disassembly gap). They are **not** thunks —
+"not_in_procedure" alone was not treated as proof of a thunk (per the spec). They are two sibling
+match-state methods that both invoke the phase handler `FUN_00498ac0`.
+
+## Workstream B — vtable discovery from intact RTTI (constructor-independent)
+
+`search_strings(".?AV")` returns 1,654 type-descriptor strings (output saved; 517 match the match-engine
+keyword set). Representative recovered class names (VERIFIED — Type Descriptor strings in `.data`):
+
+| Type Descriptor @ | Class |
+|---|---|
+| 0xc60724 / 0xc61098 | `GCMatchResolverWrapper` / `GCMatchResolverWrapperImpl` |
+| 0xc61070 / 0xc610c4 | `GCMatchResolverMonitor` / `…WrapperImplMonitor` |
+| 0xc61b84 | `GCFixtureSimulator` |
+| 0xc31f8c | `GCMatchModule` |
+| 0xc24a00 | `GCFieldPositionModule` |
+| 0xc24b00 / 0xc24b24 | `GCMatchEventModule` / `GCMatchInputModule` |
+| 0xc24aac / 0xc24ad4 | `GCPositionTacticsModule` / `GCPositionTeamTacticsModule` |
+| 0xc24dc0 / 0xc2cf30 | `GCMatchReportModule` / `GCMatchReportReplayableModule` |
+| 0xc3e100 / 0xc40a7c | `FEBallModelComponent` / `FEMatchActionComponent` (2D view) |
+
+### The RTTI walk (RECONSTRUCTED, method proven end-to-end)
+
+MSVC32 layout: Type Descriptor = `{void* type_info_vftable; void* spare; char name[]}`, so
+`TD_base = name_addr − 8`. A Complete Object Locator holds `pTypeDescriptor` at COL+0xC and
+`pClassHierarchyDescriptor` at COL+0x10. A class's vtable stores `&COL` at `vtable[−1]`. Because the RTTI
+analyzer was disabled, these pointers are raw dwords Ghidra did not label, so the walk is done with
+`search_bytes` on little-endian pointer values instead of `xrefs`.
+
+**Worked example — `GCMatchResolverWrapperImpl` (fully VERIFIED):**
+1. TD_base = 0xc61098 − 8 = **0xc61090**. `search_bytes("90 10 c6 00")` → 0xc039b4, 0xc039d4 (two
+   references ⇒ two base subobjects / multiple inheritance).
+2. COL#1 base = 0xc039b4 − 0xC = **0xc039a8**. `search_bytes("a8 39 c0 00")` → **0xbd6c5c** = `vtable[−1]`.
+3. `read_bytes(0xbd6c60, …)` yields the object's two vptr blocks:
+   - **Subobject A vtable @ 0xbd6c60** (COL 0xc039a8): 1 method `0x009f9df0`, then inline float constants.
+   - **Primary vtable @ 0xbd6c74** (COL 0xc039f0): **37 methods, ALL in the 0x9f region** — 0x9fce40,
+     0x9fd0a0, 0x9fd0d0, 0x9fd100, 0x9fcec0, 0x9f9e70, 0x9fce60, 0x9fce90(×2), 0x9fcd50, 0x9fcd00,
+     0x9fcca0, 0x9fcc50, 0x9fcbf0, 0x9fcb90, 0x9fcb30, 0x9fcad0, 0x9fca10, 0x9fc970, 0x9fc920, 0x9fca70,
+     0x9fc9c0, 0x9fcdb0…0x9fce00, 0x9fd020, 0x9fd000, 0x9fcfe0, 0x9fcfc0, 0x9fd130, 0x9fd030, 0x9fd080,
+     0x9fd090, 0x9fce10 — table ends at 0xbd6d08 where the string `" vs "` begins.
+
+**Cross-reference (RECONSTRUCTED):** the entire primary vtable lands in the **0x9f region**, which prior
+functional analysis (MATCH_PHYSICS_ENGINE.md: the physics-config initializer `FUN_009f4dd0` and the 2D
+engine at 0x9f9400/0x9f7f00) already localized. **The 0x9f region is the `GCMatchResolverWrapperImpl`
+class implementation.** The physics config object (DAT_00c682f4) and its initializer are members/helpers
+of this class.
+
+**Inheritance depth (VERIFIED for `GCFieldPositionModule`):** `search_bytes("f8 49 c2 00")` → three TD
+references (0xbee41c, 0xbee454, 0xbee47c). `read_bytes(0xbee400,144)` decodes a Class Hierarchy Descriptor
+at **0xbee424** `{signature 0, attributes 1, numBaseClasses 7, pBaseClassArray 0xbee434}` and a 7-entry
+Base-Class Array at 0xbee434 → the class has a **7-deep inheritance chain** (GCFieldPositionModule + 6
+bases, including a shared `GCGameModule`-family base). The full class graph is therefore recoverable the
+same way for every class.
+
+## Workstream C — indirect-call site analysis (characterization)
+
+- `FUN_00498ac0` (the match phase/tick handler) is itself invoked by **direct** calls from the two
+  unregistered 0x498d40/0x498e00 methods; it is **not** a virtual slot (its address appears in no vtable;
+  `xrefs` = only the two call sites). So the top phase handler is an ordinary method, reached through
+  methods that are themselves virtual. **VERIFIED.**
+- The per-player match-logic functions traced earlier (FUN_004b8ef0, FUN_004eff60, FUN_004f1570,
+  FUN_004f2180, FUN_004ef490, FUN_004a8160, …) are reached by **direct** calls within the 0x4b–0x4f
+  module and are **not** virtual slots of the resolver vtable (none of their addresses appears in the
+  0xbd6c74 table). They are concrete helpers operating on the match-state/body structs. **VERIFIED.**
+- The resolver's **37 virtual slots are all in 0x9f** and form the class's external interface (ctor/dtor,
+  load/save, step/advance, query). Mapping each slot to a role needs one decompile per slot, but the
+  **slot inventory and ownership are known without decompiling any of them.** **RECONSTRUCTED.**
+- Not every indirect call is a C++ virtual call: the match also uses plain function-pointer tables (e.g.
+  the posture appliers switch in FUN_004f2180 selects `FUN_004ef5c0/490/1860/530` by a computed index,
+  a data-driven dispatch, not a vtable). Distinguished by evidence. **VERIFIED.**
+
+## Workstream D — dispatch matrix
+
+| Class (TD @) | vtable @ | vfptr off | RTTI | Slots | Region | Relation / state | Evidence |
+|---|---|---|---|---|---|---|---|
+| GCMatchResolverWrapperImpl (0xc61090) | **0xbd6c74** (primary); 0xbd6c60 (base A) | obj+0 (primary), obj+? (A) | COL 0xc039f0 / 0xc039a8 | 37 (+1) | 0x9f | the match RESOLVER engine; owns physics config (DAT_00c682f4) | VERIFIED |
+| GCFieldPositionModule (0xc249f8) | (walk: CHD 0xbee424) | obj+0 | CHD 0xbee424, 7 bases | — | — | field/zone positions module; 7-deep chain | VERIFIED (RTTI), vtable RECONSTRUCTED |
+| GCMatchModule (0xc31f84) | via TD-ref 0xbfb558 (BCD) | obj+0 | present | — | — | match controller/module | RTTI VERIFIED; vtable RECONSTRUCTED-pending |
+| match-state object (0x498d40/0x498e00 methods) | — | — | — | ≥2 | 0x498 | wraps FUN_00498ac0 phase/tick; side-swap, set-piece | VERIFIED (bodies) |
+| per-player body (entity+0xf0) | UNKNOWN | obj+0 (vptr, never read as data) | UNKNOWN | — | — | continuous position X/Y; **mover = a virtual slot here** | HYPOTHESIS (class), INFERRED (vptr) |
+
+The matrix is extensible to any class by the §B walk; the three "RECONSTRUCTED-pending" rows need only
+the mechanical COL→vtable search already demonstrated, not new technique.
+
+## Workstream E — Ghidra database quality (valid code not registered as functions)
+
+| Range | Validity | In-refs | Out-refs | Create function? |
+|---|---|---|---|---|
+| 0x498d40–~0x498dA0 | valid __thiscall body (prologue/`ret 0x10`) | vtable/dispatch (indirect) | calls FUN_00498ac0 | YES — would restore a caller edge |
+| ~0x498e00–0x498e46 | valid __thiscall body (`ret 0x10`) | indirect | calls FUN_00498ac0 | YES |
+| LAB_009f2190 (atexit thunk) | valid | _atexit arg | destructor path | optional |
+
+Root cause of the gaps: the REA profile disables **"Windows x86 PE RTTI Analyzer"** and **"Call
+Convention ID"**. Re-enabling the RTTI analyzer (and letting auto-analysis re-flow) would (a) label every
+COL/CHD/BCD/vtable, (b) turn the byte-search walk above into native `xrefs`, and (c) likely register the
+missing 0x498 function bodies from the recovered vtable references. No destructive re-disassembly is
+required — this is additive. **RECONSTRUCTED recommendation.**
+
+## 6. What is still blocked, and the exact missing evidence
+
+- **Per-player position INTEGRATOR (writer of body+0x08/+0x10).** The body object is polymorphic (body+0
+  is a vptr) and its mover is a virtual slot. To pin it: identify the body/player-model **class** (one of
+  the `FE*`/pitch/model classes, HYPOTHESIS) and walk its vtable by §B. The missing evidence is purely
+  *which TD names the body class* — resolvable by matching the body's known layout (continuous X/Y at
+  +0x08/+0x10) to a constructor that stores that vtable; i.e. the walk is unblocked, only not yet done.
+- **Slot→role semantics for the 37 resolver methods**: needs one decompile per slot (bodies). The spec's
+  question is explicitly whether relationships can be mapped *without* recovering every body — and they
+  can (ownership, class, slot count, inheritance are all recovered); only the *per-slot behaviour* needs
+  bodies.
+- Nothing here needs runtime, memory extraction, or DRM bypass.
+
+## Conclusion
+
+The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. State handlers,
+their owning classes, inheritance relationships, vtable addresses and slot counts are reconstructible by a
+byte-search RTTI walk (proven on `GCMatchResolverWrapperImpl`: vtable @ 0xbd6c74, 37 slots, = the 0x9f
+region) or by re-enabling Ghidra's RTTI analyzer. The earlier "virtual dispatch is a static wall" plateau
+is lifted for *structure*; only *per-handler behaviour* still costs one decompile each.

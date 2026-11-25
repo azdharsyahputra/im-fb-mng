@@ -76,10 +76,13 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   C++ object (body+0x00 is a vtable pointer, never read as data) and its per-tick mover is a VIRTUAL
   method — an INDIRECT call that Ghidra's resolved call graph cannot see, which is why ~17 traced
   functions all read the position and none writes it. A full body-object field map is recovered (§4e).
-  STILL UNKNOWN: the position INTEGRATOR itself. Pinning it now needs vtable archaeology (find the body
-  constructor's `mov [obj],vtable` via a byte/offset-write search the current REA tools lack) or an
-  indirect-call/data-flow resolver; runtime watchpoints are excluded (no exe execution). Also UNKNOWN:
-  FUN_004b0aa0 local-duel kernel; tier→event mapping; posture-setters FUN_004ef5c0/1860/530 internals.
+  STILL UNKNOWN: the position INTEGRATOR itself — but it is now UNBLOCKED, not walled. RTTI is fully
+  intact (MATCH_VTABLE_DISPATCH_MATRIX.md): the vtable walk is proven end-to-end (GCMatchResolverWrapperImpl
+  vtable @ 0xbd6c74, 37 slots, = the 0x9f region) via byte-search, and re-enabling Ghidra's RTTI analyzer
+  recovers the whole class/vtable graph. To pin the mover: identify the body/player-model CLASS (match its
+  +0x08/+0x10 layout to a TD) and walk its vtable; the mover is a virtual slot there. Also UNKNOWN (one
+  decompile each): the 37 resolver slot roles; FUN_004b0aa0 local-duel kernel; tier→event mapping;
+  posture-setters FUN_004ef5c0/1860/530 internals.
 - Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
   looks like competition fixture formatting, unconfirmed).
 

@@ -88,9 +88,13 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   Ghidra's RTTI analyzer (now staged in ~/.claude.json). PINNED (MATCH_VTABLE_DISPATCH_MATRIX.md §9): RunningToBall
   state vtable @0xb5bea8 → OnTick handler **0x4de470** (VERIFIED reads body=entity+0xf0, body+0x189, uses
   the 1.5 Reaction constant @0xbbae9c) → move-order **0x4a0ea0** (writes waypoint into body +0xc0/+0x100/
-  +0x1a0…). REMAINING: the single physics-step callee below 0x4a0ea0 that does the literal
-  body+0x08 += vel·dt (one decompile); the 37 resolver slot roles; FUN_004b0aa0 local-duel kernel;
-  tier→event mapping.
+  +0x1a0…). RESOLVED: the physics integrator is **FUN_004a0440** (found via
+  offset-fingerprint byte-search d9??0c010000 ∩ d9??10010000) — VERIFIED Newtonian kinematics
+  `s = v·t + ½·a·t²`, `newpos = pos + s·normalize(target−pos)`; kinematics object pos@+0x100/+0x108,
+  dir@+0x10c/+0x114, speed@+0x118, per-state accel in_ECX[state+0x30], timestep const DAT_00c15450=0.1,
+  near-target snap at ε≈1e-7, strafe heading +90/180/270°. The FULL movement chain is pinned end-to-end
+  (GCPlayerState → OnTick 0x4de470 → move-order 0x4a0ea0 → integrator FUN_004a0440). REMAINING (unrelated):
+  the 37 resolver slot roles; FUN_004b0aa0 local-duel kernel; tier→event mapping.
 - Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
   looks like competition fixture formatting, unconfirmed).
 

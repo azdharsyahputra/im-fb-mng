@@ -277,6 +277,41 @@ Decoded the two remaining callees:
   (Walking 2–3 … Sprinting 8–9 m/s), accel 1–2, decel −4…−5 m/s² — so the clean-room mover can be written
   faithfully even without that last VA.
 
+## 11. PHYSICS INTEGRATOR FOUND — FUN_004a0440 (VERIFIED Newtonian kinematics)
+
+Found by an **offset-fingerprint byte-search**: `search_bytes("d9 ?? 0c 01 00 00")` (x87 float op on
++0x10c) ∩ `search_bytes("d9 ?? 10 01 00 00")` (+0x110) → ~11 functions; **FUN_004a0440** (adjacent to the
+move-order 0x4a0ea0) is the per-player motion integrator. Decompiled cleanly (registered post-reanalysis).
+
+Kinematics sub-object `M = in_ECX[1]`; `param_1` = target position (param_1[0]=X, param_1[2]=Z):
+- **Position:** M+0x100 = X, M+0x108 = Z (the authoritative sim position).
+- **Delta/direction:** `dX = targetX − M[0x100]; dZ = targetZ − M[0x108]`, stored to M+0x10c / M+0x114
+  (M+0x110 = Y≈0), then **normalized** by FUN_0049d5c0.
+- **Speed:** M+0x118 (current). **State enum:** M+0x11c. **Per-state accel:** `in_ECX[state+0x30]`;
+  secondary coeff `in_ECX[state+0x25]`.
+- **Timestep term:** `t = DAT_00c15450 / in_ECX[0x3b]` where **DAT_00c15450 = 0.1** (0x3dcccccd).
+
+**The integration (VERIFIED, classic kinematics `s = v·t + ½·a·t²`):**
+```
+f   = −((M[0x118] − t) · accel)                  // M[0xb4]: speed step toward target rate
+s   = 0.5 · coeff · f² + M[0x118] · f            // M[0xbc]: displacement = ½·a·t² + v·t
+newX = s · dir.X + M[0x100]                       // M[0x9c]  = s·M[0x10c] + M[0x100]
+newZ = s · dir.Z + M[0x108]                       // M[0xa4]  = s·M[0x114] + M[0x108]
+remX = targetX − newX;  remZ = targetZ − newZ    // M[0xa8], M[0xb0]: remaining delta
+```
+- **Near-target snap:** if `ABS(dX) < ~1e-7 && ABS(dZ) < ~1e-7` (0x33d6bf95) the player is at the target —
+  it zeroes the velocity/accel block (M+0x3c..+0x44, +0x48..+0x60) and copies pos→M+0x6c.
+- **Heading:** angle = FUN_0049e320(dir); strafe states add 90°/180°/270° (state 5→180, 6/8→270, 7/9→90),
+  wrapped at 360; applied via FUN_0049f640.
+
+So the **complete movement chain is now pinned end-to-end, all VERIFIED to real addresses:**
+`GCPlayerState<X>` (e.g. RunningToBall, vtable 0xb5bea8) → **OnTick 0x4de470** (reads body, 1.5 reaction
+const, reach-check) → **move-order 0x4a0ea0** (writes target to body) → **integrator FUN_004a0440**
+(`s = v·t + ½a·t²`, `newpos = pos + s·normalize(target−pos)`, per-state accel). The earlier call-graph
+"wall" is fully dismantled; the mover was reachable by the offset-fingerprint byte-search, not call-graph.
+The clean-room `movephysics` mover can now be written 1:1: normalize(target−pos), kinematic displacement
+with the PlayerDegradeable Pace/accel/decel ranges, snap within ε, strafe heading offsets.
+
 ## Conclusion
 
 The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. **The player

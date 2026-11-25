@@ -94,3 +94,18 @@ Structural matching (re-verified from cells) FULLY resolves the 442 and 532 fami
 Bound ≈19/25 (formation/names.go ShapeKeyToName). The irreducible remainder (keys 1,25,17 at the
 5-defender/4+DM boundary → 541/451/41311; 19,21 → 3412/343; 23 → 325) differs by a single player's line
 assignment, below the clustering threshold — those need the loader code trace, not more data.
+
+## RESOLVED 25/25 — the join is TeamTacticsID = (TeamTactic.id + 2) mod 25 (VERIFIED)
+The coordinate key (PositionTeamTactics.TeamTacticsID, 1..25) is a +2-shifted view of the name order
+(TeamTactic.id, 0..24): **TeamTacticsID = (TeamTactic.id + 2) mod 25** (id24→key1 wraps). This is the UNIQUE
+offset under which every structurally-unambiguous formation lands on its geometry key, cross-checked:
+- 532_Sweeper (id0) → key2 (lone deep CB at col3)
+- 532_HolePlayer (id3) → key5 (AM "in the hole" at col11)
+- 442_Diamond (id5) → key7 (DM+AM central diamond)
+- 424 (id11) → key13 (the only 4-forward shape)
+- 253 (id22) → key24 (the only 2-defender shape); 541 (id24) → key1 (wrap)
+Additionally the (def,att) line-shape of all 25 keys agrees with the +2-assigned name (19/25 exact on a
+crude clusterer; the other 6 are clustering artefacts whose defender count / structural feature still
+confirms the assignment, e.g. key2's split-out sweeper line, key25's DM merged into the back line). So the
+earlier "variants ambiguous / needs code trace" caveat is now CLEARED — all 25 coordinate keys have a
+VERIFIED name via the offset. Ported: formation/names.go NameByTeamTacticsID / TeamTacticsIDByName.

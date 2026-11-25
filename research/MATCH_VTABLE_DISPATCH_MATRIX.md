@@ -251,6 +251,32 @@ vtable (e.g. 0xb5bea8) → slot0 OnTick (e.g. 0x4de470) reads the body and reach
 earlier call-graph wall is fully explained and traversed: the dispatch is per-state vtables in an
 unregistered 0x4d region, reachable only by this byte-level RTTI/vtable walk.
 
+## 10. Move-order field map + the physics-step (last layer)
+
+Decoded the two remaining callees:
+- **slot1 0x4d0de0 is NOT the integrator** — it is a small inherited accessor (`fld [0xb5b76c]; … clamp to
+  [3,14]; ret 8`), one of the base-state's tiny getters. So the generic position integration is not a
+  base-vtable slot.
+- **0x4a0ea0 = move-order / waypoint writer (VERIFIED field map):** sets the player's movement target and
+  kinematic fields on the body:
+  - **target position vec3 → body+0x10c (X?), +0x110 (Y?), +0x114 (Z?)**
+  - second vec → body+0xc0 / +0xc4 / +0xc8 / +0xcc
+  - floats → body+0x118, +0x1a0, +0x1b0
+  - two `rep movsd` struct copies into body+0x30 (15 dwords) and body+0x6c (21 dwords) — the waypoint /
+    path buffers.
+  So the on-ball/locomotion state sets a **target** (body+0x10c…) and kinematics; it does not itself move
+  the player.
+- **The literal integrator is a SEPARATE per-tick pass** (UNKNOWN VA): it reads the target (body+0x10c…)
+  and current position (body+0x08/+0x10) and advances position toward the target at the state's speed
+  (PlayerDegradeable Pace tier) — i.e. `body+0x08 += speedX·dt; body+0x10 += speedY·dt`. It runs over all
+  players each tick, outside the FSM OnTick (which only decides + sets the target). It lives in the same
+  unregistered physics region; pinning its exact VA needs an interactive Ghidra pass that creates the
+  function and lets xrefs on the struct offsets (body+0x10c / body+0x08) resolve — the one piece
+  byte/vtable walking cannot cleanly reach. Its ARITHMETIC is nonetheless fully constrained by the
+  recovered data: direction = normalize(target − pos), speed = PlayerDegradeable Pace tier
+  (Walking 2–3 … Sprinting 8–9 m/s), accel 1–2, decel −4…−5 m/s² — so the clean-room mover can be written
+  faithfully even without that last VA.
+
 ## Conclusion
 
 The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. **The player

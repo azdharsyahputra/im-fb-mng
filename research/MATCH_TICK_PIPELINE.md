@@ -188,6 +188,63 @@ from `matchstate[2]+0xd8 + 0x48e + side`), `FUN_004f4b10` (marking). None writes
 all consume the already-updated continuous position. So the integrator is in a separate subsystem
 (reached before this consumer cluster runs), not yet located by static call-graph walking.
 
+## 4c. Decision / targeting layer + the nature of the positions (integrator hunt, pass 2)
+
+Climbing the call graph from the consumer cluster reached the match-tick top and a second, parallel
+DECISION subsystem. Both read positions; neither writes body+0x08/+0x10.
+
+**Match-tick top = `FUN_00498ac0`** (set-piece / phase handler): branches on match-state enum
+`*state+0x34 == 6`, swaps the attacking/defending side pointers (`+0xcc/+0xd0/+0xd4/+0xd8`), and invokes
+the **tactical phase `FUN_004f8b90`** (once or twice, gated on config flags +0x4b8/+0x4b9). The tactical
+phase calls `FUN_004f1040`, `FUN_004f1070`, `FUN_004f2180`, `FUN_004f4b10` (marking), `FUN_004f8a30`.
+
+**`FUN_004f2180` — team-posture selector (VERIFIED, and it pins the coordinate system):** averages four
+per-team metrics over the **11 active starters** (`×0.09090909 = 1/11`, bench skipped via body+0xd0 bit):
+- `Σ(1.0 − body+0x08)` — mean of (1 − X)
+- `Σ(1.0 − body+0x10)` — mean of (1 − Y)
+- `Σ(1.0 − body+0x1b8·0.01)` — mean of (1 − condition/100)
+- `Σ body+0x14` — mean threat metric
+
+then takes the dominant metric → posture code {1,2,3,4} and applies it to all players via
+`FUN_004ef5c0` / `FUN_004ef490` / `FUN_004f1860` / `FUN_004ef530`. Because it computes `1.0 − body+0x08`
+and `1.0 − body+0x10` as "distance from the far end", the **positions are NORMALIZED pitch fractions in
+0..1** (0 = own end, 1 = opponent end), not metres — which is why FUN_004b8ef0 quantizes them ×100 into a
+0..100 "percent of pitch" byte. **VERIFIED.** (A sentinel `float 1000.0` = 0x447a0000 is used as an
+init-max elsewhere in the same function.)
+
+**`FUN_004ef490` — per-player zone target from X (VERIFIED coeffs):** reads the player's X (body+0x08),
+clamps it at `entity+0x268`, and builds a target box as four linear functions of X:
+`{24·X − 12, −20·X + 20, −6·X + 6, −2·X + 2}`, passed to `FUN_004a8160`.
+
+**`FUN_004a8160` — candidate scoring / selection (not a position write):** adjusts the zone bounds by
+`entity+0x260`, scales by `(12 − tier)/11`, weights them through `FUN_004a7590/76e0/7670/7600` (×0.1 and
+×0.0075), forms a composite score `(p2 + p3 + p4) − p1`, and accumulates it into the player's
+option-selection struct at `body+0x174` (running sum +0x14, count +0x1c, max +0x10, min +0x18, with the
+chosen option id taken from `body+0x1a8`). This is argmax/argmin DECISION-MAKING over candidate targets,
+feeding the selection struct — it writes scores and the picked option, never the continuous position.
+
+## 4d. Conclusion of the integrator hunt (honest)
+
+Two full call-graph trees were traced to their roots:
+1. **Resolution** — FUN_004b8ef0 → FUN_004eff60/FUN_004efef0 → FUN_004f1570 → FUN_0048cc10 (duel → side
+   aggregate → balance tier).
+2. **Decision/targeting** — FUN_00498ac0 → FUN_004f8b90 → FUN_004f2180 → FUN_004ef490 → FUN_004a8160
+   (posture → zone target → candidate scoring).
+
+**Every function in both trees READS `body+0x08`/`body+0x10`; none writes them.** So the position
+INTEGRATOR (the per-tick writer that advances the normalized X/Y from velocity/heading) is architecturally
+SEPARATE from — and upstream of — the entire match-logic module (0x4b–0x4f). It is not reachable by
+call-graph walking from the logic that consumes positions.
+
+What this establishes as VERIFIED: CM2008 maintains continuous normalized (0..1) per-player pitch
+positions, and the match LOGIC (both the statistical resolver and the tactical/decision layer) is driven
+by reading those positions plus the condensed ratings and the two behaviour-config singletons. What
+remains UNKNOWN: the exact function that writes body+0x08/+0x10 each tick. Pinning it needs a different
+technique than call-graph walking — either (a) identifying the body object's class via its allocator /
+constructor (the entity-array initializer that stores the body pointer at entity+0xf0) and reading its
+update method, or (b) runtime observation (watch writes to a body's +0x08). Static call-graph tracing
+from the consumer side has been exhausted.
+
 ## 5. Codeable atom
 
 The balance-tier classifier (§3d) is fully constant-verified and can be ported 1:1 as a resolver atom

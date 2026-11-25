@@ -66,12 +66,17 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 ## Match engine leftovers
 - a029c0: the per-bit meaning of the event-condition bitfield (+0x40/+0x44) — INFERRED (event-type
   definition).
-- Movement/positions: RESOLVED (MATCH_TICK_PIPELINE.md) that CM2008 keeps CONTINUOUS per-player float
-  positions (body+0x08 X / +0x10 Y, quantized ×100), and the per-player→per-side→balance-tier resolution
-  chain (FUN_004b8ef0 / FUN_004eff60 / FUN_004efef0 / FUN_004f1570) with all its constants (pivot 55,
-  slope 0.5, tiers 0.30/0.65/1.30/3.00) is VERIFIED. STILL UNKNOWN: the position INTEGRATION function that
-  WRITES body+0x08/+0x10 from velocity/heading each tick (consumes the 0x9f accel/speed-tier config); the
-  FUN_004b0aa0 local-duel kernel; the tier→event mapping; the phase scheduler above FUN_004f1570.
+- Movement/positions: RESOLVED (MATCH_TICK_PIPELINE.md) that CM2008 keeps CONTINUOUS per-player
+  NORMALIZED (0..1) pitch positions (body+0x08 X / +0x10 Y; quantized ×100 to a percent-of-pitch byte),
+  with 11 active starters per side. Two full match-logic trees are VERIFIED and traced to their roots:
+  (1) resolution FUN_004b8ef0→FUN_004eff60/FUN_004efef0→FUN_004f1570 (duel→side→balance tier; pivot 55,
+  slope 0.5, tiers 0.30/0.65/1.30/3.00); (2) decision/targeting FUN_00498ac0→FUN_004f8b90→FUN_004f2180→
+  FUN_004ef490→FUN_004a8160 (posture→zone target→candidate scoring). EVERY function in both trees READS
+  body+0x08/+0x10; none writes them. STILL UNKNOWN: the position INTEGRATOR (the per-tick writer of
+  body+0x08/+0x10) — architecturally SEPARATE from and upstream of the 0x4b–0x4f logic module, not
+  reachable by call-graph walking; pinning it needs the body-object class (via its allocator/constructor
+  at entity+0xf0) or runtime watchpoints. Also UNKNOWN: FUN_004b0aa0 local-duel kernel; tier→event
+  mapping; the posture-setters FUN_004ef5c0/1860/530 internals.
 - Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
   looks like competition fixture formatting, unconfirmed).
 

@@ -162,3 +162,54 @@ mapped in pass 1: ProcessData FUN_0077ee80 → dispatcher FUN_0077cd40 (RNG draw
 desc+4/5/6 to the duel/presentation) → the resolver atoms. The honest next target is the code that
 FILLS the descriptor pool before cd40 runs — i.e. who sets desc+8 (event type) / desc+4/5/6 — reached
 from the ProcessData pump and the event-object pool 0xc77df8, NOT from this reporting scheduler.
+
+---
+
+# Pass 4 — FOUND: the GCMatchPredicate engine is the match-ANALYSIS/COMMENTARY selector (not a gameplay generator)
+
+Chasing "who decides which event fires", the predicate.go lead (FUN_009e5160 → FUN_009e9570, threshold
+80.0) led to the real GCMatchPredicate engine. Decompiled both (VERIFIED):
+
+## FUN_009e5160(mode, predicate) — the PRIORITY SCORER (VERIFIED)
+A big if-chain mapping each GCMatchPredicate TYPE-NAME (via its vtable name getter) to a fixed score:
+- **100** GCMatchPredicateTeamGoals (0 when mode==1)
+- **92** (fall-through default) WeakDefence, VeryBadDefence, WeakMidfield, VeryBadMidfield,
+  StrongDefence, StrongMidfield, PlayerHadStrong{A,D}, PlayerHadBadDefe, PlayerHadABadMatch×4,
+  PlayerHadAGoodMatch×3
+- **90**, **85** TeamDoesManyQuickAttacks, then **70 / 65 / 60 / 45 / 40 / 35 / 30 / 20 / 10**, and
+  **0** (TeamOffsides + any unmatched → LAB_009e57fd).
+So each predicate NAME has a priority tier. (This is the "weight" predicate.go recovered; the 80.0
+cutoff keeps only the 85/90/92/100 tiers normally.)
+
+## FUN_009e9570(mode, ctx, candidates, threshold) — the SELECTION engine (VERIFIED)
+1. Score every candidate predicate via FUN_009e5160; keep score>0 in a list.
+2. Sort by score descending (FUN_009e59d0; key = -score).
+3. Walk highest-first, materialize each via FUN_009e92b0 and append to the output list; **STOP when
+   score < threshold AND >7 already chosen** → selects the top ~7+ above `threshold` (=80.0, passed by
+   FUN_0077c540 `fld [0xb5b10c]`). The dev switch "--disable_match_analysis_rule_filtering" bypasses
+   the scoring/threshold and emits all candidates.
+4. mode==1 adds a dedup pass (compares serialized predicate keys).
+
+## The honest reframe (what the 267-predicate system IS)
+The GCMatchPredicate names are **match ANALYSIS / commentary rules** — verdicts about what happened
+("PlayerHadAGoodMatch", "WeakDefence", "TeamDoesManyQuickAttacks", "AttackBandCommences",
+"DefenceBandCommentary") — NOT causal gameplay events. FUN_009e9570 is the **"match analysis rule
+filtering"** system (its own dev-flag name): it scores candidate observations and surfaces the top
+priority ones. It does not decide that a shot/tackle happens.
+
+## Resolved: there is NO separate menu-style gameplay "event generator"
+Combining all passes, the match architecture is three layers:
+1. **Gameplay resolution** — per-entity, per-tick duel/a029c0/shootout atoms over real attributes
+   (cadence +10s), routed by the ProcessData pump → dispatcher cd40. The "which gameplay act" is the
+   per-entity record's class flags (desc+4/5/6) resolving to a duel; there is no central AI picking
+   event types from a list. (Duel atom ported: contest.TallyDuel.)
+2. **Stats export** — FUN_009d52e0 publishes per-player resolved stats to the FE interface (pass 3).
+3. **Analysis/commentary** — the GCMatchPredicate scorer+selector (this pass): priority-scored,
+   threshold-80 rule filtering that chooses which match observations to present.
+
+So "the event generator" that was imagined (a causal AI choosing shots/passes/tackles) does not exist
+as a discrete subsystem: gameplay emerges from the per-entity duel tick, and the GCMatchPredicate
+engine is the commentary/analysis selector on top. This closes the G1 "open core" question: the
+remaining richness is (a) how each entity's per-tick class flag is set (entity role/state, a small
+local decision, not a global generator) and (b) the a029c0 multi-gate resolver's exact thresholds —
+both bounded, not a multi-week AI port.

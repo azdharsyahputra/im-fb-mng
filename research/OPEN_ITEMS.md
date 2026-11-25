@@ -1,0 +1,77 @@
+# Open items — everything still INFERRED or UNKNOWN (all subsystems)
+
+Consolidated from the 6 subsystem RE passes + the match passes. VERIFIED items are in their own docs
+(and the codeable ones are ported: `tactics`, `league`, the 3 contest atoms, lcg, clock, etc.). This
+file is the honest backlog: what is NOT nailed down, so nothing here gets fabricated into the engine.
+
+## Legend
+- **INFERRED** = structure/behaviour deduced but not byte/line-proven.
+- **UNKNOWN** = not recoverable from the static image (lives in runtime state / external data) or simply
+  not yet traced.
+
+## Stat → gameplay linkage (STAT_GAMEPLAY_LINKAGE.md)
+- INFERRED: person+0x3c is a single derived "current ability" rating, one of a 7-bit rating family
+  (+0x3c bits12-18, +0xb0 bits18-24, +0xb4 bits8-14).
+- UNKNOWN: the upstream squad/player-load snapshot builder (behind cache [0xc775b8]) that first writes
+  person+0x3c from DB PlayerProperties — i.e. the exact 77-attribute → single 7-bit contest-rating
+  formula / which property blend produces it.
+
+## Tactics / formations (MATCH_TACTICS_FORMATIONS.md)
+- INFERRED: Column→zone cut-offs (depth split into Def/Mid/Att); named-variant effects
+  (_Attacking/_Defensive/_Diamond/_Sweeper); TeamTacticFormation (a,b) menu-group semantics;
+  TeamTactics/PositionTactics per-field byte offsets (declaration order known, each byte not verified).
+- UNKNOWN: the `.tac` field-hash→name map; the 11 formation-slot → FieldPosition-id binding inside a
+  `.tac`; the exact tactical-substitution formula algebra (beyond the fitness<=0.5 gate); the
+  "which players are the contestants per zone" selection step.
+
+## Commentary (MATCH_COMMENTARY.md)
+- INFERRED: the token vocabulary ([%…] / %team / %surname) lives in the external .str; the single
+  live-match axiom emit call site; predicate→GID for the live-axiom path (verified only for the
+  expert-comment path).
+- UNKNOWN: the literal commentary sentences + exact token syntax in Commentary.str (archive not on the
+  install media); the FE token-resolution function; 24 of 26 expert keys' exact field offsets.
+
+## Morale / GCHappy (PLAYER_MORALE.md)
+- INFERRED: morale = initial baseline + time-decayed weighted sum of active effects; post-match
+  mutation + recovery-toward-baseline behaviour.
+- UNKNOWN: the exact per-effect numeric magnitudes (live in runtime GCHappyEffectData / HappyMemory.dat,
+  not static); the decay-formula coefficients; the numeric concern thresholds; the canonical integer
+  enum id per effect.
+
+## Management: contract / finance / transfer / board (MGMT_CONTRACT_FINANCE.md)
+- INFERRED: ContractDetail wage@4:f64 and bigMoney@12:f64 meanings; ContractLoan flag-bit meanings;
+  Club.dat @14 = Bank Balance (strong); the file-offset→budget labels (@38/@62/@74/@110).
+- UNKNOWN: the exact wage-formula arithmetic (Min + Mult·base^Exp, cap — site not pinned); the precise
+  AI transfer-bid fee and ProcessOffer accept threshold; the board confidence-delta store site; the
+  Club.dat file-offset → {transfer,wage} budget 1:1 mapping; Board.dat populated-row packing; the
+  ContractDetail tail + loan-flag encodings.
+
+## Misc features (MISC_FEATURES.md)
+- INFERRED: on-disk column→field bindings for several tables (byte-range + declaration order, not
+  value-confirmed); the International layouts.
+- UNKNOWN: the exact decision/generation formulas — injury roll, award ranking criteria, tendency
+  generation; Award.dat @4/@8 columns; the PersonInjury @4 anomaly (max observed type id 47 > the 42
+  Injury.dat rows).
+
+## Season / competition (SEASON_COMPETITION_SIM.md)
+- INFERRED: CompetitionTeam @4 meaning; Group/Fixture packed sub-bytes; the double-round-robin
+  leg/venue swap (shape known, not line-traced); the RoundType numeric enum order; the tiebreak
+  comparator ordering constant.
+- UNKNOWN: the exact VA of the GCRoundPosition table accumulator + placing sort (no profiler name);
+  the MatchFormatRuleID / GamePointsID numeric→meaning maps (external Data/IDConversion CSVs); the
+  runtime GCRoundPosition byte offsets (names/order known, offsets not resolved).
+
+## Match engine leftovers
+- a029c0: the per-bit meaning of the event-condition bitfield (+0x40/+0x44) — INFERRED (event-type
+  definition).
+- Movement/view: the sprite interpolation (whether the view stores continuous x/y and how it tweens) —
+  NOT traced (cosmetic); the exact pump ACTIVATION cadence — not pinned (unnecessary: engine anchors
+  to real distributions).
+- Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
+  looks like competition fixture formatting, unconfirmed).
+
+## The common root of most UNKNOWNs
+Two buckets dominate: (1) RUNTIME-only magnitudes (morale weights, live ratings, board confidence) that
+are not in the static image; (2) external DATA maps (Commentary.str, IDConversion CSVs, .tac field
+names) that ship outside the exe. Neither can be honestly coded from the crack alone — they need the
+runtime or the external data files, not more disassembly.

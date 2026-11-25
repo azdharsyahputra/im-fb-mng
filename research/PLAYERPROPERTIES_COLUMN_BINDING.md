@@ -445,3 +445,40 @@ Bojan/Martina captures). A lower-league capture cannot pin skill columns.
 fullmap.go: col13 PreferredFoot(L) → Unknown13(X). Positional/foot bindings (col0/1/2/4/8/10/11)
 reinforced by a real capture. Skill/mental columns still need a **top-club player capture** (fastest) —
 a lower-league player's skills are not on disk.
+
+## Eleventh pass — 3-detailed-player capture solve corrects 7 swapped columns
+
+The owner sent a batch of CM2008 profile captures (sibling session). Usable DETAILED outfield players:
+**Fernando Torres (Liverpool, id 48489)** and **Luka Modric (Dinamo Zagreb, id 134772)**, both located by
+DOB join in Person.dat (Torres 20-03-1984, Modric 09-09-1985; disambiguated among same-DOB persons by
+"detailed + position"). Combined with the known **Bojan (id 143410)**, that is 3 full (fine=43) vectors.
+(Also in the batch: Bojan/Zarate re-shots already used; 2 GOALKEEPERS — Ventura/Grohe — for the separate
+GoalkeeperProperties map; and one non-CM2008 screenshot, discarded.)
+
+Method: per disk column, the (Torres, Modric, Bojan) raw triple vs each visible attribute's display*5
+triple. ~Most existing bindings reproduced all 3 within a few points (Finishing 23, Dribbling 52,
+Marking 55, Tackling 58, Bravery 40, Determination 29, Acceleration 27, Pace 34, Anticipation 18,
+Flair 44, Agility 28, DeadBalls 61, PenaltyTaking 62 — so the map is ~85% right). But a **cluster of 7
+columns was HARD-REFUTED and re-pinned** (old binding impossible for at least one player; new binding
+reproduced all 3, Modric/Bojan usually exact):
+
+| col | was | triple (T,M,B) | now | why old is impossible |
+|---|---|---|---|---|
+| 22 | Strength | (37,45,60) | **Positioning** | Torres Strength 20→100, col22=37 |
+| 33 | Heading | (73,45,75) | **Jumping** | Modric Jumping 9→45 = col33; Heading 11→55 ≠45 |
+| 36 | Aggression | (92,70,60) | **Strength** | Torres Aggression 13→65, col36=92 |
+| 38 | Ambition | (63,65,75) | **Aggression** | exact Aggression (65,65,75); Ambition hidden/guess |
+| 45 | Positioning | (80,83,60) | **Leadership** | Torres Positioning 9→45, col45=80 |
+| 50 | InjuryResistance | (40,77,75) | **Versatility** | Torres Versatility 8→40 = col50 exactly |
+| 54 | Jumping | (82,54,75) | **Heading** | pairs with col33: Heading/Jumping were swapped |
+
+Heading↔Jumping (33/54) were simply transposed; the other five form a Strength/Positioning/Leadership/
+Aggression reshuffle. Displaced: **col32** (was Leadership) and **col49** (was Versatility) now hold an
+unidentified attribute each → marked Unknown/X; the two homeless hidden names (Ambition, InjuryResistance)
+are unlocated. col61 DeadBalls confirmed (M→H).
+
+Ported to fullmap.go (all 7 → confidence H; col32/col49 → X). Bojan wire test still passes (reads by
+name). Limitation: all 3 captures are attack-minded, so the technical cluster (Passing/Movement/Vision/
+Creativity/FirstTouch) and the hidden-personality cluster are not fully separable — a defender or a
+physically-contrasting capture would tighten them. KEEPER captures (Ventura/Grohe) remain available to
+map GoalkeeperProperties.dat (separate file / gknames.go) in a future pass.

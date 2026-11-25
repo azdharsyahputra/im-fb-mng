@@ -146,3 +146,25 @@ Net confirmed-ish column names so far (VERIFIED signature OR strong archetype): 
 (VERIFIED), col 2 Marking, col 33 Heading, col 56 LongShots, col 9 Crossing, col 12 Dribbling,
 col 38 Strength, col 54 CentralDefender, col 13 Vision. The remaining ~50 columns are category-known
 but not uniquely named — the method keeps converging as more distinctive archetypes are added.
+
+## Current best column→name map (27 of 77)
+
+After two archetype passes (27 real players), the bound columns:
+
+VERIFIED (signature): cols 63–76 = the 14 instruction sliders; col 7 = ThrowIns (rare-attr shape).
+
+INFERRED HIGH (archetype top-rankers, committed to playerdb.PlayerPropertyInferredColumn):
+col 2 Marking · col 9 Crossing · col 20 Agility · col 21 Balance · col 22 Tackling ·
+col 23 Finishing · col 27 Acceleration · col 33 Heading · col 34 Pace · col 38 Strength ·
+col 52 Dribbling · col 56 LongShots.
+
+Key splits achieved this pass: Marking (c2, Cannavaro/Terry) vs Tackling (c22, Gattuso/Mascherano);
+Finishing (c23, Inzaghi/van Nistelrooy poachers) vs Dribbling (c52, Messi/Robben) — correcting the
+earlier c5=Finishing/c52=Finishing guesses; Pace (c34) vs Acceleration (c27) by Walcott.
+
+MED (not committed to code; see evidence): col 45 Positioning (Maldini/Cannavaro/Terry) ·
+col 13 Vision/Creativity (Totti/Scholes) · col 26 Aggression-ish (Gattuso) · col 54 CentralDefender.
+
+Remaining ~50 columns: category-known but still correlated (e.g. Anticipation/OffTheBall/Composure
+cluster, the positional-familiarity block, hidden CA/PA). Ground-truth for all 77 at once stays the
+PlayerProperties loader disasm; the archetype method keeps converging but slows on correlated traits.

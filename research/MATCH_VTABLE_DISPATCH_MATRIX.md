@@ -312,6 +312,41 @@ const, reach-check) → **move-order 0x4a0ea0** (writes target to body) → **in
 The clean-room `movephysics` mover can now be written 1:1: normalize(target−pos), kinematic displacement
 with the PlayerDegradeable Pace/accel/decel ranges, snap within ε, strafe heading offsets.
 
+## 12. Scorer FUN_004a8160 DECODED — it is a proportional zone-positioning controller (correction)
+
+Decompiled FUN_004a8160's four callees (FUN_004a7590 / 4a76e0 / 4a7670 / 4a7600). They are NOT scoring
+weight functions — each is an identical **clamped field accumulator** on the body (entity+0xf0):
+
+	void setter(float d) {           // one per body field
+	  if (sign(d) matches)           // 4a7590/7670/7600: d<0 ; 4a76e0: d>0
+	    d = (1.5 - detail[0x264]) * d // asymmetric scale of one sign by (1.5 - reaction term)
+	  field += d                      // accumulate the delta
+	  field = clamp(field)            // branchless IEEE clamp (bounds 1.0f / -4.0f in the bit-tricks)
+	}
+
+Field map (VERIFIED):
+- FUN_004a7670 → **body+0x08 (X position)**
+- FUN_004a7590 → **body+0x10 (Y position)**
+- FUN_004a76e0 → body+0x14  (aux metric)
+- FUN_004a7600 → body+0x18  (aux metric)
+
+And FUN_004a8160 drives them with the zone-box components as deltas:
+
+	setter_X (box[B] * 0.1)      // body+0x08 += 0.1 * zone
+	setter_Y (box[A] * 0.1)      // body+0x10 += 0.1 * zone
+	setter14(box[?] * 0.1)
+	setter18(box[D] * 0.0075)
+
+So **FUN_004a8160 is a proportional positioning controller**, not a candidate scorer: each call nudges the
+player's normalized position (body+0x08/+0x10) a fraction (×0.1) toward the posture zone target
+(FUN_004ef490's {24X−12, −20X+20, −6X+6, −2X+2}), with one sign scaled by (1.5 − reaction) and the result
+clamped to the pitch. This CORRECTS the earlier "candidate scoring / argmax into body+0x174" reading in §4c
+(the +0x174 struct is the owner the detail is read through, not an arg-max result). VERIFIED: the four
+target fields, the ×0.1 / ×0.0075 step scales, the (1.5 − term) sign asymmetry; INFERRED: the exact clamp
+bounds (obscured by the branchless IEEE bit-tricks around 1.0f/−4.0f). The two position layers are now
+clear: this coarse controller nudges the normalized tactical position (body+0x08/+0x10); the kinematic
+integrator FUN_004a0440 (§11) does the fine per-frame world-metre motion toward the committed target.
+
 ## Conclusion
 
 The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. **The player

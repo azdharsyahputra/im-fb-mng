@@ -78,10 +78,13 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   board confidence / request thresholds / sacking = **BoardAI (19), BoardRequest (37), BoardExpectation,
   ManagerSacking (17)** → cm2008-formulas/managerai. (So "wage-formula arithmetic / transfer accept
   threshold / board confidence-delta UNKNOWN" is retracted — all in the decrypted XML and coded.)
-- STILL OPEN — only the BYTE-OFFSET bindings in the save tables (static, value-confirmable, tedious):
-  ContractDetail tail + loan-flag bit encodings; Club.dat file-offset → {transfer,wage} budget 1:1
-  labels (@38/@62/@74/@110); Board.dat populated-row packing. The board/finance VALUES per save are
-  runtime, but the engine computes them from the ported formulas.
+- RESOLVED (CLUB_DATA_RESOLVED.md): Club.dat is byte-aligned (169B = row-id + first 42 schema fields in
+  declaration order + pad). Facility offsets value-confirmed: Training@138, YouthAccademy@163,
+  YouthDevelopment@164, YearFounded@166 u16 (not @120), Reputation@97. CORRECTION: TransferBudget/
+  WageBudget are NOT in Club.dat (idx43/44 beyond the 42-field prefix — runtime); @38/@62/@74/@110 are
+  GroundCost/Merchandising/OutstandingLoan/SponsorAmount, not budgets. NAME TEXT RESOLVED: real names ship
+  in the Text*/*.str STR1 tables; ClubStringID@4 -> Club.str, player NameIDs -> Person.str (ported:
+  super-manager-engine/names). STILL OPEN: ContractDetail tail + loan-flag bit encodings; Board.dat packing.
 
 ## Misc features (MISC_FEATURES.md)
 - INFERRED: on-disk column→field bindings for several tables (byte-range + declaration order, not
@@ -112,8 +115,9 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   runtime GCRoundPosition byte offsets (names/order known, offsets not resolved).
 
 ## Match engine leftovers
-- a029c0: the per-bit meaning of the event-condition bitfield (+0x40/+0x44) — INFERRED (event-type
-  definition).
+- a029c0 event-condition bitfield (+0x40/+0x44): RESOLVED (MATCH_RESOLVER_INTERNALS.md §4) — the event's
+  resolution-shape descriptor (bit2 runSingleDuel, bit3 emitSplitOnDisagree, bit4 exclusiveWinner, bit5
+  runBestOf6, bits6/8 requireBalancedTallies, bit7 emitImbalanceGuard; +0x44 detailed / +0x40>>0x15 quick).
 - Movement/positions: RESOLVED (MATCH_TICK_PIPELINE.md) that CM2008 keeps CONTINUOUS per-player
   NORMALIZED (0..1) pitch positions (body+0x08 X / +0x10 Y; quantized ×100 to a percent-of-pitch byte),
   with 11 active starters per side. Two full match-logic trees are VERIFIED and traced to their roots:
@@ -141,8 +145,12 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   `s = v·t + ½·a·t²`, `newpos = pos + s·normalize(target−pos)`; kinematics object pos@+0x100/+0x108,
   dir@+0x10c/+0x114, speed@+0x118, per-state accel in_ECX[state+0x30], timestep const DAT_00c15450=0.1,
   near-target snap at ε≈1e-7, strafe heading +90/180/270°. The FULL movement chain is pinned end-to-end
-  (GCPlayerState → OnTick 0x4de470 → move-order 0x4a0ea0 → integrator FUN_004a0440). REMAINING (unrelated):
-  the 37 resolver slot roles; FUN_004b0aa0 local-duel kernel; tier→event mapping.
+  (GCPlayerState → OnTick 0x4de470 → move-order 0x4a0ea0 → integrator FUN_004a0440). RESOLVED (MATCH_RESOLVER_INTERNALS.md): the 37-slot vtable @0xbd6c74 = GCMatchResolverMonitor OBSERVER
+  (slot roles mapped); FUN_004b0aa0 = the per-player effective-rating kernel (40..100; twin FUN_00a04e40
+  for quick-sim); tier→event = the outcome-code switch FUN_00a05c40 (codes 0..5, event+6&7 dispatch);
+  the +0x40/+0x44 condition bitfield decoded (resolution-shape). Aggregation mode al>=2 = sum per-actor
+  5-bit sub-counters into team A/B totals. Open: the tier-multiplier (55/0.5/{.30,.65,1.30,3.0}) VA and
+  the rating weights' formula.xml names.
 - Replay: RESOLVED (MATCH_REPLAY.md). ReplayMatchFormat.dat + RoundMatchFormat.dat inspected = DATa
   ID-keyed config tables (8-byte [u32 ID][u32 enum]; Replay=180 recs, 90 IDs ×{1,4}; Round=2906 recs,
   enums {0,1,2,4,5,6,7,8}) — competition fixture/format rules for cup REPLAY fixtures (re-played drawn

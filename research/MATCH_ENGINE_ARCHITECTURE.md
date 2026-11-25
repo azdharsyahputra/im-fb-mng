@@ -76,6 +76,38 @@ without decompiling handler bodies. (Ghidra's "Windows x86 PE RTTI Analyzer" is 
 (FUN_00a023f0), **TeamBalanceTier (FUN_004f1570)**. `cm2008-formulas`: params/ballphysics/movephysics/
 playerability/dynamic/playerstate/official/postmatch/quicksim + management clusters.
 
+## View layer — how movement is rendered (VERIFIED class inventory)
+
+The logic FSM owns the authoritative positions (body+0x08/+0x10); a separate **front-end model/render
+layer** draws and interpolates them:
+- `FEModelComponent` (base) → `FEBaseModelComponent`, `FEPlayerModelComponent`, `FEBallModelComponent`,
+  `FEOfficialModelComponent`, `FEPersonModelComponent`, `FEVenueModelComponent`,
+  `FEShadowedModelComponent`, `FEAdvertisingModelComponent`.
+- `FEAnimatedComponent` (animation playback), `FECameraComponent` (match camera), `FEMovableMatchCursor`,
+  `FEMatchInterface`, `FEMatchActionComponent` / `FEMatchActionStateComponent` / `FEMatchDisplayStateComponent`.
+- Quick-sim UI: `FEMatchResolverComponent` / `FEMatchResolverScreen`; plus the analysis/stats/overview
+  screens.
+
+So the movement pipeline is: **logic FSM (GCPlayerState*) advances normalized positions → FE*ModelComponent
+reads them and tweens/animates the on-screen models** (FEPlayerModelComponent for players, FEBallModel for
+the ball). The visible smooth motion is the view's interpolation; the authoritative per-tick advance is the
+FSM handler. This cleanly separates the sim from the render and confirms the positions are sim state, not a
+view artefact.
+
+## FSM handler-hunt plan (ready to run the moment REA frees / re-analysis lands)
+
+To extract the literal per-tick position write, in order:
+1. Locate the FSM **handler-pointer array** (parallel to the name table at 0xb5be14): read around the
+   name-lookup site 0x4d1d01 (now hopefully registered post-re-analysis) and the per-tick dispatcher it
+   belongs to; OR scan .rdata/.data for a dense run of ~255 .text pointers adjacent to a state-enum switch.
+2. From the dispatcher, follow the case/handler for a locomotion state — **PlayerRunningToBall** or
+   **PlayerDribble** — the simplest movers.
+3. Decompile that handler; expect `body+0x08 += speed·dirX·dt; body+0x10 += speed·dirY·dt` with `speed`
+   from the PlayerDegradeable Pace range (Walking 2–3 … Sprinting 8–9 m/s) and `dt` the tick step.
+4. Confirm against the quantize in FUN_004b8ef0 (body+0x1ba = X·100) to validate X/Y identity.
+Post-re-analysis bonus: RTTI auto-link should register the 0x498/0x4d1d gap functions and resolve the
+virtual dispatch, turning steps 1–2 into normal navigation.
+
 ## Honest remaining work (one decompile each, not a search)
 
 - The literal per-tick `body+0x08 += speed·dir·dt` inside a chosen locomotion-state handler (needs the

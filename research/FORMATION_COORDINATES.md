@@ -62,3 +62,16 @@ bytes identical. The 25 .tac are one GCTactics template keyed by a NameID; the g
 - Still soft (does NOT block coordinates): FormationID(1..25) → formation-NAME binding is shape-matched
   (exact confirmation needs the game name-hash fn over TeamTactic.dat namehash); grid→metres scale is a
   normalization choice. Likely runtime reader: GCFieldPositionModule / the loader near VA 0x70f600–0x70fc00.
+
+## Variant separation (442_* / 532_*) — structural distinctives VERIFIED
+Dumping the full (Column,Row) base cells per coordinate key separates the variants by their defining
+sub-position (not just coarse shape):
+- **442_Diamond** = key 7: midfield is a diamond — DM (7,7) + AM (11,7), both central (vs a flat 4).
+- **532_Sweeper** = key 4: a lone deepest central defender (4,7) sitting behind the back line.
+- **532_HolePlayer** = key 5: an advanced central AM "in the hole" (11,7) ahead of a flat back 5.
+These three are VERIFIED by the cell pattern. The **_Attacking / _Defensive** variants are then assigned
+within each family by team depth (Attacking = line pushed up / strikers at col14; Defensive = withdrawn /
+strikers at col13): key 10=442_Attacking, 8=442_Defensive, 9=442(base); 17=532_Attacking, 3=532_Defensive
+— INFERRED-by-depth (medium confidence). Remaining ambiguous keys (1/25 both 5-4-1 → 541/451; 22/23 → 334/
+325; 2) are left UNBOUND rather than guessed — they need the Row sub-pattern or another source. Ported in
+formation/names.go ShapeKeyToName with per-entry confidence.

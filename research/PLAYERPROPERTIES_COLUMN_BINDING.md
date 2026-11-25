@@ -505,3 +505,30 @@ col20 (FirstTouch) 28, col23 (Finishing) 42, col51 (Crossing) 38, col52 (Dribbli
 Handling/CoordinatingDefense/Crosses/Kicking/Throwing/OneOnOnes/Eccentricity) to pin. 1586/8984 keepers
 are detailed, so a top-club keeper (Casillas/Buffon/Van der Sar/Cech) would complete it. Groundwork
 recorded in playerdb/gknames.go.
+
+## Thirteenth pass — Torres excluded (post-season capture); disk-order manifest hunt = runtime-built
+
+**Torres capture INVALID for the .dat:** his screenshot is dated **24-05-08** (end of season 1), so his
+attributes had developed away from the shipped **01-07-07** `PlayerProperties.dat`. Excluded. The 7
+column corrections from the 11th pass were **re-confirmed on Modric + Bojan alone** (both captured
+01-07-07 = the .dat state), near-EXACT (Δ0 on most): col22=Positioning, col33=Jumping, col36=Strength,
+col38=Aggression, col45=Leadership, col50=Versatility, col54=Heading all HOLD; the old bindings are
+hard-refuted on these valid players too (e.g. col45-as-Positioning needs Modric 9→45 but reads 83). So
+the corrections stand on valid data; Torres was redundant.
+
+**Disk-order manifest — searched everywhere, it is RUNTIME-BUILT (not a static table):**
+The engine must map each disk column to a field to work (correct). Where that map lives:
+- **exe strings:** the 77 attribute-name strings exist in **two blocks sorted ALPHABETICALLY** (e.g.
+  0xb79f48: PenaltyTaking, DeadBalls, WorkRate, Vision, Versatility… = reverse-alpha) — these are a
+  name→id LOOKUP table, NOT disk order. String address order != disk order.
+- **descriptor arrays** (0xc20b78 second schema, 0xc20c20 first schema): **zero-filled in the static
+  image** — they are populated at STARTUP by the schema-registration code. So the live disk→field table
+  exists only once the game is running.
+- the `PlayerProperties.inc` path in the exe is only an **assert label** (passed to the error reporter),
+  not a runtime file open; and the `.inc` ships nowhere (exe/game/installer) — so the game does NOT read
+  it at runtime; the order is baked into the GCRawTable init.
+Conclusion: the map is real but **materialises only at runtime** (GCRawTable descriptor list built at
+startup). Reading it statically needs a full trace of that init / the deserializer's disk-offset→bit-
+position writes (deep, not a one-shot extract — matches the 8th-pass loader-disasm negative result). A
+**live debugger on Windows** would dump it directly; in clean-room static, **valid start-dated captures**
+remain the practical bridge (already pinning ~62/77 columns).

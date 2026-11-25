@@ -237,3 +237,25 @@ playerdb.PlayerPropertyInferredColumn). Remaining coarse cols (c1/c3/c7/c8/c11/c
 ratings (RightFoot is near-universally high) + a few positions (GoalKeeper/Roaming/LeftSide/
 RightSide/Central); remaining fine cols are the correlated mental cluster + Crossing/FirstTouch/
 Stamina/Concentration.
+
+## Fifth pass — foot + mental cluster (51/77 bound)
+
+Added foot (col8 LeftFoot, col11 RightFoot via left/right-footed archetypes) and the resolvable
+mental/physical fine skills: col24 Stamina, col26 WorkRate, col35 Determination, col37 Movement,
+col40 Bravery, col43 Aggression, col48 DecisionMaking (each by engine/workhorse/brave/smart
+archetype top-rankers). col25's best fit (Composure) is not in the 77-name set, so it was left
+unbound rather than forced.
+
+**Bound: 51/77** — 15 VERIFIED (14 sliders + col7 ThrowIns) + 36 INFERRED
+(playerdb.PlayerPropertyInferredColumn).
+
+Remaining ~26 columns are the genuinely-correlated cluster that archetypes cannot uniquely separate:
+- Technical/creative overlap: Creativity, Vision, Flair, FirstTouch, Technique, Crossing (fine) — all
+  high for the same technical players.
+- Personality overlap: Consistency, Professionalism, Pressure, Loyalty, Sportsmanship, Ambition,
+  Adaptability, Versatility, Confidence, Leadership, Concentration, TeamWork — all high for the same
+  pro/veteran players.
+- Plus Fitness/NaturalFitness, InjuryResistance/RecoveryRate, and the rarer positional/foot slots
+  (GoalKeeper familiarity, Roaming, LeftSide, RightSide, Central, PreferredFoot).
+These would need either a single-trait capture per attribute or the live-deserialisation trace; the
+main gameplay-relevant attributes (skills, physical, positions, foot, set-pieces) are all bound.

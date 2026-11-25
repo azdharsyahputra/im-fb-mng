@@ -12,9 +12,10 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 ## Stat → gameplay linkage (STAT_GAMEPLAY_LINKAGE.md)
 - INFERRED: person+0x3c is a single derived "current ability" rating, one of a 7-bit rating family
   (+0x3c bits12-18, +0xb0 bits18-24, +0xb4 bits8-14).
-- UNKNOWN: the upstream squad/player-load snapshot builder (behind cache [0xc775b8]) that first writes
-  person+0x3c from DB PlayerProperties — i.e. the exact 77-attribute → single 7-bit contest-rating
-  formula / which property blend produces it.
+- RESOLVED (decrypted formula.xml, group PlayerConstant): the raw-attribute → match-ability transform is
+  recovered — each of 113 derived abilities is the MEAN of specific raw attrs (e.g. Composure=mean(
+  DecisionMaking,Confidence); 94 simple + 19 with sub/div/prod). Ported in cm2008-formulas/playerability.
+  The final person+0x3c contest value is the runtime CurrentAbility (PlayerAbility=mean(CurrentAbility)).
 
 ## Tactics / formations (MATCH_TACTICS_FORMATIONS.md)
 - INFERRED: Column→zone cut-offs (depth split into Def/Mid/Att); named-variant effects

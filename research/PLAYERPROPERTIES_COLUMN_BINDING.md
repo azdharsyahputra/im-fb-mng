@@ -296,3 +296,55 @@ attributes), so a binding is only committed when the captures AND the 38-player 
 agree. Columns where they conflict (Creativity/Vision/FirstTouch/TeamWork/Leadership overlap) stay
 unbound — each needs another capture with a distinctive value to triangulate. More single-attribute
 captures would keep closing the gap; the method now has a validated scale and two anchors.
+
+## Eighth pass — correlation signatures on the full 76,051-record corpus (no captures needed)
+
+A different, capture-free lever: instead of per-player archetypes, compute per-column Pearson
+correlations across ALL 76,051 rows and read each unbound column by its correlation *signature*
+against already-bound anchor columns. This pinned three of the long-standing unbound rare positional
+slots and forced a correction on the col60/61 set-piece pair. (Script: scratch `corr.py`/`corr2.py`;
+all from the owner's file, nothing committed.)
+
+Authoritative-name recheck: the 62-name GCPropertyPlayer **debug dumper FUN_00609ff0 @0x609ff0**
+("---GCPropertyPlayer Output Start---") was decompiled as a second witness to the schema-registration
+names — it prints each attribute as a 7-bit field (`&0x7f`, 4 per 32-bit dword) in runtime-struct
+order, re-confirming the name SET (and that LeftFoot/RightFoot are 0..100 ABILITIES; PreferredFoot is
+a separate schema field, field 62, not a dumped runtime field).
+
+### Pinned (UPGRADED L→H)
+- **col 1 = Central** (positional familiarity). corr with central positions all positive — Striker
+  +0.32, CentralDefender +0.29, DefMid +0.18, AttMid +0.16 — and negative with wide — FullBack -0.41,
+  Winger -0.15. Unique "plays centrally" signature among the unbound slots {Central, LeftSide,
+  RightSide, Roaming, GoalKeeper}.
+- **col 6 = LeftSide** and **col 12 = RightSide**, separated decisively by footedness:
+  corr(col6, LeftFoot col8) **+0.25** vs corr(col6, RightFoot) -0.04; corr(col12, RightFoot col11)
+  **+0.33** vs corr(col12, LeftFoot) -0.09. Left-side familiarity tracks left-footedness and vice
+  versa — the clean discriminator the earlier passes lacked.
+
+### Corrected (set-piece pair; resolves the 7th-pass "col60 DeadBalls refuted" dangling thread)
+- This file is **outfield-only**: PlayerProperties ids (76,051) ∩ GoalkeeperProperties ids (8,984) =
+  **0 overlap**. So a column cannot be a keeper rating, and even the GoalKeeper *familiarity* (schema
+  field 48, "can an outfielder deputise") is NOT the 98.8%-sentinel col61.
+- **col 61 = DeadBalls** (was "GoalKeeper"). col61 is ~1% populated and pairs **+0.746 with
+  PenaltyTaking (col62)**, +0.65 Crossing, +0.63 LongShots, +0.57 col60, -0.37 CentralDefender — the
+  textbook dead-ball/free-kick specialist profile, co-populated with the penalty takers. DeadBalls and
+  PenaltyTaking are the two schema set-piece fields and here they are the two rare (~900-player) cols
+  61/62.
+- **col 60 = UNRESOLVED (X)** — the 7th pass already refuted col60=DeadBalls via captures; with
+  DeadBalls now placed at col61, col60's identity is open (it is a normal 0..100 attacking-technique
+  bell: corr Flair +0.46, Finishing +0.45, LongShots +0.44, Crossing +0.37). Left unbound, not guessed.
+- **GoalKeeper familiarity (schema 48): now UNBOUND**, honestly, rather than mis-slotted at col61.
+
+### Checked but NOT upgraded (stay LOW — honest)
+- col 25 TeamWork: corr(Determination col29) +0.63 only places it in the attitude cluster; cannot be
+  split from the other hidden mentals (the 7th pass' best fit was "Composure", not in the name set).
+- col 49 Versatility: corr with #positions-played +0.12 — right direction, too weak to pin.
+- col 3 Roaming, col 13 PreferredFoot (weak-foot rating: low mean 6, ~0 foot correlation — consistent
+  with a real but undistinctive schema field), col 50/59 injury Resistance/RecoveryRate, and the rest
+  of the hidden-personality cluster: no distinctive on-pitch correlate exists in attribute values, so
+  they need a single-trait capture per attr or the live-deserialisation trace.
+
+Net effect on `super-manager-engine/playerdb/fullmap.go`: +3 H (Central/LeftSide/RightSide),
+col61 L→DeadBalls(M), col60 M→X(unresolved), GoalKeeper dropped (unbound). Name vocabulary now cited
+to BOTH the schema-registration fn and the dumper. Confidence tier "X" (proven-wrong, not re-pinned)
+added.

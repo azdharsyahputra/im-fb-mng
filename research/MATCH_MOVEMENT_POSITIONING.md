@@ -46,3 +46,11 @@ tweens dots between events) was not fully decompiled — it is cosmetic and irre
 does not affect the reconstruction. The precise pump ACTIVATION cadence (how often an entity fires an
 event) was also not pinned to a constant; it is unnecessary because the engine anchors event COUNTS to
 the real output distributions rather than re-deriving the tick rate.
+
+## Correction (from MATCH_TACTICS_FORMATIONS.md): FieldPosition.dat IS a pitch grid
+A later tactics pass showed the 268×32 FieldPosition.dat records are `id + namehash + 3×(Column,Row)`
+= base / attack-phase / defend-phase grid CELLS (GK id=1=(0,7); Column=depth, Row=width; -1 sentinel).
+So positions ARE grid cells per formation phase — but they are STATIC formation slots (base/attack/
+defend), NOT per-second continuous trajectories, and the stat resolvers still read only the condensed
+rating (STAT_GAMEPLAY_LINKAGE.md), not these cells. The "no per-second 22-player movement sim"
+conclusion stands; the "not coordinates" wording is corrected to "static formation grid cells, 3 phases".

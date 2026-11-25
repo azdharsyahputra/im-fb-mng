@@ -75,3 +75,22 @@ strikers at col13): key 10=442_Attacking, 8=442_Defensive, 9=442(base); 17=532_A
 — INFERRED-by-depth (medium confidence). Remaining ambiguous keys (1/25 both 5-4-1 → 541/451; 22/23 → 334/
 325; 2) are left UNBOUND rather than guessed — they need the Row sub-pattern or another source. Ported in
 formation/names.go ShapeKeyToName with per-entry confidence.
+
+## Cross-reference exhausted — the TeamTacticsID→name join is CODE-resident
+Checked every candidate DATA source for a key→name join; NONE exists:
+- .tac files: only the 4-byte NameID @0x525 differs across all 25 (confirmed by full pairwise diff) — one
+  template, no geometry/key field.
+- TeamTactics.dat (25×51), PositionTactics.dat (16×73): scalar presets, no formation hash in any record.
+- TeamTacticsFormation.dat / TeamTacticFormation.dat (48×8): UI menu grouping (member-id, group-id 1..18),
+  no key→name.
+- Only TeamTactic.dat carries the formation namehashes (= the id→name we already have).
+So the TeamTacticsID(geometry)→name join is not in shipped data; it is code-resident (the loader near the
+GCPositionTeamTacticsModule / formation selector).
+
+Structural matching (re-verified from cells) FULLY resolves the 442 and 532 families:
+- 442: key7=Diamond (DM+AM), 16=4132, 8/9/10 = Defensive/base/Attacking by depth.
+- 532: key2=Sweeper (lone CB at col3 behind the back four — corrects the earlier key4=Sweeper), 5=HolePlayer
+  (AM at col11), 3/4 = Defensive/Attacking by depth.
+Bound ≈19/25 (formation/names.go ShapeKeyToName). The irreducible remainder (keys 1,25,17 at the
+5-defender/4+DM boundary → 541/451/41311; 19,21 → 3412/343; 23 → 325) differs by a single player's line
+assignment, below the clustering threshold — those need the loader code trace, not more data.

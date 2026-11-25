@@ -306,3 +306,45 @@ intermediate integer "commentary ID" table in the exe — the name *is* the id.
   line was not isolated.
 - Full offset→key enumeration for all 26 expert templates (2 of 26 traced; rest inferred from the
   symmetric cascade).
+
+---
+
+## RESOLVED from the ISO — the commentary text + token grammar (VERIFIED)
+
+The earlier pass only had the exe (keys + CRC32 + emit) and could not see the sentences, because the
+text ships INSIDE the InstallShield installer on the game ISO, not loose. Extracted from the user's
+`Championship Manager 2008.iso` → `/Setup/data1.cab` (InstallShield, group `TextEnglish`) with
+`unshield`:
+  `unshield -g TextEnglish -d <out> x /Volumes/CM2008/Setup/data1.cab`  → `TextEnglish/Commentary.str`
+  (210 032 B) + `TextUnlocalised/Commentary.gid` (27 556 B). The same cabinet holds every other `.str`
+  (Club/City/Injury/News/stories/Media/Categories/TeamTactic…) and `DataXML/Mails/*.xml`.
+
+### Commentary.str format — VERIFIED
+Header `"STR1"` + `01 00 01 00` (version) + `u32 count` (4391) + `u32` (string-region size). The body
+is a stream of records `[u32 keyHash][u32 len][utf8 text]` back-to-back (the keyHash is the CRC32 the
+exe computes from the key name — FUN_00405530; the emit path matches by hash). So a selected
+GCMatchPredicate/Axiom key → CRC32 → the record whose hash matches → its template text.
+
+### Name-substitution token grammar — VERIFIED (corrects the earlier "[%…]" guess)
+Tokens are `#<slot><Tn><Fn>#`, NOT `[%…]`:
+- slot `1/2/3` = the participant (1 = actor, 2 = target/second player, 3 = third).
+- `T4 / T8 / T2 / T5` = the participant's team/role context (T4 dominates for on-pitch players; T8 =
+  manager/team context, seen in substitution lines).
+- `F0 / F2 / F5` = the name-format code (surname / full / variant).
+Observed frequency: `#1T4F0#` ×395, `#2T4F0#` ×123, `#1T8F0#` ×18, … The FE resolves each token against
+the live player/team object at render time.
+
+### Representative lines (VERIFIED, quoted for mechanism; the full corpus is the game's text, not copied here)
+- throw-in: `"#1T4F0# picks up the ball and takes the throw"`, `"The throw is taken by #1T4F0#"`,
+  `"#1T4F0# throws the ball back into play"`, bare `"Throw-in"`.
+- corner: `"Corner to be taken by #1T4F0#"`, bare `"Corner"`.
+- free kick: `"#1T4F0# sends in his free kick...."`, `"#1T4F0# fired in the free kick"`.
+- penalty/offside: `"The ref has given a penalty!"`, `"#1T4F0# scored a penalty!"`,
+  `"#1T4F0# strays fractionally offside"`, `"#1T4F0# was fouled in the penalty area, going past #2T4F0#"`.
+- substitution: `"Substitution by #1T8F0#"`, `"#1T8F0# made a substitution"`.
+
+### End-to-end, now complete
+GCMatchPredicate selected (FUN_009e9570, threshold 80) → key NAME → CRC32 (FUN_00405530) → GID lookup
+(Commentary.gid) → record in Commentary.str → template with `#…#` tokens → FE fills player/team names →
+displayed line. Nothing in this chain is left UNKNOWN now except the GID's internal name→hash directory
+layout (the hash match alone suffices to emit).

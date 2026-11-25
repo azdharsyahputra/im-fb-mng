@@ -28,8 +28,9 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 - INFERRED: the token vocabulary ([%…] / %team / %surname) lives in the external .str; the single
   live-match axiom emit call site; predicate→GID for the live-axiom path (verified only for the
   expert-comment path).
-- UNKNOWN: the literal commentary sentences + exact token syntax in Commentary.str (archive not on the
-  install media); the FE token-resolution function; 24 of 26 expert keys' exact field offsets.
+- RESOLVED (from the ISO installer, MATCH_COMMENTARY.md): the literal sentences + token grammar
+  `#<slot><Tn><Fn>#` are recovered from Commentary.str (extracted via unshield from /Setup/data1.cab).
+  Still UNKNOWN: the FE token-resolution function internals; 24 of 26 expert keys' exact field offsets.
 
 ## Morale / GCHappy (PLAYER_MORALE.md)
 - INFERRED: morale = initial baseline + time-decayed weighted sum of active effects; post-match

@@ -76,13 +76,18 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   C++ object (body+0x00 is a vtable pointer, never read as data) and its per-tick mover is a VIRTUAL
   method — an INDIRECT call that Ghidra's resolved call graph cannot see, which is why ~17 traced
   functions all read the position and none writes it. A full body-object field map is recovered (§4e).
-  STILL UNKNOWN: the position INTEGRATOR itself — but it is now UNBLOCKED, not walled. RTTI is fully
-  intact (MATCH_VTABLE_DISPATCH_MATRIX.md): the vtable walk is proven end-to-end (GCMatchResolverWrapperImpl
-  vtable @ 0xbd6c74, 37 slots, = the 0x9f region) via byte-search, and re-enabling Ghidra's RTTI analyzer
-  recovers the whole class/vtable graph. To pin the mover: identify the body/player-model CLASS (match its
-  +0x08/+0x10 layout to a TD) and walk its vtable; the mover is a virtual slot there. Also UNKNOWN (one
-  decompile each): the 37 resolver slot roles; FUN_004b0aa0 local-duel kernel; tier→event mapping;
-  posture-setters FUN_004ef5c0/1860/530 internals.
+  RESOLVED (MATCH_VTABLE_DISPATCH_MATRIX.md §7): the "position INTEGRATOR" is not a single function — the
+  player movement/behaviour layer is a **~250-state per-player finite state machine** (`GCPlayerStatePlayer*`
+  / `GCPlayerStateKeeper*`, names @0xb5be14–0xb5e9f8) dispatched VIRTUALLY per tick. Position is advanced by
+  whichever locomotion-state handler the player is in (Standing/RunningToBall/Dribble/SprintDribble — the
+  walk/jog/run/sprint tiers already ported in cm2008-formulas/movephysics), plus DribbleTurn* (turning
+  circle), shots, headers, fouls, keeper dive/save/push matrix. That virtual dispatch is why call-graph
+  walking never found a writer. Two engines reconciled: GCMatchResolverWrapperImpl (0x9f, 37-slot vtable) =
+  quick-sim/instant-result statistical resolver; GCPlayerState* FSM = full 2D match. RTTI is fully intact,
+  so the whole class/vtable/dispatch graph is reconstructible by byte-search (proven) or by re-enabling
+  Ghidra's RTTI analyzer (now staged in ~/.claude.json). REMAINING (one decompile each, not a search): the
+  literal per-state position-advance body (e.g. PlayerRunningToBall handler); the 37 resolver slot roles;
+  FUN_004b0aa0 local-duel kernel; tier→event mapping.
 - Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
   looks like competition fixture formatting, unconfirmed).
 

@@ -150,9 +150,65 @@ required — this is additive. **RECONSTRUCTED recommendation.**
   bodies.
 - Nothing here needs runtime, memory extraction, or DRM bypass.
 
+## 7. THE DECISIVE FINDING — a per-player finite state machine is the real movement model
+
+Walking the dispatch tables (byte-search in `.rdata`) resolved the structure completely, and it reframes
+the whole "position integrator" hunt.
+
+**The 0x498 handlers are named STATE classes.** `search_bytes("40 8d 49 00")` (the address of the
+unregistered function at 0x498d40) hits `.rdata` @0xb5efa4, inside a **{handler_ptr, state-name}
+registration table**. `read_bytes` there decodes inline names: FUN_00498d40 ↔
+`"GCOfficialStateRefereeHalfMilling"`, with siblings `GCOfficialStateRefereeAfterShootout`,
+`…RefereePlayerArguement`, `…OfficialSignallingSubstitution`, `…AwaitingCornerKick`. So FUN_00498ac0 is
+the shared handler for **referee/official stoppage states**, and the 0x498 region is the official
+state machine.
+
+**The player movement model is a ~250-state FSM (VERIFIED).** `search_strings("GC(Player|Ball|Match)State…")`
+returns **~255 `GCPlayerStatePlayer*` / `GCPlayerStateKeeper*` state names** (0xb5be14–0xb5e9f8), a complete
+football behaviour/animation state machine:
+- **Locomotion (the distributed "mover"):** `PlayerStanding`, `PlayerTactical`, `PlayerRunningToBall`,
+  `PlayerDribble`, `PlayerSprintDribble`, `PlayerMilling`, `PlayerHalfMilling`, `PlayerSkipping`,
+  `PlayerLeaving` — these are exactly the **walk/jog/run/sprint speed tiers** recovered from formula.xml
+  MatchResolver (cm2008-formulas/movephysics).
+- **Turning circle:** `PlayerDribbleTurn1R/2R/3R/4/1L/2L/3L`.
+- Feints `Spin/Lollypop/Dummy/DragBack`; shots `Curl/SideFoot/Volley/Hook/Overhead/Running/Dribble`;
+  heading ×8; fouls `Tripping/Elbowing/PullShirt/BlockTackle/SlideTackle/HookTackle/DirtyTackle/TakesDive/
+  Handball/Stumble/Whack`; a full keeper `Dive/Save/Push {Low,High,Close}×{Left,Right}` matrix, plus
+  `Clutching/Smothering/Punching/Tipping/Bowling/Rolling/…`.
+
+### Why the integrator was never found by call-graph — resolved
+
+There is **no single position-integration function.** Each player carries a state object; the per-tick
+update is the **current state's handler (a virtual method)**, and that handler advances the player's
+normalized X/Y (body+0x08/+0x10) at the speed its state implies (Standing≈0, RunningToBall≈run,
+SprintDribble≈sprint). The match tick dispatches these handlers **virtually**, through the state object's
+vptr — invisible to Ghidra's resolved call graph, which only connects direct calls. ~17 functions were
+traced on the consumer side and none wrote the position precisely because the writer is whichever of ~250
+state handlers the player is currently in, reached by indirect dispatch. This also reconciles the two
+engines: the **0x9f `GCMatchResolverWrapperImpl`** vtable is the **instant-result / quick-sim** resolver
+(statistical — the balance-tier atom etc. already ported), while the **`GCPlayerState*` FSM** is the
+**full 2D match** path. Both ship; the player picks one.
+
+**Cross-validation (RECONSTRUCTED):** the FSM's locomotion tiers (Standing / RunningToBall / SprintDribble
+/ Backing-equivalents / SlideTackle / DiveHeading) map 1:1 onto the speed-state table already ported in
+cm2008-formulas/movephysics (Walking/Jogging/Running/Sprinting/Backing/Sidling/Diving/Sliding) — the
+formula.xml physics constants are the per-state speed/accel parameters this FSM consumes.
+
+### To extract an exact per-tick position write (optional, now mechanical)
+
+Each `GCPlayerStatePlayer*` is a state class; its handler is a virtual slot reachable by the §B RTTI walk
+(TD → COL → vtable → the tick/update slot) or via the parallel `{handler_ptr[], name_ptr[]}` enum arrays
+that register the FSM. Decompiling, e.g., the `PlayerRunningToBall` handler would show the literal
+`body+0x08 += speed·dir·dt` update. That is one decompile per state, not a search — the *structure and
+semantics* are already fully mapped from the names, which is exactly what the spec asked for.
+
 ## Conclusion
 
-The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. State handlers,
+The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. **The player
+movement/behaviour layer is a ~250-state per-player finite state machine (`GCPlayerState*`), dispatched
+virtually; the "position integrator" is distributed across its locomotion-state handlers, not a single
+function** — which is the definitive reason static call-graph walking never found one. The quick-sim path
+is the separate `GCMatchResolverWrapperImpl` (0x9f) statistical resolver. State handlers,
 their owning classes, inheritance relationships, vtable addresses and slot counts are reconstructible by a
 byte-search RTTI walk (proven on `GCMatchResolverWrapperImpl`: vtable @ 0xbd6c74, 37 slots, = the 0x9f
 region) or by re-enabling Ghidra's RTTI analyzer. The earlier "virtual dispatch is a static wall" plateau

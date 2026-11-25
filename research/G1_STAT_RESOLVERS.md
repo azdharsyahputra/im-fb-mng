@@ -56,3 +56,16 @@ All 3 stat-resolvers' MECHANISMS are VERIFIED, and all use the SAME integer idio
   is NOT 1:1 (user-flagged, not ported).
 Exact per-gate thresholds of a029c0 (which attribute → which byte) not all traced. Event GENERATOR
 (which atom fires when/between whom) remains the large open core (~190-fn subsystem, see G1_MODEL.md).
+
+## a029c0 condition flags — FUN_005a9770 / FUN_005a9750 (VERIFIED)
+The a029c0 outcome-path selection (quick 0x40000/0x50000 vs the main 3-stage best-of-6) is gated by
+EVENT-OBJECT condition bits, read via two tiny bit-test helpers (ecx = the event object):
+- `FUN_005a9770(mask)` = `(([event+0x44] & mask) & 0x1ff) != 0` — tests the 9-bit flag field at
+  event+0x44 (used on the "detailed" path, when `[ctx+0xc] & 0x1e000000 == 0x2000000`).
+- `FUN_005a9750(mask)` = `((([event+0x40] >> 0x15) & mask) & 0x1ff) != 0` — tests bits 21+ of
+  event+0x40 (the non-detailed path).
+a029c0 reads them with masks 8/4/2/0x10/0x40/0x80/0x100 into local_29/28/cVar1/2a/26/27/25; these pick
+the resolve path: cVar1 (bit2) / local_2a (bit0x10) enable the gates, local_28/29 drive the single-gate
+0x40000/0x50000 outcomes, local_26/27 the balance guards. So the "which outcome kind" is set by the
+event descriptor's own condition bitfield (+0x40 / +0x44); the exact real-world meaning of each bit is
+the event-type definition (INFERRED). Completes the a029c0 decode.

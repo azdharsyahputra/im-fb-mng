@@ -9,6 +9,7 @@ Each row = a Go component checked byte-for-byte against the crack. ✅ matches /
 | `lcg.IntN` ((Next()*n)>>32) | mov 0x7d; mul [scale] (high dword) @0xa02638 | ✅ VERIFIED 1:1 |
 | `contest.Shootout` PK odds | FUN_00a023f0: (draw*125)>>32 ≤50 miss, else score (p=74/125≈0.592) | 🔧 FIXED (was inverted 0.408) → commit 30d2ad1 |
 | `contest.TallyDuel` duel atom | FUN_0077c710: repeated GEOMETRIC tally — while u<shareA bump ctrA, then while u<shareB bump ctrB; shareA=0.5·A/(A+B); two 5-bit counters | ✅ PORTED 1:1 (47aa8b2): verified vs derived distribution (A==B → 1/3,1/3 symmetric, P0=0.75; 100v20 → 0.714/0.091). Old binary `Resolve` relabelled clean-room narrative projection. Aggregation mode (al≥2) not ported (no caller context). |
+| `contest.ResolveBestOf6` (a029c0 core) | FUN_00a029c0: best-of-6 exceedance count over two 7-bit attrs, scale 125, extreme-smoothing, tie re-roll; outcome desc+4 0x20000/0x30000 | ✅ PORTED 1:1 (95959c1): A==B→0.5003 symmetric, A100vB20→>0.95; flag-gated quick paths (0x40000/0x50000) + balance pre-check noted, not ported |
 | `predicate.RankThreshold` = 80.0 | `fld [0xb5b10c]`(=80.0f) pushed to rank-filter FUN_009e9570 in FUN_0077c540 @0x77c575 | ✅ VERIFIED 1:1 |
 | `geometry` SCALE=1/255 | byte read .rdata @0xb73954 | ✅ VERIFIED (prior) |
 | `formula` evaluator ops (binop 1-5, agg 0-2) | FUN_00818080/00817df0 jump tables | ✅ VERIFIED 1:1 (prior, 300c46a) |

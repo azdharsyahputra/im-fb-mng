@@ -57,3 +57,63 @@ eligible event type); (2) find where the eligible action WRITES a descriptor (de
 class) into the pool — the actual event creation; (3) how the action vector (+0x98) is populated per
 entity/zone. Items (1)-(3) span the ~190-fn subsystem and want the Ghidra decompiler (currently slow to
 analyze this 11 MB image) for a tractable multi-pass port. Capstone recon continues on the trio next.
+
+---
+
+# Pass 2 — decompiler-driven (Ghidra now working; RTTI+CallConvID disabled, 3G heap)
+
+## The scheduler FUN_009d52e0(group) — DECOMPILED (VERIFIED)
+`in_ECX` = match context; `param_1` = a GROUP index. Three callers (0x9d5640 / 0x9d57b0 / 0x9d5a10)
+⇒ param_1 ∈ {0,1,2} = **3 zones** (INFERRED: Attack/Midfield/Defence, matching the 3×3 GCMatchPredicate
+zone model). Two modes on `ctx+0x150`:
+
+### Mode 0 (ctx+0x150==0) — normal per-tick generation
+```
+slot = 0
+begin = *(ctx + 0x98 + group*0xc)              // action vector {begin,end} per zone
+end   = *(ctx + 0x9c + group*0xc)
+cadenceFired = (ctx+0x154 <= clock[*(ctx+0x148→).0xe4 +0x48])
+for action in [begin,end) stride 4:
+    slotResult = FUN_009d3e50(action)           // dest byte for this slot
+    *slotResult = FUN_009d0fb0(group, slot)     // eligibility (predicate eval)
+    slot++
+if cadenceFired: ctx+0x154 += 10.0f             // +10s entity cadence (VERIFIED const 0xc5d43c)
+// event BUILDERS (turn eligibility → events):
+FUN_0048dbd0(buf); FUN_009d45d0(buf,group); FUN_009d4930(buf,group);
+FUN_009d4090(group); FUN_009d41f0(group)
+ctx+0x15c+group*4 = FUN_0048c790(group)
+ctx+0x164+group*4 = FUN_0048c7c0(group)
+```
+
+### Mode 1 (ctx+0x150==1) — record-walk variant
+Walks records (FUN_005cdcf0 → FUN_009fdd60), eligibility from record flags (`rec+0x10==-1 ||
+rec+0x11!=-1`), state `rec[0x2c]&0x3ffff` (skip 0x20000). Then builders FUN_009d4c60/9d4fc0/9d4090/
+9d41f0. (A different source of eligibility; same builder tail.)
+
+## The predicate eval FUN_009d0fb0(group, slot) — DECOMPILED (VERIFIED)
+```
+FUN_009efa90()                                   // resolve ctx+0x148 handle
+c = FUN_0048c8c0(group, slot, &out)              // predicate A: slot-lookup, bool
+FUN_009d0a00(buf)
+if (c != 0 && FUN_004956e0(group,slot)==0)       // predicate B: u16 state == 0
+    FUN_0048c470(group, slot)                    // predicate C: object byte +0x1b3
+```
+The per-(group,slot) record model (VERIFIED from the trio):
+- records are **0x34c (844) bytes**, indexed `group*0x17 + slot` (0x17 = **23 slots/zone**).
+- `FUN_0048c8c0`: searches a pointer table `*(ctx+0xd8) + 0x114 + (i + group*0xb)*4` for the record
+  address `ctx + (group*23+slot)*0x34c + 0x7e8`; count at `*(ctx+0xd8)+0x48e+group`. Returns the hit
+  index → the slot's eligibility key.
+- `FUN_004956e0`: reads u16 `*(ctx + 0x760 + (group*23+slot)*2)` — a per-slot STATE/counter; eval
+  requires it `== 0`.
+- `FUN_0048c470`: follows `*(ctx + (group*23+slot)*0x34c + 0x8d8)` → reads byte `+0x1b3` of that obj.
+
+## What pass 2 nails (VERIFIED) + what's open
+NAILED: the generator is a per-tick, per-ZONE (×3) walk of ≤23 action slots; each slot's eligibility is
+a 3-predicate test over an 844-byte per-slot record (pointer-table membership + a u16 state==0 + an
+object flag); the +10s cadence advances per zone. The 3×3 zone model is now concrete in the data layout
+(3 zones × 23 slots).
+OPEN (pass 3 — the heart): the **event BUILDERS** FUN_009d45d0 / FUN_009d4930 / FUN_009d4090 /
+FUN_009d41f0 (+ FUN_0048c790 / FUN_0048c7c0 result computers) — these consume the eligibility bytes and
+WRITE the actual event descriptors (desc+8 type, desc+4/5/6 class) into the pool, i.e. decide which
+event fires between whom. Decompiling these four is the next pass. With the decompiler working this is
+now tractable (no longer a capstone needle-hunt), though still a multi-pass port.

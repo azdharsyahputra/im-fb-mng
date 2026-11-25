@@ -213,3 +213,45 @@ engine is the commentary/analysis selector on top. This closes the G1 "open core
 remaining richness is (a) how each entity's per-tick class flag is set (entity role/state, a small
 local decision, not a global generator) and (b) the a029c0 multi-gate resolver's exact thresholds —
 both bounded, not a multi-week AI port.
+
+---
+
+# Pass 5 — CLOSE-OUT: both remaining items resolved (class flags + a029c0 thresholds)
+
+## Item 1 — who sets the descriptor class flags (desc+4/5/6)? → the RESOLVER itself (VERIFIED)
+cf20 (FUN_0077cf20) does NOT set them: it is the activate/report phase — resolves contestants, calls
+presentation handlers, calls FUN_0077c540 (the GCMatchPredicate commentary filter) when the
+detailed-match gate FUN_0069a610 is active, and clears the pending bit (`[ecx+0x18] &= 0xfef7ffff`).
+Instead, **FUN_00a029c0 writes `*(param_1 + 4)` directly** with the outcome class code. So the event's
+class/outcome flag that cd40 routes on is the **resolver's OUTPUT**, not a value chosen by a separate
+generator. Outcome codes written to desc+4 (bits 16-19):
+- `0x10000` imbalance / no-contest (counter sums don't match, or local_27 guard)
+- `0x20000` side-B result (uVar8 > uVar11)   · `0x30000` side-A result (uVar11 > uVar8)
+- `0x40000` single-gate decisive (local_29 path)   · `0x50000` split (local_28 path)
+- `0x00000` (mask only) when fully balanced and no flags.
+This closes "who sets the per-entity class flag": the contest RESULT is the class; there is no upstream
+event-type chooser.
+
+## Item 2 — a029c0 per-gate thresholds → the two contestants' 7-bit attributes (VERIFIED)
+- A = `*(byte)(A_idx*0x34 + [DAT_00c80464+0x2c] + 0x2c)`, B = same `& 0x7f`, where A_idx/B_idx =
+  `*FUN_005ce3e0(0/1) & 0x1fffff` (0x100000/0x1fffff are null sentinels). So the thresholds are the
+  participants' 7-bit attrs, from a 0x34 (52)-byte record table.
+- Quick gates (cVar1 path): `value=(draw*0x7d)>>32` vs A, `value=(draw*0x7f)>>32` vs B (scales 125,
+  127); follow-up draws use scale 10; bumps FUN_005cd020 and packs desc+0x38/+0x18 counters.
+- Main resolver (local_2a path) = **best-of-6 count**: for each side, draw up to 6× `value=(draw*125)
+  >>32`; `if value <= attr: break; else count++` → count = how many of ≤6 draws exceed the attr.
+  Then **extreme-smoothing** (exact): `(uVar11==5 & uVar8<4)→uVar8=3`, `(uVar8==5 & uVar11<4)→uVar11=3`,
+  `(uVar11==4 & uVar8<2)→uVar8=1`, `(uVar8==4 & uVar11<2)→uVar11=1`. Store via FUN_005ccff0(0/1,count).
+  Compare: uVar11<uVar8 → desc+4|0x30000; uVar8<uVar11 → |0x20000; tie → re-roll both (scale 125)
+  until they differ. Also an initial team-counter aggregation (sum of packed 5-bit fields over both
+  teams' records → local_1c/local_18) gates whether the resolve runs at all.
+
+## G1 — CLOSED
+The causal match engine is now fully mapped and (for the duel) ported:
+- Gameplay = per-entity/per-tick resolvers (duel FUN_0077c710 = geometric tally [ported as
+  contest.TallyDuel]; a029c0 = best-of-6 attribute gate [this pass]; penalty shootout [ported]). Each
+  writes its own outcome into desc+4, which cd40 routes to presentation. No separate "event generator".
+- Reporting = FUN_009d52e0 publishes per-player stats to the FE (pass 3).
+- Commentary = the GCMatchPredicate scorer/selector, threshold 80 (pass 4).
+Remaining is only mechanical breadth (porting a029c0's best-of-6 gate to Go like TallyDuel, and the
+per-event flag reads FUN_005a9770/9750) — bounded, not open research.

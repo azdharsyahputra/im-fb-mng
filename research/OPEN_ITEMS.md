@@ -86,9 +86,22 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
 ## Misc features (MISC_FEATURES.md)
 - INFERRED: on-disk column→field bindings for several tables (byte-range + declaration order, not
   value-confirmed); the International layouts.
-- UNKNOWN: the exact decision/generation formulas — injury roll, award ranking criteria, tendency
-  generation; Award.dat @4/@8 columns; the PersonInjury @4 anomaly (max observed type id 47 > the 42
-  Injury.dat rows).
+- RESOLVED: **tendency generation** = data-table driven, not code/formula. Tendencies are stored in
+  PlayerProperties cols 63..76 (the 14 "…Or…" sliders, 0..15, VERIFIED). Generation = **GCTendencyStereotype
+  Module** (RTTI @0xc24e68, a GCDataModule2) replaying the shipped **TendencyGeneration.dat** ("DATa",
+  108 recs × 72B = 36 u16; a stereotype lookup: col0 key 0..66, col2 sub-index, cols4..19 input/condition
+  slots, cols20..35 output slots in the 5..15 slider range). Port = ship the .dat + replay the 108-row
+  stereotype to write cols 63..76. (Full per-column names need TendencyGeneration.inc, not shipped.)
+- RESOLVED (architecture) / UNKNOWN (integers): **card/suspension discipline**. NOT in formula.xml
+  (ManagerDiscipline's 4 formulas govern the MANAGER's touchline conduct, not player bans) and NOT in any
+  shipped .dat. Mechanism: per-player NumberYellowCards/RedCards counters pooled per Competition
+  **DisciplineGroupID** (Competition.inc field, schema builder FUN_00a62de0), reset per **ClearDisciplineCards**,
+  region-scoped (Data/IDConversion/DisciplineID.csv). The "N yellows = M-match ban" thresholds are inline
+  CODE CONSTANTS in the round-end processor (no named field/string/fn) — still need a targeted deep trace
+  of the GCRoundPosition discipline path to pin the exact integers.
+- UNKNOWN: the exact injury roll / award ranking criteria (injury/ageing/reputation FORMULAS are in
+  formula.xml — PhysioInjuries/PlayerAgeingFactors/PlayerReputation); Award.dat @4/@8 columns; the
+  PersonInjury @4 anomaly (max observed type id 47 > the 42 Injury.dat rows).
 
 ## Season / competition (SEASON_COMPETITION_SIM.md)
 - INFERRED: CompetitionTeam @4 meaning; Group/Fixture packed sub-bytes; the double-round-robin

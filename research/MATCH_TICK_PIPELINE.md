@@ -149,6 +149,45 @@ chance, even midfield, etc.) and the phase scheduler above it.
 
 ---
 
+## 4b. Second behaviour config + the marking pass (traced while hunting the integrator)
+
+- **`DAT_00c68428`** — a SECOND match config singleton, 0x5e0 (1504) bytes, constructed by
+  `FUN_004e4e80`, destructor `LAB_004800f0`, lazy getter `FUN_00480110`. It is read from **several
+  hundred sites** across 0x49–0x4f (and is also populated inside the big initializer FUN_009f4dd0, so
+  that 10KB routine seeds BOTH config objects). This is the master behaviour/physics parameter block the
+  live match math reads. Its field +0xe8 is a float scale used in the reachability term below.
+  **VERIFIED** (identity/size/constructor); field meanings mostly **UNKNOWN**.
+- **`FUN_004f4b10`** — the opponent **man-marking / assignment** pass. Loops the opposing side's 23
+  entities (side `^1`), commits each position via `FUN_004b8ef0`, tracks several "best candidate"
+  extrema, then writes assignment codes {1,2,3,4} into `matchstate+0x250 + slot*8` with a target id at
+  `+0x24c` (up to 0x62=98 slots). Recovered decision inputs:
+  - **reachability term** `(1 − rng · body+0x0c · DAT_00c68428+0xe8) · entity+0x17c` — compared against
+    **0.5**; `body+0x0c` behaves as a SPEED/closing-rate term, `entity+0x17c` as a cap. **VERIFIED**
+    shape; semantics INFERRED.
+  - role/position gate `body+0x74` with thresholds **>9, <7, >6**; duel-rating gate `local_27 < 0x4c`
+    (76). **VERIFIED** constants.
+  This is marking logic (who picks up whom), not position integration — it READS positions.
+
+### Extra body fields seen this pass
+
+| Body offset | Type | Meaning | Evidence |
+|---|---|---|---|
+| `+0x0c` | float | speed / closing-rate (×config+0xe8 in reachability) | FUN_004f4b10 |
+| `+0x14` | float | threat / secondary position metric (tracked as a max) | FUN_004f4b10 |
+| `+0x1b7` | byte | secondary per-player metric (tracked as a max) | FUN_004f4b10 |
+| `+0x74` | int | role / position id (gated >9 / <7 / >6) | FUN_004f4b10 |
+
+The four consecutive floats at body **+0x08, +0x0c, +0x10, +0x14** are consistent with a
+position/velocity pair — pos = (+0x08 X, +0x10 Y), with +0x0c / +0x14 as the matching rate/velocity
+components — but that pairing is **INFERRED**, not yet proven by the writer.
+
+### The four FUN_004b8ef0 callers are all READERS
+
+`FUN_004eff60` (side duel-mean), `FUN_004f09b0`/`FUN_004f0a10` (thin "commit N times" wrappers, count
+from `matchstate[2]+0xd8 + 0x48e + side`), `FUN_004f4b10` (marking). None writes body+0x08/+0x10 — they
+all consume the already-updated continuous position. So the integrator is in a separate subsystem
+(reached before this consumer cluster runs), not yet located by static call-graph walking.
+
 ## 5. Codeable atom
 
 The balance-tier classifier (§3d) is fully constant-verified and can be ported 1:1 as a resolver atom

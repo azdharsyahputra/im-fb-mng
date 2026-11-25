@@ -58,19 +58,29 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   Still UNKNOWN: the FE token-resolution function internals; 24 of 26 expert keys' exact field offsets.
 
 ## Morale / GCHappy (PLAYER_MORALE.md)
-- INFERRED: morale = initial baseline + time-decayed weighted sum of active effects; post-match
-  mutation + recovery-toward-baseline behaviour.
-- UNKNOWN: the exact per-effect numeric magnitudes (live in runtime GCHappyEffectData / HappyMemory.dat,
-  not static); the decay-formula coefficients; the numeric concern thresholds; the canonical integer
-  enum id per effect.
+- RESOLVED (formula.xml, ported to cm2008-formulas/happiness): the per-effect magnitudes, decay
+  coefficients and thresholds the old notes called "UNKNOWN runtime" are STATIC after all — group
+  **PersonHappiness (75 formulas)** gives each effect's Max/MinRange, StartTimeOffset, Duration,
+  DecayRate, RepeatEffectFactor (e.g. EventPraise*, and the full event catalog); group
+  **PlayerHappiness (37)** gives HappinessStateThreshold(Multiplier), HappinessUpdateFrequency, the
+  per-situation inputs. These are the game's own tuning values, now coded.
+- GENUINELY RUNTIME (per-save, and NOT needed to code the engine — the engine generates it from the
+  formulas above): a specific player's CURRENT happiness memory (which events they presently hold) in
+  the save's GCHappyEffectData / HappyMemory.dat. The canonical integer enum id per effect is the only
+  static loose end (naming, not value).
 
 ## Management: contract / finance / transfer / board (MGMT_CONTRACT_FINANCE.md)
-- INFERRED: ContractDetail wage@4:f64 and bigMoney@12:f64 meanings; ContractLoan flag-bit meanings;
-  Club.dat @14 = Bank Balance (strong); the file-offset→budget labels (@38/@62/@74/@110).
-- UNKNOWN: the exact wage-formula arithmetic (Min + Mult·base^Exp, cap — site not pinned); the precise
-  AI transfer-bid fee and ProcessOffer accept threshold; the board confidence-delta store site; the
-  Club.dat file-offset → {transfer,wage} budget 1:1 mapping; Board.dat populated-row packing; the
-  ContractDetail tail + loan-flag encodings.
+- RESOLVED (formula.xml — the FORMULAS the old notes called "UNKNOWN" are static and ported):
+  wage/salary arithmetic = groups **WageLimits (34), NewPlayerSalary (3)** → cm2008-formulas/wagefinance;
+  transfer fee / AI value / accept = **ManagerPlayerTransferValue (44), ActualPlayerTransferValue (29),
+  PlayerBuyingPrice/SellingPrice/Value, TransferModule, ContractInterest** → cm2008-formulas/transfervalue;
+  board confidence / request thresholds / sacking = **BoardAI (19), BoardRequest (37), BoardExpectation,
+  ManagerSacking (17)** → cm2008-formulas/managerai. (So "wage-formula arithmetic / transfer accept
+  threshold / board confidence-delta UNKNOWN" is retracted — all in the decrypted XML and coded.)
+- STILL OPEN — only the BYTE-OFFSET bindings in the save tables (static, value-confirmable, tedious):
+  ContractDetail tail + loan-flag bit encodings; Club.dat file-offset → {transfer,wage} budget 1:1
+  labels (@38/@62/@74/@110); Board.dat populated-row packing. The board/finance VALUES per save are
+  runtime, but the engine computes them from the ported formulas.
 
 ## Misc features (MISC_FEATURES.md)
 - INFERRED: on-disk column→field bindings for several tables (byte-range + declaration order, not
@@ -125,8 +135,20 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   ties), NOT match-event capture. CONFIRMED: no on-disk saved-match/video-replay format exists; in-match
   "watch replay" re-runs the live stat/FSM pipeline (ctx+0x150), not a loaded file.
 
-## The common root of most UNKNOWNs
-Two buckets dominate: (1) RUNTIME-only magnitudes (morale weights, live ratings, board confidence) that
-are not in the static image; (2) external DATA maps (Commentary.str, IDConversion CSVs, .tac field
-names) that ship outside the exe. Neither can be honestly coded from the crack alone — they need the
-runtime or the external data files, not more disassembly.
+## The common root of what actually remains (CORRECTED)
+An earlier version of this section claimed "morale weights, live ratings, board confidence" were
+RUNTIME-only — that was WRONG. Those are FORMULAS, and the decrypted `formula.xml` holds them (ported to
+cm2008-formulas: happiness, managerai, wagefinance, transfervalue, movephysics, …). Rule of thumb:
+every FORMULA/weight/constant the engine uses is in the exe or in `formula.xml` and is static-recoverable
+(the program cannot run without it). What genuinely remains is only:
+1. **Static code not yet traced** — e.g. the DB-attribute→person+0x3c contest-rating builder (the
+   snapshot writer behind cache [0xc775b8]); recoverable, just needs the trace.
+2. **Byte-offset bindings not value-confirmed** — ContractDetail/Club/Board/GCRoundPosition column
+   offsets, Award.dat columns; static, tedious.
+3. **The disk-column→name permutation** (PlayerProperties/GoalkeeperProperties) — encoded in the loader's
+   positional bit-pack, not a static table; recoverable by trace, captures, or a runtime dump.
+4. **External data files** — Commentary.str token-resolver internals, IDConversion CSVs (ship outside
+   the exe).
+5. **Per-save LIVE STATE** (a given player's current morale memory, a board's current confidence value,
+   a player's current CA) — genuinely runtime, but NOT needed to code the engine: it is GENERATED from
+   the static formulas above, not an input to recover.

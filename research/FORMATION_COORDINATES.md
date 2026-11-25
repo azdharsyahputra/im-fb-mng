@@ -1,5 +1,18 @@
 # Formation pitch coordinates — VERIFIED source (FieldPosition.dat + PositionTeamTactics.dat)
 
+> **CORRECTION (cross-checked against the key schema + a second pass).** The COORDINATES below are VERIFIED
+> and stand. But the middle column of PositionTeamTactics.dat is **TeamTacticsID**, not a name-ordered
+> "FormationID" (VERIFIED key schema GCPositionTeamTactics, MATCH_TACTICS_FORMATIONS.md §2.1:
+> FieldPositionID, TeamTacticsID, PositionTacticsID). Each of the 25 TeamTacticsID keys resolves to a real
+> 11-man formation SHAPE (verified: key 8→4-4-2, 11→4-3-3, 14→4-2-3-1, 4→5-3-2, 6→4-1-4-1), so the geometry
+> is sound — BUT the key→formation-NAME binding is NOT established: the TeamTacticsID order does NOT match
+> the .tac name-array order (e.g. .tac index 8 = "352", yet TeamTacticsID 8 is a 4-4-2), and a coarse
+> def/mid/att shape collides across keys/variants. So treat "FormationID N" below as the numeric
+> TeamTacticsID key, and the earlier "FormationID 8 = 442 (name-aligned)" phrasing as RETRACTED — it is a
+> 4-4-2 by SHAPE, not by name-index. TeamTactic.dat is the 25 squad-tactic presets (not formations); its
+> namehashes are not the formation names, and zlib.crc32 does not reproduce them. The name↔geometry binding
+> stays OPEN; coordinates-by-id are VERIFIED and usable (formation/grid.go SlotsByID).
+
 Resolves the long-standing open item "runtime NameID→FieldPosition-cell assignment UNKNOWN". The real
 per-formation, per-player on-pitch home cells ARE in two shipped DATa files (NOT code-resident). Decoded
 from bytes and re-verified independently.

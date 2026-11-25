@@ -23,11 +23,15 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   TeamTactics/PositionTactics per-field byte offsets (declaration order known, each byte not verified).
 - RESOLVED (ISO_GAME_DATA.md): the 25 shipped .tac are byte-identical except a 4-byte NameID — they do
   NOT store distinct grids, so formation shape is name-keyed (tactics.ZoneCounts).
-  RESOLVED (FORMATION_COORDINATES.md): the runtime NameID→FieldPosition-cell assignment IS in shipped data
-  — FieldPosition.dat (268×32B: id, namehash, 3 (Column,Row) base/attack/defend cells; Column depth 0..15,
-  Row width 1..13) + PositionTeamTactics.dat (25 formations × 11: FormationID→FieldPositionID FK). Ported to
-  formation/grid.go (VERIFIED coords). Still UNKNOWN: FormationID(1..25)→NAME binding (shape-matched, needs
-  the name-hash fn); the tactical-sub formula; the zone-contestant selection.
+  PARTLY RESOLVED (FORMATION_COORDINATES.md): the per-key field-cell geometry IS in shipped data —
+  FieldPosition.dat (268×32B: id, namehash, 3 (Column,Row) base/attack/defend cells; Column depth 0..15,
+  Row width 1..13) + PositionTeamTactics.dat (275=25×11: {PositionTacticsID, TeamTacticsID(1..25),
+  FieldPositionID FK}). Each TeamTacticsID resolves to a real 11-man shape (8→442, 11→433, 14→4231, 4→532,
+  6→4141) — COORDINATES VERIFIED, ported to formation/grid.go (SlotsByID, keyed by the numeric
+  TeamTacticsID). STILL UNKNOWN: the TeamTacticsID→formation-NAME binding — the key order ≠ the .tac
+  name-array order and coarse shapes collide; TeamTactic.dat is squad-tactic presets (not formations) and
+  zlib.crc32 does not reproduce its namehashes, so the name↔geometry link needs another table or the .tac
+  NameID field map (unreversed). Also still UNKNOWN: tactical-sub formula; zone-contestant selection.
 
 ## Commentary (MATCH_COMMENTARY.md)
 - INFERRED: the token vocabulary ([%…] / %team / %surname) lives in the external .str; the single

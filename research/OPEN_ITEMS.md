@@ -72,11 +72,14 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   (1) resolution FUN_004b8ef0→FUN_004eff60/FUN_004efef0→FUN_004f1570 (duel→side→balance tier; pivot 55,
   slope 0.5, tiers 0.30/0.65/1.30/3.00); (2) decision/targeting FUN_00498ac0→FUN_004f8b90→FUN_004f2180→
   FUN_004ef490→FUN_004a8160 (posture→zone target→candidate scoring). EVERY function in both trees READS
-  body+0x08/+0x10; none writes them. STILL UNKNOWN: the position INTEGRATOR (the per-tick writer of
-  body+0x08/+0x10) — architecturally SEPARATE from and upstream of the 0x4b–0x4f logic module, not
-  reachable by call-graph walking; pinning it needs the body-object class (via its allocator/constructor
-  at entity+0xf0) or runtime watchpoints. Also UNKNOWN: FUN_004b0aa0 local-duel kernel; tier→event
-  mapping; the posture-setters FUN_004ef5c0/1860/530 internals.
+  body+0x08/+0x10; none writes them. ROOT CAUSE (MATCH_TICK_PIPELINE.md §4e): the body is a POLYMORPHIC
+  C++ object (body+0x00 is a vtable pointer, never read as data) and its per-tick mover is a VIRTUAL
+  method — an INDIRECT call that Ghidra's resolved call graph cannot see, which is why ~17 traced
+  functions all read the position and none writes it. A full body-object field map is recovered (§4e).
+  STILL UNKNOWN: the position INTEGRATOR itself. Pinning it now needs vtable archaeology (find the body
+  constructor's `mov [obj],vtable` via a byte/offset-write search the current REA tools lack) or an
+  indirect-call/data-flow resolver; runtime watchpoints are excluded (no exe execution). Also UNKNOWN:
+  FUN_004b0aa0 local-duel kernel; tier→event mapping; posture-setters FUN_004ef5c0/1860/530 internals.
 - Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
   looks like competition fixture formatting, unconfirmed).
 

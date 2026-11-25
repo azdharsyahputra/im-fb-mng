@@ -245,6 +245,68 @@ constructor (the entity-array initializer that stores the body pointer at entity
 update method, or (b) runtime observation (watch writes to a body's +0x08). Static call-graph tracing
 from the consumer side has been exhausted.
 
+## 4e. Allocator hunt — the body is a POLYMORPHIC object; the mover is a VIRTUAL method
+
+Pursuing the body-object class, the lineup/role-setup path was mapped (all readers, no position write):
+- `FUN_004ef8a0` — lineup accessor: `*((matchstate[2]+0xd8)+0x114 + (side·11 + idx)·4)` — a table of **11
+  starter pointers per side** (pointers into the 23-entity array), separate from the physical array at
+  `matchstate[2]+0x7e8`.
+- `FUN_004f8a30` — per-starter lineup/marking setup: clears body+0x7c / +0x214, assigns the marking
+  target `body+0x8c`, accumulates `entity+0x2bc` into `matchstate+0x59c`, then cascades to six per-phase
+  steps (FUN_004f4eb0/12c0/efaa0/f1350/ef8d0/ef9b0).
+- `FUN_004efaa0` — assigns each starter a role/zone id (`body+0x74 = FUN_004a7f20(matchstate+0x5fc)`).
+- `FUN_004aebe0` — thin forwarder to `FUN_004ae3f0(body+0xd8, *(body+0x174)+0x5fc)`.
+
+**The decisive structural finding:** across ~17 traced functions, **`body+0x00` is never read as data** —
+it is only ever the base for `+0x08`, `+0x10`, etc. That is the signature of a **C++ vtable pointer**: the
+body is a polymorphic object. Its per-tick position update is therefore almost certainly a **virtual
+method, invoked through an indirect call** `(*body->vtbl[n])(body)`. Ghidra's call graph resolves only
+direct calls (it states plainly: "unresolved computed or indirect calls remain unknown"), so a
+virtual-dispatched mover is **invisible** to the resolved-call-graph walking used throughout this trace —
+which is exactly why every reachable function reads the position and none writes it.
+
+### Recovered body-object field map (body = *(entity+0xf0))
+
+| Offset | Type | Meaning | Status |
+|---|---|---|---|
+| +0x00 | ptr | **vtable pointer** (never read as data) | INFERRED |
+| +0x08 | float | X position, normalized 0..1 | VERIFIED |
+| +0x0c | float | speed / closing-rate | INFERRED |
+| +0x10 | float | Y position, normalized 0..1 | VERIFIED |
+| +0x14 | float | threat / forward metric | INFERRED |
+| +0x3c | byte | role index (<11) | VERIFIED (read) |
+| +0x74 | int | role / zone id (assigned by FUN_004efaa0) | VERIFIED |
+| +0x7c | u32 | cleared at setup | VERIFIED |
+| +0x8c | ptr | assigned marking opponent | VERIFIED |
+| +0xd0 | byte | flags; bit0 = inactive/bench | VERIFIED |
+| +0xd8 | ptr/u32 | passed to FUN_004ae3f0 | VERIFIED (read) |
+| +0x174 | ptr | candidate/option selection struct | VERIFIED |
+| +0x180 | uint | side index (XOR 1 = opponent) | VERIFIED |
+| +0x189 | byte | contest parameter | VERIFIED |
+| +0x18e | byte | cleared on role change | VERIFIED |
+| +0x1a8 | u32 | contest / option accumulator id | VERIFIED |
+| +0x1b1 | byte | active sentinel (0xFF = inactive) | VERIFIED |
+| +0x1b6 | byte | local-duel result | VERIFIED |
+| +0x1b7 | byte | secondary per-player metric | VERIFIED |
+| +0x1b8 | byte | condition / fitness (0..100) | VERIFIED |
+| +0x1ba | byte | quantized X (= X·100) | VERIFIED |
+| +0x1bb | byte | quantized Y (= Y·100) | VERIFIED |
+| +0x214 | u32 | cleared at setup | VERIFIED |
+
+### Terminal conclusion of the integrator hunt
+
+The position-integration WRITER cannot be reached by resolved-call-graph walking because it is a
+**virtual method** on the polymorphic body object. Threading it statically now requires either:
+1. **vtable archaeology** — find the body's constructor (the `mov [obj+0], <vtable_addr>` store, which
+   needs a byte/offset-write search the current REA call-graph tools do not provide) and read the vtable's
+   function pointers; or
+2. an **indirect-call / data-flow resolver** that maps the virtual dispatch to its concrete target.
+
+Runtime observation (watchpoint on a body's +0x08) is **excluded** by the project's rule against executing
+the cracked binary. So the movement writer is, for now, the documented static-analysis plateau; everything
+that CONSUMES the positions (the entire match-logic module) is mapped, and the positions' nature
+(normalized 0..1, 11 active starters, quantized ×100) is VERIFIED.
+
 ## 5. Codeable atom
 
 The balance-tier classifier (§3d) is fully constant-verified and can be ported 1:1 as a resolver atom

@@ -224,6 +224,33 @@ ID"]`, fresh DB digest 6adaf64…). Outcome:
   FSM region (which REA's read-only flow does not perform) or a one-off interactive Ghidra pass; it adds no
   new gameplay constant beyond the PlayerDegradeable speed ranges already recovered.
 
+## 9. FSM handler PINNED — RunningToBall state → OnTick → move-order (VERIFIED addresses)
+
+Resolved the state vtable and handler concretely (read_bytes decoding, no fabrication):
+
+- **RunningToBall state vtable @ 0xb5bea8** (3 slots, built by the per-state ctor in the 0x4d2xxx
+  initializer; interleaved with the state name strings): slot0 **0x4de470**, slot1 **0x4d0de0**, slot2
+  **0x4d2360** (the `mov eax,<name>; ret` GetName thunk). The **base-state vtable @ 0xb5bdd8** shares slot1
+  = 0x4d0de0, so slot1 is an INHERITED method and **slot0 (0x4de470) is the per-state OVERRIDE = the
+  OnTick/update handler (the mover)**.
+- **FUN @ 0x4de470 = RunningToBall OnTick (VERIFIED it operates on the player body):** prologue decodes to
+  `mov esi,[arg]; mov edx,[esi+0xf0]` (edx = body = entity+0xf0) `; mov al,[edx+0x189]` (reads body+0x189,
+  a field in the recovered body map); it loads **1.5** (`fld [0xbbae9c]` = 0x3fc00000) — exactly the
+  Reaction constant from the PlayerFluid formula `((1.5 − Reaction)·KickReactionSeconds)` — does a
+  reach/collision check (call 0x4aa100), then issues a move order via **call 0x4a0ea0** with args
+  `(targetPtr, 2, 0, 3)`.
+- **FUN @ 0x4a0ea0 = move-order / waypoint setup:** `rep movsd` + `fstp`/`mov` writes target/waypoint data
+  into body fields (+0xc0, +0x100, +0x10c/+0x110/+0x114, +0x1a0, …). This is the movement COMMAND; the
+  literal per-frame `pos += vel·dt` integration is a further physics-step callee below this (reads the
+  waypoint + the PlayerDegradeable speed tier and advances body+0x08/+0x10). That final arithmetic
+  function is the last remaining decompile; everything above it is now VERIFIED to real addresses.
+
+So the full movement path is pinned end to end: **player's current GCPlayerState → that state object's
+vtable (e.g. 0xb5bea8) → slot0 OnTick (e.g. 0x4de470) reads the body and reach-checks → move-order
+0x4a0ea0 writes the waypoint → a physics step integrates body+0x08/+0x10 at the state's speed.** The
+earlier call-graph wall is fully explained and traversed: the dispatch is per-state vtables in an
+unregistered 0x4d region, reachable only by this byte-level RTTI/vtable walk.
+
 ## Conclusion
 
 The match engine is an MSVC C++ **vtable-driven object graph** whose RTTI is fully intact. **The player

@@ -85,9 +85,12 @@ file is the honest backlog: what is NOT nailed down, so nothing here gets fabric
   walking never found a writer. Two engines reconciled: GCMatchResolverWrapperImpl (0x9f, 37-slot vtable) =
   quick-sim/instant-result statistical resolver; GCPlayerState* FSM = full 2D match. RTTI is fully intact,
   so the whole class/vtable/dispatch graph is reconstructible by byte-search (proven) or by re-enabling
-  Ghidra's RTTI analyzer (now staged in ~/.claude.json). REMAINING (one decompile each, not a search): the
-  literal per-state position-advance body (e.g. PlayerRunningToBall handler); the 37 resolver slot roles;
-  FUN_004b0aa0 local-duel kernel; tier→event mapping.
+  Ghidra's RTTI analyzer (now staged in ~/.claude.json). PINNED (MATCH_VTABLE_DISPATCH_MATRIX.md §9): RunningToBall
+  state vtable @0xb5bea8 → OnTick handler **0x4de470** (VERIFIED reads body=entity+0xf0, body+0x189, uses
+  the 1.5 Reaction constant @0xbbae9c) → move-order **0x4a0ea0** (writes waypoint into body +0xc0/+0x100/
+  +0x1a0…). REMAINING: the single physics-step callee below 0x4a0ea0 that does the literal
+  body+0x08 += vel·dt (one decompile); the 37 resolver slot roles; FUN_004b0aa0 local-duel kernel;
+  tier→event mapping.
 - Replay: the on-disk Report persistence / saved-match file format — NOT traced (ReplayMatchFormat.dat
   looks like competition fixture formatting, unconfirmed).
 
